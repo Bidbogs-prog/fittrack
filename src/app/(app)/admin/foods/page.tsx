@@ -1,0 +1,120 @@
+import { CheckCircle, PencilSimple, Trash, WarningCircle } from "@phosphor-icons/react/dist/ssr";
+import Link from "next/link";
+import { FoodImage } from "@/components/food-image";
+import { requireAdmin } from "@/lib/auth";
+import type { Food } from "@/lib/types";
+import { deleteFood } from "../actions";
+import { FoodForm } from "./food-form";
+
+export const metadata = { title: "Admin · Foods" };
+
+export default async function AdminFoodsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string; saved?: string }>;
+}) {
+  const [{ supabase }, { error, saved }] = await Promise.all([requireAdmin(), searchParams]);
+
+  const { data } = await supabase.from("foods").select("*").order("created_at", { ascending: false });
+  const foods = (data ?? []) as Food[];
+
+  return (
+    <div className="space-y-8">
+      {saved && (
+        <p className="flex items-start gap-2 rounded-lg border border-lime/25 bg-lime/[0.06] px-3.5 py-3 text-sm text-lime">
+          <CheckCircle className="mt-0.5 size-4 shrink-0" weight="bold" />
+          “{saved}” saved to the library.
+        </p>
+      )}
+      {error && (
+        <p className="flex items-start gap-2 rounded-lg border border-danger/30 bg-danger/[0.08] px-3.5 py-3 text-sm text-danger">
+          <WarningCircle className="mt-0.5 size-4 shrink-0" weight="bold" />
+          {error}
+        </p>
+      )}
+
+      <section className="rounded-2xl border border-ink-800 bg-ink-900/60 p-6">
+        <h2 className="font-display text-lg font-semibold tracking-tight text-paper">
+          Add a food
+        </h2>
+        <p className="mb-5 mt-1 text-xs text-paper-mute">
+          Facts are per 100 g — portion math is derived from these numbers everywhere in the app.
+        </p>
+        <FoodForm />
+      </section>
+
+      <section>
+        <h2 className="mb-4 font-display text-lg font-semibold tracking-tight text-paper">
+          Library <span className="font-mono text-sm text-paper-mute tabular">({foods.length})</span>
+        </h2>
+        {foods.length === 0 ? (
+          <p className="rounded-2xl border border-dashed border-ink-700 px-6 py-14 text-center text-sm text-paper-mute">
+            No foods yet — add your first one above.
+          </p>
+        ) : (
+          <div className="overflow-x-auto rounded-2xl border border-ink-800">
+            <table className="w-full min-w-[720px] text-sm">
+              <thead>
+                <tr className="border-b border-ink-800 text-left text-[11px] uppercase tracking-[0.12em] text-paper-mute">
+                  <th className="px-4 py-3 font-semibold">Food</th>
+                  <th className="px-3 py-3 text-right font-semibold">kcal</th>
+                  <th className="px-3 py-3 text-right font-semibold">Protein</th>
+                  <th className="px-3 py-3 text-right font-semibold">Carbs</th>
+                  <th className="px-3 py-3 text-right font-semibold">Fat</th>
+                  <th className="px-3 py-3 text-right font-semibold">Fibre</th>
+                  <th className="px-4 py-3 text-right font-semibold">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-ink-800/70">
+                {foods.map((food) => (
+                  <tr key={food.id} className="bg-ink-900/40 transition-colors hover:bg-ink-850">
+                    <td className="px-4 py-2.5">
+                      <div className="flex items-center gap-3">
+                        <FoodImage src={food.image_url} alt="" className="size-9 rounded-md" />
+                        <div className="min-w-0">
+                          <p className="truncate font-medium text-paper">{food.name}</p>
+                          <p className="text-[11px] capitalize text-paper-mute">
+                            {food.brand ? `${food.brand} · ` : ""}
+                            {food.category.replace("-", " & ")}
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                    {([food.kcal, food.protein_g, food.carbs_g, food.fat_g, food.fibre_g] as const).map(
+                      (v, i) => (
+                        <td key={i} className="px-3 py-2.5 text-right font-mono text-paper-dim tabular">
+                          {v}
+                        </td>
+                      )
+                    )}
+                    <td className="px-4 py-2.5">
+                      <div className="flex items-center justify-end gap-1">
+                        <Link
+                          href={`/admin/foods/${food.id}`}
+                          aria-label={`Edit ${food.name}`}
+                          className="btn-press rounded-md p-2 text-paper-mute hover:bg-ink-700 hover:text-paper"
+                        >
+                          <PencilSimple className="size-4" />
+                        </Link>
+                        <form action={deleteFood}>
+                          <input type="hidden" name="id" value={food.id} />
+                          <button
+                            type="submit"
+                            aria-label={`Delete ${food.name}`}
+                            className="btn-press rounded-md p-2 text-paper-mute hover:bg-danger/10 hover:text-danger"
+                          >
+                            <Trash className="size-4" />
+                          </button>
+                        </form>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+    </div>
+  );
+}
