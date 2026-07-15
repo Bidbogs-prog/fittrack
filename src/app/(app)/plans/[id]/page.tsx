@@ -3,6 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FoodImage } from "@/components/food-image";
 import { MacroInline } from "@/components/macros";
+import { CountUp } from "@/components/motion/count-up";
+import { Reveal } from "@/components/motion/reveal";
 import { getProfile } from "@/lib/auth";
 import { GOALS, calcTargets, macrosForPortion, sumMacros } from "@/lib/nutrition";
 import { MEAL_TYPES, type MealPlan } from "@/lib/types";
@@ -38,7 +40,7 @@ export default async function PlanDetailPage({
         All plans
       </Link>
 
-      <header className="rounded-2xl border border-ink-800 bg-ink-900/60 p-6 md:p-8">
+      <Reveal as="header" onScroll={false} className="rounded-2xl border border-ink-800 bg-ink-900/60 p-6 md:p-8">
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-lime">
           {GOALS[plan.goal].label}
         </p>
@@ -54,7 +56,7 @@ export default async function PlanDetailPage({
           <div>
             <p className="text-[11px] uppercase tracking-wide text-paper-mute">Day total</p>
             <p className="font-mono text-2xl font-semibold tracking-tight text-paper tabular">
-              {Math.round(total.kcal).toLocaleString()} <span className="text-sm text-paper-mute">kcal</span>
+              <CountUp value={Math.round(total.kcal)} /> <span className="text-sm text-paper-mute">kcal</span>
             </p>
           </div>
           <MacroInline macros={total} />
@@ -64,15 +66,15 @@ export default async function PlanDetailPage({
             </p>
           )}
         </div>
-      </header>
+      </Reveal>
 
-      <section className="grid gap-5 lg:grid-cols-2">
+      <Reveal as="section" className="grid gap-5 lg:grid-cols-2" stagger={0.1} start="top 90%">
         {MEAL_TYPES.map((meal) => {
           const items = plan.items.filter((it) => it.meal === meal);
           if (items.length === 0) return null;
           const mealTotal = sumMacros(items.map((it) => macrosForPortion(it.food, it.grams)));
           return (
-            <article key={meal} className="rounded-2xl border border-ink-800 bg-ink-900/60">
+            <article key={meal} data-reveal className="rounded-2xl border border-ink-800 bg-ink-900/60">
               <header className="flex items-center justify-between border-b border-ink-800 px-5 py-4">
                 <h2 className="font-display text-base font-semibold capitalize text-paper">{meal}</h2>
                 <span className="font-mono text-sm text-paper-dim tabular">
@@ -102,7 +104,7 @@ export default async function PlanDetailPage({
             </article>
           );
         })}
-      </section>
+      </Reveal>
     </div>
   );
 }

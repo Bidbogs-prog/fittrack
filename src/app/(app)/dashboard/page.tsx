@@ -2,6 +2,8 @@ import { CaretLeft, CaretRight, Trash } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { CalorieRing, MacroBars, MacroInline } from "@/components/macros";
+import { CountUp } from "@/components/motion/count-up";
+import { Reveal } from "@/components/motion/reveal";
 import { getProfile } from "@/lib/auth";
 import { GOALS, calcTargets, macrosForPortion, sumMacros } from "@/lib/nutrition";
 import { MEAL_TYPES, type DiaryEntry, type Food } from "@/lib/types";
@@ -62,8 +64,8 @@ export default async function DashboardPage({
   return (
     <div className="space-y-8">
       {/* header */}
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
+      <Reveal as="header" className="flex flex-wrap items-end justify-between gap-4" onScroll={false}>
+        <div data-reveal>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-lime">
             {GOALS[targets.goal].label} · {isToday ? "today" : dateLabel}
           </p>
@@ -71,7 +73,7 @@ export default async function DashboardPage({
             {isToday ? `Fuel the work, ${firstName}.` : dateLabel}
           </h1>
         </div>
-        <nav className="flex items-center gap-1 rounded-lg border border-ink-700 bg-ink-900 p-1">
+        <nav data-reveal className="flex items-center gap-1 rounded-lg border border-ink-700 bg-ink-900 p-1">
           <Link
             href={`/dashboard?d=${shiftDate(date, -1)}`}
             aria-label="Previous day"
@@ -95,23 +97,26 @@ export default async function DashboardPage({
             <CaretRight weight="bold" className="size-4" />
           </Link>
         </nav>
-      </header>
+      </Reveal>
 
       {/* energy hero */}
-      <section className="reveal grid gap-6 rounded-2xl border border-ink-800 bg-ink-900/60 p-6 md:grid-cols-[auto_1fr] md:items-center md:gap-10 md:p-8">
+      <Reveal
+        as="section"
+        onScroll={false}
+        delay={0.1}
+        className="grid gap-6 rounded-2xl border border-ink-800 bg-ink-900/60 p-6 md:grid-cols-[auto_1fr] md:items-center md:gap-10 md:p-8"
+      >
         <CalorieRing eaten={eaten.kcal} target={targets.kcal} />
         <div>
           <p className="font-display text-xl font-semibold tracking-tight text-paper">
             {remaining >= 0 ? (
               <>
-                <span className="font-mono text-lime tabular">{remaining.toLocaleString()}</span> kcal
+                <CountUp value={remaining} className="font-mono text-lime tabular" /> kcal
                 left {isToday ? "today" : "that day"}
               </>
             ) : (
               <>
-                <span className="font-mono text-danger tabular">
-                  {Math.abs(remaining).toLocaleString()}
-                </span>{" "}
+                <CountUp value={Math.abs(remaining)} className="font-mono text-danger tabular" />{" "}
                 kcal over target
               </>
             )}
@@ -129,27 +134,27 @@ export default async function DashboardPage({
                   {label}
                 </dt>
                 <dd className="mt-0.5 font-mono text-xl font-semibold tracking-tight text-paper tabular">
-                  {value.toLocaleString()}
+                  <CountUp value={value} />
                 </dd>
                 <dd className="text-[11px] text-paper-mute">{sub}</dd>
               </div>
             ))}
           </dl>
         </div>
-      </section>
+      </Reveal>
 
       <MacroBars eaten={eaten} targets={targets} />
 
       {/* meals */}
-      <section className="grid gap-5 lg:grid-cols-2">
-        {MEAL_TYPES.map((meal, i) => {
+      <Reveal as="section" className="grid gap-5 lg:grid-cols-2" stagger={0.1} start="top 90%">
+        {MEAL_TYPES.map((meal) => {
           const mealEntries = entries.filter((e) => e.meal === meal);
           const mealTotal = sumMacros(mealEntries.map((e) => macrosForPortion(e.food, e.grams)));
           return (
             <article
               key={meal}
-              className="reveal rounded-2xl border border-ink-800 bg-ink-900/60"
-              style={{ "--i": i + 1 } as React.CSSProperties}
+              data-reveal
+              className="rounded-2xl border border-ink-800 bg-ink-900/60"
             >
               <header className="flex items-center justify-between border-b border-ink-800 px-5 py-4">
                 <div>
@@ -205,7 +210,7 @@ export default async function DashboardPage({
             </article>
           );
         })}
-      </section>
+      </Reveal>
     </div>
   );
 }

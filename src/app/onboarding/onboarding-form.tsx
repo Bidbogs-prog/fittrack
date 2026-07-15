@@ -9,6 +9,7 @@ import {
   calcBmr,
   calcTdee,
 } from "@/lib/nutrition";
+import { Reveal } from "@/components/motion/reveal";
 import type { ActivityLevel, Gender, Goal, Profile } from "@/lib/types";
 import { completeOnboarding } from "./actions";
 
@@ -41,14 +42,16 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
     Boolean(gender && birthDate && height && weight && activity && goal) && preview !== null;
 
   return (
-    <form
-      action={completeOnboarding}
-      onSubmit={() => setSubmitting(true)}
-      className="mt-10 grid gap-10 lg:grid-cols-[1fr_320px]"
-    >
+    <form action={completeOnboarding} onSubmit={() => setSubmitting(true)}>
+      <Reveal
+        onScroll={false}
+        delay={0.25}
+        stagger={0.12}
+        className="mt-10 grid gap-10 lg:grid-cols-[1fr_320px]"
+      >
       <div className="space-y-10">
         {/* 01 — body */}
-        <section>
+        <section data-reveal>
           <h2 className="flex items-baseline gap-3 font-display text-lg font-semibold text-paper">
             <span className="font-mono text-xs text-lime">01</span> Your body
           </h2>
@@ -139,7 +142,7 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
         </section>
 
         {/* 02 — training */}
-        <section>
+        <section data-reveal>
           <h2 className="flex items-baseline gap-3 font-display text-lg font-semibold text-paper">
             <span className="font-mono text-xs text-lime">02</span> Training frequency
           </h2>
@@ -186,7 +189,7 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
         </section>
 
         {/* 03 — goal */}
-        <section>
+        <section data-reveal>
           <h2 className="flex items-baseline gap-3 font-display text-lg font-semibold text-paper">
             <span className="font-mono text-xs text-lime">03</span> Your goal
           </h2>
@@ -224,7 +227,7 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
       </div>
 
       {/* live preview panel */}
-      <aside className="lg:sticky lg:top-8 lg:self-start">
+      <aside data-reveal className="lg:sticky lg:top-8 lg:self-start">
         <div className="rounded-2xl border border-ink-700 bg-ink-900/80 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-paper-mute">
             Your numbers
@@ -264,6 +267,7 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
           </p>
         </div>
       </aside>
+      </Reveal>
     </form>
   );
 }

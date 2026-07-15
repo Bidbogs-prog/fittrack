@@ -81,6 +81,132 @@ body {
   background-size: 56px 56px;
 }
 
+/* ============================================================
+   GSAP motion system
+   ============================================================ */
+
+/* Elements choreographed by <Reveal> are pre-hidden only when the user
+   allows motion — reduced-motion users always see content instantly. */
+@media (prefers-reduced-motion: no-preference) {
+  [data-reveal],
+  [data-reveal-self] {
+    opacity: 0;
+  }
+}
+
+/* Kinetic marquee: track holds two copies of its content. */
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee 42s linear infinite;
+}
+.marquee:hover .marquee-track {
+  animation-play-state: paused;
+}
+
+/* Pointer-tracked glare for TiltCard surfaces (uses --mx/--my). */
+.glare::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(
+    460px circle at var(--mx, 50%) var(--my, 50%),
+    rgba(255, 255, 255, 0.07),
+    transparent 62%
+  );
+}
+
+/* Gentle idle drift for floating chips (applied to an inner span so it
+   never fights GSAP's translateZ on the depth wrapper). */
+@keyframes floaty {
+  0%,
+  100% {
+    transform: translateY(-5px);
+  }
+  50% {
+    transform: translateY(6px);
+  }
+}
+.floaty {
+  animation: floaty 6s ease-in-out infinite;
+}
+
+/* 3D orbit rings for the hero scene (parent supplies perspective). */
+@keyframes orbit {
+  from {
+    transform: rotateX(70deg) rotateZ(0deg);
+  }
+  to {
+    transform: rotateX(70deg) rotateZ(360deg);
+  }
+}
+.orbit-ring {
+  animation: orbit 28s linear infinite;
+}
+.orbit-ring-slow {
+  animation: orbit 44s linear infinite reverse;
+}
+
+/* Card lift on hover — transform/shadow only, GPU-safe. */
+.card-lift {
+  transition:
+    transform 0.45s cubic-bezier(0.32, 0.72, 0, 1),
+    border-color 0.45s cubic-bezier(0.32, 0.72, 0, 1),
+    box-shadow 0.45s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.card-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 24px 48px -24px rgba(0, 0, 0, 0.7);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track,
+  .floaty,
+  .orbit-ring,
+  .orbit-ring-slow {
+    animation: none;
+  }
+  .card-lift,
+  .card-lift:hover {
+    transition: none;
+    transform: none;
+  }
+}
+
+/* Modal entrance: overlay fades, panel pops with a gentle settle. */
+@keyframes overlay-fade {
+  from {
+    opacity: 0;
+  }
+}
+.overlay-fade {
+  animation: overlay-fade 0.22s ease-out;
+}
+
+@keyframes dialog-pop {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+}
+.dialog-pop {
+  animation: dialog-pop 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay-fade,
+  .dialog-pop {
+    animation: none;
+  }
+}
+
 /* Staggered page-load reveal: add .reveal to items and set --i. */
 @keyframes rise {
   from {

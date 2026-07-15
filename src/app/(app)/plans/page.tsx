@@ -1,5 +1,6 @@
 import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
+import { Reveal } from "@/components/motion/reveal";
 import { getProfile } from "@/lib/auth";
 import { GOALS, macrosForPortion, sumMacros } from "@/lib/nutrition";
 import type { Goal, MealPlan } from "@/lib/types";
@@ -61,14 +62,14 @@ export default async function PlansPage({
           No {GOALS[goal].label.toLowerCase()} plans yet — your coach is cooking.
         </p>
       ) : (
-        <ul className="grid gap-4 md:grid-cols-2">
-          {plans.map((plan, i) => {
+        <Reveal as="ul" className="grid gap-4 md:grid-cols-2" stagger={0.08} start="top 92%">
+          {plans.map((plan) => {
             const total = sumMacros(plan.items.map((it) => macrosForPortion(it.food, it.grams)));
             return (
-              <li key={plan.id} className="reveal" style={{ "--i": i } as React.CSSProperties}>
+              <li key={plan.id} data-reveal>
                 <Link
                   href={`/plans/${plan.id}`}
-                  className="btn-press group block rounded-2xl border border-ink-800 bg-ink-900/60 p-5 transition-colors hover:border-ink-600"
+                  className="btn-press card-lift group block rounded-2xl border border-ink-800 bg-ink-900/60 p-5 hover:border-ink-600"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <h2 className="font-display text-base font-semibold tracking-tight text-paper">
@@ -106,7 +107,7 @@ export default async function PlansPage({
               </li>
             );
           })}
-        </ul>
+        </Reveal>
       )}
     </div>
   );

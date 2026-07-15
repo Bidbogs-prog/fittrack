@@ -1,6 +1,7 @@
 import { SignOut } from "@phosphor-icons/react/dist/ssr";
 import { redirect } from "next/navigation";
 import { Logo } from "@/components/logo";
+import { RouteFx } from "@/components/motion/route-fx";
 import { AppNav } from "@/components/nav";
 import { getProfile, isAdmin } from "@/lib/auth";
 import { signout } from "../(auth)/actions";
@@ -47,7 +48,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <AppNav admin={admin} />
       </div>
 
-      <main className="min-w-0 flex-1 px-5 py-8 md:px-10 md:py-10">{children}</main>
+      <main className="min-w-0 flex-1 px-5 py-8 md:px-10 md:py-10">
+        <RouteFx>{children}</RouteFx>
+      </main>
     </div>
   );
 }

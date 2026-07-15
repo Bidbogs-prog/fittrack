@@ -1,6 +1,9 @@
 import type { Macros } from "@/lib/nutrition";
+import { CountUp } from "@/components/motion/count-up";
+import { DrawnBar, DrawnRing } from "@/components/motion/progress";
+import { Reveal } from "@/components/motion/reveal";
 
-/** Big SVG calorie ring for the dashboard hero. Pure server component. */
+/** Big calorie ring for the dashboard hero — GSAP-drawn with counted center. */
 export function CalorieRing({
   eaten,
   target,
@@ -8,32 +11,23 @@ export function CalorieRing({
   eaten: number;
   target: number;
 }) {
-  const r = 64;
-  const c = 2 * Math.PI * r;
   const pct = target > 0 ? Math.min(eaten / target, 1) : 0;
   const over = eaten > target;
 
   return (
     <div className="relative size-40 shrink-0">
-      <svg viewBox="0 0 160 160" className="size-full -rotate-90">
-        <circle cx="80" cy="80" r={r} fill="none" stroke="var(--ink-700)" strokeWidth="10" />
-        <circle
-          cx="80"
-          cy="80"
-          r={r}
-          fill="none"
-          stroke={over ? "var(--danger)" : "var(--lime)"}
-          strokeWidth="10"
-          strokeLinecap="round"
-          strokeDasharray={c}
-          strokeDashoffset={c * (1 - pct)}
-          className="transition-[stroke-dashoffset] duration-700 ease-out"
-        />
-      </svg>
+      <DrawnRing
+        pct={pct}
+        radius={64}
+        stroke={10}
+        color={over ? "var(--danger)" : "var(--lime)"}
+        className="size-full"
+        delay={0.15}
+      />
       <div className="absolute inset-0 grid place-items-center">
         <div className="text-center">
           <p className="font-mono text-2xl font-semibold tracking-tight text-paper tabular">
-            {Math.round(eaten).toLocaleString()}
+            <CountUp value={Math.round(eaten)} />
           </p>
           <p className="text-[11px] text-paper-mute">of {target.toLocaleString()} kcal</p>
         </div>
@@ -52,29 +46,30 @@ const MACRO_META = [
 /** Four labelled progress bars: eaten vs target grams. */
 export function MacroBars({ eaten, targets }: { eaten: Macros; targets: Macros }) {
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      {MACRO_META.map(([key, label, color]) => {
+    <Reveal className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" stagger={0.09}>
+      {MACRO_META.map(([key, label, color], i) => {
         const value = eaten[key];
         const target = targets[key];
         const pct = target > 0 ? Math.min((value / target) * 100, 100) : 0;
         return (
-          <div key={key} className="rounded-xl border border-ink-800 bg-ink-900/60 px-4 py-3.5">
+          <div
+            key={key}
+            data-reveal
+            className="card-lift rounded-xl border border-ink-800 bg-ink-900/60 px-4 py-3.5"
+          >
             <div className="flex items-baseline justify-between">
               <p className="text-xs font-medium text-paper-dim">{label}</p>
               <p className="font-mono text-xs text-paper-mute tabular">
-                {Math.round(value)} / {Math.round(target)} g
+                <CountUp value={Math.round(value)} /> / {Math.round(target)} g
               </p>
             </div>
             <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-ink-700">
-              <div
-                className={`h-full rounded-full ${color} transition-[width] duration-700 ease-out`}
-                style={{ width: `${pct}%` }}
-              />
+              <DrawnBar pct={pct} delay={0.2 + i * 0.1} className={color} />
             </div>
           </div>
         );
       })}
-    </div>
+    </Reveal>
   );
 }
 

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { FoodImage } from "@/components/food-image";
+import { Reveal } from "@/components/motion/reveal";
 import { requireUser } from "@/lib/auth";
 import { FOOD_CATEGORIES, type Food } from "@/lib/types";
 
@@ -63,12 +64,12 @@ export default async function FoodsPage({
           No foods in this category yet.
         </p>
       ) : (
-        <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {foods.map((food, i) => (
+        <Reveal as="ul" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3" stagger={0.05} start="top 92%">
+          {foods.map((food) => (
             <li
               key={food.id}
-              className="reveal rounded-2xl border border-ink-800 bg-ink-900/60 p-4 transition-colors hover:border-ink-600"
-              style={{ "--i": Math.min(i, 8) } as React.CSSProperties}
+              data-reveal
+              className="card-lift rounded-2xl border border-ink-800 bg-ink-900/60 p-4 hover:border-ink-600"
             >
               <div className="flex items-start gap-3.5">
                 <FoodImage src={food.image_url} alt={food.name} className="size-16 rounded-xl" />
@@ -103,7 +104,7 @@ export default async function FoodsPage({
               </dl>
             </li>
           ))}
-        </ul>
+        </Reveal>
       )}
     </div>
   );

@@ -73,14 +73,14 @@ export function AddFoodDialog({
 
       {open && (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-ink-950/80 p-4 backdrop-blur-sm sm:items-center"
+          className="overlay-fade fixed inset-0 z-50 flex items-end justify-center bg-ink-950/80 p-4 backdrop-blur-sm sm:items-center"
           onClick={reset}
         >
           <div
             role="dialog"
             aria-modal="true"
             aria-label={`Add food to ${meal}`}
-            className="w-full max-w-md rounded-2xl border border-ink-700 bg-ink-900 p-5 shadow-[0_40px_80px_-20px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.05)]"
+            className="dialog-pop w-full max-w-md rounded-2xl border border-ink-700 bg-ink-900 p-5 shadow-[0_40px_80px_-20px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.05)]"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
