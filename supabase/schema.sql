@@ -90,6 +90,32 @@ create table if not exists public.foods (
   updated_at timestamptz not null default now()
 );
 
+-- Extended nutritional profile (per 100 g). Null = unknown / not analysed —
+-- the app treats null as "no data", never as zero. Defined via alter so this
+-- file also upgrades databases created before these columns existed.
+alter table public.foods
+  add column if not exists saturated_fat_g numeric(7, 2) check (saturated_fat_g >= 0),
+  add column if not exists trans_fat_g     numeric(7, 2) check (trans_fat_g >= 0),
+  add column if not exists sugar_g         numeric(7, 2) check (sugar_g >= 0),
+  add column if not exists cholesterol_mg  numeric(7, 2) check (cholesterol_mg >= 0),
+  add column if not exists sodium_mg       numeric(7, 2) check (sodium_mg >= 0),
+  add column if not exists potassium_mg    numeric(7, 2) check (potassium_mg >= 0),
+  add column if not exists calcium_mg      numeric(7, 2) check (calcium_mg >= 0),
+  add column if not exists iron_mg         numeric(7, 2) check (iron_mg >= 0),
+  add column if not exists magnesium_mg    numeric(7, 2) check (magnesium_mg >= 0),
+  add column if not exists zinc_mg         numeric(7, 2) check (zinc_mg >= 0),
+  add column if not exists vitamin_a_ug    numeric(7, 2) check (vitamin_a_ug >= 0),
+  add column if not exists vitamin_c_mg    numeric(7, 2) check (vitamin_c_mg >= 0),
+  add column if not exists vitamin_d_ug    numeric(7, 2) check (vitamin_d_ug >= 0),
+  add column if not exists vitamin_e_mg    numeric(7, 2) check (vitamin_e_mg >= 0),
+  add column if not exists vitamin_k_ug    numeric(7, 2) check (vitamin_k_ug >= 0),
+  add column if not exists thiamin_mg      numeric(7, 2) check (thiamin_mg >= 0),
+  add column if not exists riboflavin_mg   numeric(7, 2) check (riboflavin_mg >= 0),
+  add column if not exists niacin_mg       numeric(7, 2) check (niacin_mg >= 0),
+  add column if not exists vitamin_b6_mg   numeric(7, 2) check (vitamin_b6_mg >= 0),
+  add column if not exists folate_ug       numeric(7, 2) check (folate_ug >= 0),
+  add column if not exists vitamin_b12_ug  numeric(7, 2) check (vitamin_b12_ug >= 0);
+
 alter table public.foods enable row level security;
 
 create policy "foods: read for signed-in users" on public.foods
@@ -260,6 +286,58 @@ insert into public.foods (name, category, kcal, protein_g, carbs_g, fat_g, fibre
   ('Olive oil',                  'fats-nuts',  884,  0.0,  0.0,100.0, 0.0),
   ('Whey protein powder',        'protein',    400, 80.0, 10.0,  6.0, 0.0)
 on conflict do nothing;
+
+-- Extended-profile seed data (per 100 g, USDA-derived approximations).
+-- coalesce() only fills blanks, so it never overwrites values an admin has
+-- edited — safe to re-run, and it upgrades pre-existing seed rows too.
+update public.foods f set
+  saturated_fat_g = coalesce(f.saturated_fat_g, v.sat_g),
+  trans_fat_g     = coalesce(f.trans_fat_g,     v.trans_g),
+  sugar_g         = coalesce(f.sugar_g,         v.sugar_g),
+  cholesterol_mg  = coalesce(f.cholesterol_mg,  v.chol_mg),
+  sodium_mg       = coalesce(f.sodium_mg,       v.na_mg),
+  potassium_mg    = coalesce(f.potassium_mg,    v.k_mg),
+  calcium_mg      = coalesce(f.calcium_mg,      v.ca_mg),
+  iron_mg         = coalesce(f.iron_mg,         v.fe_mg),
+  magnesium_mg    = coalesce(f.magnesium_mg,    v.mg_mg),
+  zinc_mg         = coalesce(f.zinc_mg,         v.zn_mg),
+  vitamin_a_ug    = coalesce(f.vitamin_a_ug,    v.va_ug),
+  vitamin_c_mg    = coalesce(f.vitamin_c_mg,    v.vc_mg),
+  vitamin_d_ug    = coalesce(f.vitamin_d_ug,    v.vd_ug),
+  vitamin_e_mg    = coalesce(f.vitamin_e_mg,    v.ve_mg),
+  vitamin_k_ug    = coalesce(f.vitamin_k_ug,    v.vk_ug),
+  thiamin_mg      = coalesce(f.thiamin_mg,      v.b1_mg),
+  riboflavin_mg   = coalesce(f.riboflavin_mg,   v.b2_mg),
+  niacin_mg       = coalesce(f.niacin_mg,       v.b3_mg),
+  vitamin_b6_mg   = coalesce(f.vitamin_b6_mg,   v.b6_mg),
+  folate_ug       = coalesce(f.folate_ug,       v.b9_ug),
+  vitamin_b12_ug  = coalesce(f.vitamin_b12_ug,  v.b12_ug)
+from (values
+  --  name                     sat    trans  sugar  chol   na    k     ca    fe    mg    zn    vitA  vitC  vitD  vitE  vitK   b1    b2    b3    b6    b9   b12
+  ('Chicken breast, raw',      0.60,  0.01,  0.00,   73,    45,  334,    5,  0.40,  28,  0.70,    9,  0.0,  0.10,  0.60,   0.0, 0.09, 0.16,  9.90, 0.80,   9, 0.21),
+  ('Whole egg',                3.10,  0.04,  0.40,  372,   142,  138,   56,  1.80,  12,  1.30,  160,  0.0,  2.00,  1.10,   0.3, 0.04, 0.46,  0.10, 0.17,  47, 0.90),
+  ('Salmon fillet, raw',       3.10,  0.00,  0.00,   55,    59,  363,    9,  0.30,  27,  0.40,   58,  3.9, 11.00,  3.60,   0.5, 0.21, 0.16,  8.70, 0.60,  26, 3.20),
+  ('Lean beef mince 5%',       2.20,  0.30,  0.00,   62,    66,  346,   12,  2.40,  21,  4.60,    0,  0.0,  0.10,  0.40,   1.5, 0.05, 0.16,  5.40, 0.40,   6, 2.20),
+  ('White rice, cooked',       0.10,  0.00,  0.10,    0,     1,   35,   10,  1.20,  12,  0.50,    0,  0.0,  0.00,  0.00,   0.0, 0.16, 0.01,  1.50, 0.09,  58, 0.00),
+  ('Rolled oats, dry',         1.10,  0.00,  1.00,    0,     2,  429,   54,  4.70, 177,  4.00,    0,  0.0,  0.00,  0.40,   2.0, 0.76, 0.14,  1.10, 0.12,  56, 0.00),
+  ('Sweet potato, raw',        0.00,  0.00,  4.20,    0,    55,  337,   30,  0.60,  25,  0.30,  709,  2.4,  0.00,  0.30,   1.8, 0.08, 0.06,  0.60, 0.21,  11, 0.00),
+  ('Wholemeal bread',          0.60,  0.00,  4.30,    0,   450,  250,  107,  2.50,  76,  1.80,    0,  0.0,  0.00,  0.60,   7.8, 0.39, 0.17,  4.40, 0.21,  42, 0.00),
+  ('Pasta, cooked',            0.20,  0.00,  0.60,    0,     1,   44,    7,  0.50,  18,  0.50,    0,  0.0,  0.00,  0.10,   0.0, 0.02, 0.02,  0.40, 0.05,   7, 0.00),
+  ('Greek yogurt 5%',          3.20,  0.10,  4.00,   13,    35,  141,  111,  0.00,  11,  0.50,   63,  0.0,  0.10,  0.00,   0.0, 0.02, 0.28,  0.20, 0.06,  12, 0.75),
+  ('Skyr',                     0.10,  0.00,  4.00,    3,    45,  150,  110,  0.10,  11,  0.60,    2,  0.0,  0.00,  0.00,   0.0, 0.04, 0.30,  0.20, 0.05,  12, 0.60),
+  ('Semi-skimmed milk',        1.10,  0.10,  4.80,    7,    42,  156,  120,  0.00,  11,  0.40,   22,  0.0,  0.00,  0.00,   0.3, 0.04, 0.18,  0.10, 0.04,   5, 0.50),
+  ('Banana',                   0.10,  0.00, 12.20,    0,     1,  358,    5,  0.30,  27,  0.20,    3,  8.7,  0.00,  0.10,   0.5, 0.03, 0.07,  0.70, 0.37,  20, 0.00),
+  ('Blueberries',              0.00,  0.00, 10.00,    0,     1,   77,    6,  0.30,   6,  0.20,    3,  9.7,  0.00,  0.60,  19.3, 0.04, 0.04,  0.40, 0.05,   6, 0.00),
+  ('Apple',                    0.00,  0.00, 10.40,    0,     1,  107,    6,  0.10,   5,  0.00,    3,  4.6,  0.00,  0.20,   2.2, 0.02, 0.03,  0.10, 0.04,   3, 0.00),
+  ('Broccoli, raw',            0.00,  0.00,  1.70,    0,    33,  316,   47,  0.70,  21,  0.40,   31, 89.2,  0.00,  0.80, 101.6, 0.07, 0.12,  0.60, 0.18,  63, 0.00),
+  ('Spinach, raw',             0.10,  0.00,  0.40,    0,    79,  558,   99,  2.70,  79,  0.50,  469, 28.1,  0.00,  2.00, 482.9, 0.08, 0.19,  0.70, 0.20, 194, 0.00),
+  ('Avocado',                  2.10,  0.00,  0.70,    0,     7,  485,   12,  0.60,  29,  0.60,    7, 10.0,  0.00,  2.10,  21.0, 0.07, 0.13,  1.70, 0.26,  81, 0.00),
+  ('Almonds',                  3.80,  0.00,  4.40,    0,     1,  733,  269,  3.70, 270,  3.10,    0,  0.0,  0.00, 25.60,   0.0, 0.21, 1.14,  3.60, 0.14,  44, 0.00),
+  ('Peanut butter',           10.30,  0.00,  9.20,    0,   430,  564,   49,  1.70, 168,  2.70,    0,  0.0,  0.00,  9.10,   0.3, 0.15, 0.19, 13.10, 0.44,  87, 0.00),
+  ('Olive oil',               13.80,  0.00,  0.00,    0,     2,    1,    1,  0.60,   0,  0.00,    0,  0.0,  0.00, 14.40,  60.2, 0.00, 0.00,  0.00, 0.00,   0, 0.00),
+  ('Whey protein powder',      2.00,  0.00,  6.00,   50,   200,  400,  400,  1.00,  60,  1.00,    0,  0.0,  0.00,  0.00,   0.0, 0.10, 0.50,  0.50, 0.10,  10, 1.00)
+) as v(name, sat_g, trans_g, sugar_g, chol_mg, na_mg, k_mg, ca_mg, fe_mg, mg_mg, zn_mg, va_ug, vc_mg, vd_ug, ve_mg, vk_ug, b1_mg, b2_mg, b3_mg, b6_mg, b9_ug, b12_ug)
+where f.name = v.name and f.brand is null;
 
 -- ============================================================
 -- MAKE YOURSELF ADMIN (run after you have signed up in the app):

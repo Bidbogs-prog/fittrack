@@ -1,4 +1,5 @@
-import type { ActivityLevel, Food, Gender, Goal, Profile } from "./types";
+import type { ActivityLevel, Food, Gender, Goal, MicroKey, MicroValues, Profile } from "./types";
+import { MICRO_KEYS } from "./types";
 
 /**
  * Single source of truth for all nutrition math.
@@ -105,4 +106,83 @@ export function sumMacros(portions: Macros[]): Macros {
 
 export function round1(n: number): number {
   return Math.round(n * 10) / 10;
+}
+
+// ---------- Extended nutritional profile ----------
+
+export type MicroGroup = "Fats, sugar & cholesterol" | "Minerals" | "Vitamins";
+
+export interface MicronutrientDef {
+  label: string;
+  unit: "g" | "mg" | "µg";
+  /** FDA adult daily value; null = no DV defined (trans fat, total sugars). */
+  dv: number | null;
+  group: MicroGroup;
+  /** DV is an upper limit — being over it is bad, not good. */
+  limit?: boolean;
+}
+
+export const MICRONUTRIENTS: Record<MicroKey, MicronutrientDef> = {
+  saturated_fat_g: { label: "Saturated fat", unit: "g", dv: 20, group: "Fats, sugar & cholesterol", limit: true },
+  trans_fat_g: { label: "Trans fat", unit: "g", dv: null, group: "Fats, sugar & cholesterol", limit: true },
+  sugar_g: { label: "Sugars", unit: "g", dv: null, group: "Fats, sugar & cholesterol", limit: true },
+  cholesterol_mg: { label: "Cholesterol", unit: "mg", dv: 300, group: "Fats, sugar & cholesterol", limit: true },
+  sodium_mg: { label: "Sodium", unit: "mg", dv: 2300, group: "Minerals", limit: true },
+  potassium_mg: { label: "Potassium", unit: "mg", dv: 4700, group: "Minerals" },
+  calcium_mg: { label: "Calcium", unit: "mg", dv: 1300, group: "Minerals" },
+  iron_mg: { label: "Iron", unit: "mg", dv: 18, group: "Minerals" },
+  magnesium_mg: { label: "Magnesium", unit: "mg", dv: 420, group: "Minerals" },
+  zinc_mg: { label: "Zinc", unit: "mg", dv: 11, group: "Minerals" },
+  vitamin_a_ug: { label: "Vitamin A", unit: "µg", dv: 900, group: "Vitamins" },
+  vitamin_c_mg: { label: "Vitamin C", unit: "mg", dv: 90, group: "Vitamins" },
+  vitamin_d_ug: { label: "Vitamin D", unit: "µg", dv: 20, group: "Vitamins" },
+  vitamin_e_mg: { label: "Vitamin E", unit: "mg", dv: 15, group: "Vitamins" },
+  vitamin_k_ug: { label: "Vitamin K", unit: "µg", dv: 120, group: "Vitamins" },
+  thiamin_mg: { label: "Thiamin (B1)", unit: "mg", dv: 1.2, group: "Vitamins" },
+  riboflavin_mg: { label: "Riboflavin (B2)", unit: "mg", dv: 1.3, group: "Vitamins" },
+  niacin_mg: { label: "Niacin (B3)", unit: "mg", dv: 16, group: "Vitamins" },
+  vitamin_b6_mg: { label: "Vitamin B6", unit: "mg", dv: 1.7, group: "Vitamins" },
+  folate_ug: { label: "Folate", unit: "µg", dv: 400, group: "Vitamins" },
+  vitamin_b12_ug: { label: "Vitamin B12", unit: "µg", dv: 2.4, group: "Vitamins" },
+};
+
+export const MICRO_GROUPS: { group: MicroGroup; keys: MicroKey[] }[] = (
+  ["Fats, sugar & cholesterol", "Minerals", "Vitamins"] as const
+).map((group) => ({
+  group,
+  keys: MICRO_KEYS.filter((k) => MICRONUTRIENTS[k].group === group),
+}));
+
+/** Scale a food's extended facts to a portion in grams. Null stays null (unknown). */
+export function microsForPortion(food: Food, grams: number): MicroValues {
+  const f = grams / 100;
+  return Object.fromEntries(
+    MICRO_KEYS.map((k) => [k, food[k] == null ? null : food[k]! * f])
+  ) as MicroValues;
+}
+
+/**
+ * Sum portions per nutrient. Unknown (null) values are skipped; a total is
+ * null only when no portion had data for that nutrient at all.
+ */
+export function sumMicros(portions: MicroValues[]): MicroValues {
+  return Object.fromEntries(
+    MICRO_KEYS.map((k) => {
+      const known = portions.map((p) => p[k]).filter((v): v is number => v != null);
+      return [k, known.length ? known.reduce((a, b) => a + b, 0) : null];
+    })
+  ) as MicroValues;
+}
+
+/** Percentage of the adult daily value, or null when the nutrient has no DV. */
+export function percentDv(key: MicroKey, amount: number): number | null {
+  const dv = MICRONUTRIENTS[key].dv;
+  return dv ? Math.round((amount / dv) * 100) : null;
+}
+
+/** Compact display of a nutrient amount: 0.06, 4.7, 334. */
+export function formatAmount(value: number): string {
+  if (value >= 100) return String(Math.round(value));
+  if (value >= 10) return String(Math.round(value * 10) / 10);
+  return String(Math.round(value * 100) / 100);
 }

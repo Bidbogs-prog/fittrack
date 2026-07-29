@@ -24,6 +24,7 @@ Next.js 16 (App Router, `src/`, `proxy.ts` not `middleware.ts`, `params`/`search
 ## Conventions
 - Data fetching in Server Components; mutations via server actions with `revalidatePath`. Every action starts with an auth check.
 - Food facts are stored per 100 g; diary entries store `grams` only — macros are always derived via `src/lib/nutrition.ts`, never stored.
+- Micronutrient columns (`MICRO_KEYS` in `src/lib/types.ts`) are nullable: null = unknown, never zero. Labels/units/daily values live in `MICRONUTRIENTS` in `src/lib/nutrition.ts`.
 - Icons: `@phosphor-icons/react` only. No emojis in UI.
 - Design tokens live in `src/app/globals.css` (Tailwind v4 `@theme`). Fonts: Outfit (display), Geist (body), Geist Mono (numerals). One accent (lime) on dark ink.
 

@@ -1,3 +1,4 @@
+import { MICRONUTRIENTS, MICRO_GROUPS } from "@/lib/nutrition";
 import type { Food } from "@/lib/types";
 import { FOOD_CATEGORIES } from "@/lib/types";
 import { saveFood } from "../actions";
@@ -77,6 +78,43 @@ export function FoodForm({ food }: { food?: Food }) {
           ))}
         </div>
       </fieldset>
+
+      <div className="rounded-xl border border-ink-800 bg-ink-900/40 p-4">
+        <p className="field-label">Full nutritional profile per 100 g (optional)</p>
+        <p className="mb-4 mt-1 text-[11px] text-paper-mute">
+          Powers daily-value tracking. Leave a field blank when the value is unknown — blanks show
+          as “no data” instead of counting as zero.
+        </p>
+        <div className="space-y-5">
+          {MICRO_GROUPS.map(({ group, keys }) => (
+            <fieldset key={group}>
+              <legend className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-paper-mute">
+                {group}
+              </legend>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {keys.map((key) => (
+                  <div key={key} className="space-y-1.5">
+                    <label htmlFor={key} className="text-[11px] font-medium text-paper-mute">
+                      {MICRONUTRIENTS[key].label} ({MICRONUTRIENTS[key].unit})
+                    </label>
+                    <input
+                      id={key}
+                      name={key}
+                      type="number"
+                      inputMode="decimal"
+                      min={0}
+                      step="0.01"
+                      defaultValue={food?.[key] ?? ""}
+                      placeholder="—"
+                      className="field tabular"
+                    />
+                  </div>
+                ))}
+              </div>
+            </fieldset>
+          ))}
+        </div>
+      </div>
 
       <div className="space-y-2">
         <label htmlFor="image" className="field-label">

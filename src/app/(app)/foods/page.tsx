@@ -1,8 +1,10 @@
+import { CaretRight } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { FoodImage } from "@/components/food-image";
 import { Reveal } from "@/components/motion/reveal";
 import { requireUser } from "@/lib/auth";
-import { FOOD_CATEGORIES, type Food } from "@/lib/types";
+import { MICRONUTRIENTS, formatAmount, percentDv } from "@/lib/nutrition";
+import { FOOD_CATEGORIES, MICRO_KEYS, type Food } from "@/lib/types";
 
 export const metadata = { title: "Food library" };
 
@@ -65,7 +67,9 @@ export default async function FoodsPage({
         </p>
       ) : (
         <Reveal as="ul" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3" stagger={0.05} start="top 92%">
-          {foods.map((food) => (
+          {foods.map((food) => {
+            const providedMicros = MICRO_KEYS.filter((key) => food[key] != null);
+            return (
             <li
               key={food.id}
               data-reveal
@@ -102,8 +106,36 @@ export default async function FoodsPage({
                   </div>
                 ))}
               </dl>
+              {providedMicros.length > 0 && (
+                <details className="group mt-3">
+                  <summary className="flex cursor-pointer list-none items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-paper-mute transition-colors hover:text-paper [&::-webkit-details-marker]:hidden">
+                    <CaretRight weight="bold" className="size-3 transition-transform group-open:rotate-90" />
+                    Full nutrition &amp; daily values
+                  </summary>
+                  <p className="mt-2 text-[11px] text-paper-mute">
+                    Per 100 g · % of adult daily value
+                  </p>
+                  <ul className="mt-2 divide-y divide-ink-800/70 rounded-lg border border-ink-800">
+                    {providedMicros.map((key) => {
+                      const def = MICRONUTRIENTS[key];
+                      const value = food[key] as number;
+                      const pct = percentDv(key, value);
+                      return (
+                        <li key={key} className="flex items-baseline justify-between gap-3 px-3 py-1.5 text-xs">
+                          <span className="text-paper-dim">{def.label}</span>
+                          <span className="font-mono text-paper tabular">
+                            {formatAmount(value)} {def.unit}
+                            {pct != null && <span className="text-paper-mute"> · {pct}%</span>}
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </details>
+              )}
             </li>
-          ))}
+            );
+          })}
         </Reveal>
       )}
     </div>

@@ -2,10 +2,18 @@ import { CaretLeft, CaretRight, Trash } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { CalorieRing, MacroBars, MacroInline } from "@/components/macros";
+import { MicroPanel } from "@/components/micros";
 import { CountUp } from "@/components/motion/count-up";
 import { Reveal } from "@/components/motion/reveal";
 import { getProfile } from "@/lib/auth";
-import { GOALS, calcTargets, macrosForPortion, sumMacros } from "@/lib/nutrition";
+import {
+  GOALS,
+  calcTargets,
+  macrosForPortion,
+  microsForPortion,
+  sumMacros,
+  sumMicros,
+} from "@/lib/nutrition";
 import { MEAL_TYPES, type DiaryEntry, type Food } from "@/lib/types";
 import { AddFoodDialog } from "./add-food-dialog";
 import { deleteDiaryEntry } from "./actions";
@@ -52,6 +60,7 @@ export default async function DashboardPage({
   const foods = (foodsData ?? []) as Food[];
 
   const eaten = sumMacros(entries.map((e) => macrosForPortion(e.food, e.grams)));
+  const microTotals = sumMicros(entries.map((e) => microsForPortion(e.food, e.grams)));
   const remaining = Math.round(targets.kcal - eaten.kcal);
   const isToday = date === today;
   const dateLabel = new Date(date + "T12:00:00").toLocaleDateString("en-GB", {
@@ -144,6 +153,8 @@ export default async function DashboardPage({
       </Reveal>
 
       <MacroBars eaten={eaten} targets={targets} />
+
+      <MicroPanel totals={microTotals} />
 
       {/* meals */}
       <Reveal as="section" className="grid gap-5 lg:grid-cols-2" stagger={0.1} start="top 90%">

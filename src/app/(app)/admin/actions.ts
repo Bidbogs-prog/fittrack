@@ -4,7 +4,15 @@ import { randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
-import { FOOD_CATEGORIES, MEAL_TYPES, type FoodCategory, type Goal, type MealType } from "@/lib/types";
+import {
+  FOOD_CATEGORIES,
+  MEAL_TYPES,
+  MICRO_KEYS,
+  type FoodCategory,
+  type Goal,
+  type MealType,
+  type MicroValues,
+} from "@/lib/types";
 
 const GOAL_VALUES: Goal[] = ["lose", "maintain", "gain"];
 const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
@@ -15,6 +23,14 @@ function fail(path: string, message: string): never {
 
 function numField(formData: FormData, name: string): number {
   const n = Number(formData.get(name));
+  return Number.isFinite(n) && n >= 0 ? n : NaN;
+}
+
+/** Optional numeric field: blank means unknown (null), invalid means NaN. */
+function optionalNumField(formData: FormData, name: string): number | null {
+  const raw = formData.get(name);
+  if (raw == null || String(raw).trim() === "") return null;
+  const n = Number(raw);
   return Number.isFinite(n) && n >= 0 ? n : NaN;
 }
 
@@ -52,10 +68,17 @@ export async function saveFood(formData: FormData) {
   const fat = numField(formData, "fat_g");
   const fibre = numField(formData, "fibre_g");
 
+  const micros = Object.fromEntries(
+    MICRO_KEYS.map((key) => [key, optionalNumField(formData, key)])
+  ) as MicroValues;
+
   if (!name) fail(back, "Give the food a name.");
   if (!FOOD_CATEGORIES.includes(category)) fail(back, "Pick a valid category.");
   if ([kcal, protein, carbs, fat, fibre].some(Number.isNaN)) {
     fail(back, "All nutritional facts must be zero or positive numbers.");
+  }
+  if (Object.values(micros).some((v) => v != null && Number.isNaN(v))) {
+    fail(back, "Micronutrient values must be zero or positive numbers — or left blank if unknown.");
   }
 
   let imageUrl: string | null = null;
@@ -75,6 +98,7 @@ export async function saveFood(formData: FormData) {
     carbs_g: carbs,
     fat_g: fat,
     fibre_g: fibre,
+    ...micros,
     updated_at: new Date().toISOString(),
     ...(imageUrl ? { image_url: imageUrl } : {}),
   };

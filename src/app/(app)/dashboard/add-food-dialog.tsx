@@ -1,9 +1,9 @@
 "use client";
 
 import { useMemo, useRef, useState, useTransition } from "react";
-import { MagnifyingGlass, Plus, X } from "@phosphor-icons/react";
-import { macrosForPortion } from "@/lib/nutrition";
-import type { Food, MealType } from "@/lib/types";
+import { CaretRight, MagnifyingGlass, Plus, X } from "@phosphor-icons/react";
+import { MICRONUTRIENTS, formatAmount, macrosForPortion, microsForPortion, percentDv } from "@/lib/nutrition";
+import { MICRO_KEYS, type Food, type MealType } from "@/lib/types";
 import { addDiaryEntry } from "./actions";
 
 export function AddFoodDialog({
@@ -37,6 +37,8 @@ export function AddFoodDialog({
   }, [foods, query]);
 
   const portion = selected ? macrosForPortion(selected, Number(grams) || 0) : null;
+  const portionMicros = selected ? microsForPortion(selected, Number(grams) || 0) : null;
+  const providedMicros = selected ? MICRO_KEYS.filter((key) => selected[key] != null) : [];
 
   function reset() {
     setOpen(false);
@@ -190,6 +192,31 @@ export function AddFoodDialog({
                       </div>
                     ))}
                   </dl>
+                )}
+
+                {portionMicros && providedMicros.length > 0 && (
+                  <details className="group mt-3">
+                    <summary className="flex cursor-pointer list-none items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-paper-mute transition-colors hover:text-paper [&::-webkit-details-marker]:hidden">
+                      <CaretRight weight="bold" className="size-3 transition-transform group-open:rotate-90" />
+                      Micronutrients in this portion
+                    </summary>
+                    <ul className="mt-2 max-h-40 divide-y divide-ink-800/70 overflow-y-auto rounded-lg border border-ink-800">
+                      {providedMicros.map((key) => {
+                        const value = portionMicros[key];
+                        if (value == null) return null;
+                        const pct = percentDv(key, value);
+                        return (
+                          <li key={key} className="flex items-baseline justify-between gap-3 px-3 py-1.5 text-xs">
+                            <span className="text-paper-dim">{MICRONUTRIENTS[key].label}</span>
+                            <span className="font-mono text-paper tabular">
+                              {formatAmount(value)} {MICRONUTRIENTS[key].unit}
+                              {pct != null && <span className="text-paper-mute"> · {pct}% DV</span>}
+                            </span>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </details>
                 )}
 
                 {error && <p className="mt-3 text-sm text-danger">{error}</p>}

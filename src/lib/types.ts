@@ -41,8 +41,39 @@ export interface Profile {
   onboarded: boolean;
 }
 
+/**
+ * Extended nutritional profile columns on `foods` — per 100 g, null = unknown.
+ * Labels, units and daily values live in `nutrition.ts` (MICRONUTRIENTS).
+ */
+export const MICRO_KEYS = [
+  "saturated_fat_g",
+  "trans_fat_g",
+  "sugar_g",
+  "cholesterol_mg",
+  "sodium_mg",
+  "potassium_mg",
+  "calcium_mg",
+  "iron_mg",
+  "magnesium_mg",
+  "zinc_mg",
+  "vitamin_a_ug",
+  "vitamin_c_mg",
+  "vitamin_d_ug",
+  "vitamin_e_mg",
+  "vitamin_k_ug",
+  "thiamin_mg",
+  "riboflavin_mg",
+  "niacin_mg",
+  "vitamin_b6_mg",
+  "folate_ug",
+  "vitamin_b12_ug",
+] as const;
+
+export type MicroKey = (typeof MICRO_KEYS)[number];
+export type MicroValues = Record<MicroKey, number | null>;
+
 /** All nutritional facts are per 100 g. */
-export interface Food {
+export interface Food extends MicroValues {
   id: string;
   name: string;
   brand: string | null;
