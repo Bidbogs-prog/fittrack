@@ -1,10 +1,11 @@
 import { ArrowLeft, Trash, WarningCircle } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { FoodPicker } from "@/components/food-picker";
 import { MacroInline } from "@/components/macros";
 import { requireAdmin } from "@/lib/auth";
 import { GOALS, macrosForPortion, sumMacros } from "@/lib/nutrition";
-import { MEAL_TYPES, type Food, type MealPlan } from "@/lib/types";
+import { MEAL_TYPES, type MealPlan } from "@/lib/types";
 import { addPlanItem, deletePlan, deletePlanItem } from "../../actions";
 
 export const metadata = { title: "Admin · Plan builder" };
@@ -22,18 +23,14 @@ export default async function PlanBuilderPage({
     searchParams,
   ]);
 
-  const [{ data: planData }, { data: foodsData }] = await Promise.all([
-    supabase
-      .from("meal_plans")
-      .select("*, items:meal_plan_items(*, food:foods(*))")
-      .eq("id", id)
-      .maybeSingle(),
-    supabase.from("foods").select("*").order("name"),
-  ]);
+  const { data: planData } = await supabase
+    .from("meal_plans")
+    .select("*, items:meal_plan_items(*, food:foods(*))")
+    .eq("id", id)
+    .maybeSingle();
 
   if (!planData) notFound();
   const plan = planData as MealPlan;
-  const foods = (foodsData ?? []) as Food[];
 
   const dayTotal = sumMacros(plan.items.map((it) => macrosForPortion(it.food, it.grams)));
 
@@ -93,14 +90,8 @@ export default async function PlanBuilderPage({
         <form action={addPlanItem} className="grid gap-4 sm:grid-cols-[1fr_160px_120px_auto] sm:items-end">
           <input type="hidden" name="plan_id" value={plan.id} />
           <div className="space-y-2">
-            <label htmlFor="food_id" className="field-label">Food</label>
-            <select id="food_id" name="food_id" required className="field">
-              {foods.map((f) => (
-                <option key={f.id} value={f.id}>
-                  {f.name} ({Math.round(f.kcal)} kcal / 100 g)
-                </option>
-              ))}
-            </select>
+            <span className="field-label">Food</span>
+            <FoodPicker name="food_id" />
           </div>
           <div className="space-y-2">
             <label htmlFor="meal" className="field-label">Meal</label>
@@ -133,11 +124,6 @@ export default async function PlanBuilderPage({
             Add
           </button>
         </form>
-        {foods.length === 0 && (
-          <p className="mt-3 text-xs text-paper-mute">
-            The food library is empty — add foods first.
-          </p>
-        )}
       </section>
 
       {/* items by meal */}

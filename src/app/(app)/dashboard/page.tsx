@@ -14,7 +14,7 @@ import {
   sumMacros,
   sumMicros,
 } from "@/lib/nutrition";
-import { MEAL_TYPES, type DiaryEntry, type Food } from "@/lib/types";
+import { MEAL_TYPES, type DiaryEntry } from "@/lib/types";
 import { AddFoodDialog } from "./add-food-dialog";
 import { deleteDiaryEntry } from "./actions";
 
@@ -46,18 +46,14 @@ export default async function DashboardPage({
   const today = toDateString(new Date());
   const date = params.d && /^\d{4}-\d{2}-\d{2}$/.test(params.d) ? params.d : today;
 
-  const [{ data: entriesData }, { data: foodsData }] = await Promise.all([
-    supabase
-      .from("diary_entries")
-      .select("*, food:foods(*)")
-      .eq("user_id", userId)
-      .eq("entry_date", date)
-      .order("created_at"),
-    supabase.from("foods").select("*").order("name"),
-  ]);
+  const { data: entriesData } = await supabase
+    .from("diary_entries")
+    .select("*, food:foods(*)")
+    .eq("user_id", userId)
+    .eq("entry_date", date)
+    .order("created_at");
 
   const entries = (entriesData ?? []) as DiaryEntry[];
-  const foods = (foodsData ?? []) as Food[];
 
   const eaten = sumMacros(entries.map((e) => macrosForPortion(e.food, e.grams)));
   const microTotals = sumMicros(entries.map((e) => microsForPortion(e.food, e.grams)));
@@ -178,7 +174,7 @@ export default async function DashboardPage({
                   <span className="font-mono text-sm text-paper-dim tabular">
                     {Math.round(mealTotal.kcal)} kcal
                   </span>
-                  <AddFoodDialog foods={foods} meal={meal} entryDate={date} />
+                  <AddFoodDialog meal={meal} entryDate={date} />
                 </div>
               </header>
               {mealEntries.length === 0 ? (

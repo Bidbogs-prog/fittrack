@@ -1,22 +1,41 @@
 import { CheckCircle, PencilSimple, Trash, WarningCircle } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { FoodImage } from "@/components/food-image";
+import { FoodSearch } from "@/components/food-search";
+import { Pagination } from "@/components/pagination";
 import { requireAdmin } from "@/lib/auth";
-import type { Food } from "@/lib/types";
+import { sanitizeSearch, searchFoods } from "@/lib/foods";
 import { deleteFood } from "../actions";
 import { FoodForm } from "./food-form";
 
 export const metadata = { title: "Admin · Foods" };
 
+const PAGE_SIZE = 50;
+
 export default async function AdminFoodsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; saved?: string }>;
+  searchParams: Promise<{ error?: string; saved?: string; q?: string; page?: string }>;
 }) {
-  const [{ supabase }, { error, saved }] = await Promise.all([requireAdmin(), searchParams]);
+  const [{ supabase }, params] = await Promise.all([requireAdmin(), searchParams]);
+  const { error, saved } = params;
 
-  const { data } = await supabase.from("foods").select("*").order("created_at", { ascending: false });
-  const foods = (data ?? []) as Food[];
+  const q = sanitizeSearch(params.q ?? "");
+  const page = Math.max(1, Number.parseInt(params.page ?? "1", 10) || 1);
+  const { foods, total } = await searchFoods(supabase, {
+    q,
+    page,
+    pageSize: PAGE_SIZE,
+    orderBy: q ? "name" : "newest",
+  });
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const href = (p: number) => {
+    const sp = new URLSearchParams();
+    if (q) sp.set("q", q);
+    if (p > 1) sp.set("page", String(p));
+    const qs = sp.toString();
+    return qs ? `/admin/foods?${qs}` : "/admin/foods";
+  };
 
   return (
     <div className="space-y-8">
@@ -43,13 +62,17 @@ export default async function AdminFoodsPage({
         <FoodForm />
       </section>
 
-      <section>
-        <h2 className="mb-4 font-display text-lg font-semibold tracking-tight text-paper">
-          Library <span className="font-mono text-sm text-paper-mute tabular">({foods.length})</span>
+      <section className="space-y-4">
+        <h2 className="font-display text-lg font-semibold tracking-tight text-paper">
+          Library{" "}
+          <span className="font-mono text-sm text-paper-mute tabular">
+            ({total.toLocaleString("en-US")})
+          </span>
         </h2>
+        <FoodSearch initialQuery={q} category={null} />
         {foods.length === 0 ? (
           <p className="rounded-2xl border border-dashed border-ink-700 px-6 py-14 text-center text-sm text-paper-mute">
-            No foods yet — add your first one above.
+            {q ? <>Nothing matches &ldquo;{q}&rdquo;.</> : "No foods yet — add your first one above."}
           </p>
         ) : (
           <div className="overflow-x-auto rounded-2xl border border-ink-800">
@@ -76,6 +99,9 @@ export default async function AdminFoodsPage({
                           <p className="text-[11px] capitalize text-paper-mute">
                             {food.brand ? `${food.brand} · ` : ""}
                             {food.category.replace("-", " & ")}
+                            {food.source !== "manual" && (
+                              <span className="uppercase"> · {food.source}</span>
+                            )}
                           </p>
                         </div>
                       </div>
@@ -114,6 +140,7 @@ export default async function AdminFoodsPage({
             </table>
           </div>
         )}
+        <Pagination page={page} totalPages={totalPages} total={total} makeHref={href} />
       </section>
     </div>
   );

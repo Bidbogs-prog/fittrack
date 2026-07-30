@@ -1,26 +1,38 @@
 import { CaretRight } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { FoodImage } from "@/components/food-image";
+import { FoodSearch } from "@/components/food-search";
 import { Reveal } from "@/components/motion/reveal";
+import { Pagination } from "@/components/pagination";
 import { requireUser } from "@/lib/auth";
+import { FOODS_PAGE_SIZE, parseCategory, sanitizeSearch, searchFoods } from "@/lib/foods";
 import { MICRONUTRIENTS, formatAmount, percentDv } from "@/lib/nutrition";
-import { FOOD_CATEGORIES, MICRO_KEYS, type Food } from "@/lib/types";
+import { FOOD_CATEGORIES, MICRO_KEYS } from "@/lib/types";
 
 export const metadata = { title: "Food library" };
+
+function href(params: { c?: string | null; q?: string; page?: number }): string {
+  const sp = new URLSearchParams();
+  if (params.c) sp.set("c", params.c);
+  if (params.q) sp.set("q", params.q);
+  if (params.page && params.page > 1) sp.set("page", String(params.page));
+  const qs = sp.toString();
+  return qs ? `/foods?${qs}` : "/foods";
+}
 
 export default async function FoodsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ c?: string }>;
+  searchParams: Promise<{ c?: string; q?: string; page?: string }>;
 }) {
-  const [{ supabase }, { c }] = await Promise.all([requireUser(), searchParams]);
+  const [{ supabase }, params] = await Promise.all([requireUser(), searchParams]);
 
-  const category = FOOD_CATEGORIES.find((cat) => cat === c) ?? null;
+  const category = parseCategory(params.c);
+  const q = sanitizeSearch(params.q ?? "");
+  const page = Math.max(1, Number.parseInt(params.page ?? "1", 10) || 1);
 
-  let query = supabase.from("foods").select("*").order("name");
-  if (category) query = query.eq("category", category);
-  const { data } = await query;
-  const foods = (data ?? []) as Food[];
+  const { foods, total } = await searchFoods(supabase, { q, category, page });
+  const totalPages = Math.max(1, Math.ceil(total / FOODS_PAGE_SIZE));
 
   return (
     <div className="space-y-7">
@@ -32,14 +44,16 @@ export default async function FoodsPage({
           Food library
         </h1>
         <p className="mt-2 max-w-[60ch] text-sm text-paper-dim">
-          Every item here is curated by your coach with exact nutritional facts per 100 grams —
-          the same numbers your diary math runs on.
+          Curated by your coach and extended with the Open Food Facts database — exact
+          nutritional facts per 100 grams, the same numbers your diary math runs on.
         </p>
       </header>
 
+      <FoodSearch initialQuery={q} category={category} />
+
       <nav className="flex flex-wrap gap-2" aria-label="Filter by category">
         <Link
-          href="/foods"
+          href={href({ q })}
           className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
             !category ? "bg-lime text-lime-ink" : "border border-ink-700 text-paper-dim hover:text-paper"
           }`}
@@ -49,7 +63,7 @@ export default async function FoodsPage({
         {FOOD_CATEGORIES.map((cat) => (
           <Link
             key={cat}
-            href={`/foods?c=${cat}`}
+            href={href({ c: cat, q })}
             className={`rounded-full px-3.5 py-1.5 text-xs font-semibold capitalize transition-colors ${
               category === cat
                 ? "bg-lime text-lime-ink"
@@ -63,7 +77,7 @@ export default async function FoodsPage({
 
       {foods.length === 0 ? (
         <p className="rounded-2xl border border-dashed border-ink-700 px-6 py-16 text-center text-sm text-paper-mute">
-          No foods in this category yet.
+          {q ? <>Nothing matches &ldquo;{q}&rdquo;{category ? " in this category" : ""}.</> : "No foods in this category yet."}
         </p>
       ) : (
         <Reveal as="ul" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3" stagger={0.05} start="top 92%">
@@ -133,11 +147,47 @@ export default async function FoodsPage({
                   </ul>
                 </details>
               )}
+              {food.source !== "manual" && (
+                <p className="mt-3 text-[10px] text-paper-mute">
+                  Source: {food.source === "off" ? "Open Food Facts" : "USDA"}
+                </p>
+              )}
             </li>
             );
           })}
         </Reveal>
       )}
+
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        total={total}
+        makeHref={(p) => href({ c: category, q, page: p })}
+      />
+
+      <footer className="border-t border-ink-800 pt-5">
+        <p className="text-xs text-paper-mute">
+          Includes data from{" "}
+          <a
+            href="https://world.openfoodfacts.org"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline underline-offset-4 hover:text-paper"
+          >
+            Open Food Facts
+          </a>
+          , available under the{" "}
+          <a
+            href="https://opendatacommons.org/licenses/odbl/1-0/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline underline-offset-4 hover:text-paper"
+          >
+            Open Database License
+          </a>
+          .
+        </p>
+      </footer>
     </div>
   );
 }

@@ -1,40 +1,54 @@
 "use client";
 
-import { useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { CaretRight, MagnifyingGlass, Plus, X } from "@phosphor-icons/react";
 import { MICRONUTRIENTS, formatAmount, macrosForPortion, microsForPortion, percentDv } from "@/lib/nutrition";
 import { MICRO_KEYS, type Food, type MealType } from "@/lib/types";
 import { addDiaryEntry } from "./actions";
 
 export function AddFoodDialog({
-  foods,
   meal,
   entryDate,
 }: {
-  foods: Food[];
   meal: MealType;
   entryDate: string;
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [results, setResults] = useState<Food[]>([]);
+  const [searching, setSearching] = useState(false);
   const [selected, setSelected] = useState<Food | null>(null);
   const [grams, setGrams] = useState("100");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const searchRef = useRef<HTMLInputElement>(null);
 
-  const results = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return foods.slice(0, 8);
-    return foods
-      .filter(
-        (f) =>
-          f.name.toLowerCase().includes(q) ||
-          f.brand?.toLowerCase().includes(q) ||
-          f.category.toLowerCase().includes(q)
-      )
-      .slice(0, 8);
-  }, [foods, query]);
+  // The library is 5k+ foods, so search runs server-side (route handler).
+  useEffect(() => {
+    if (!open || selected) return;
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const res = await fetch(`/api/foods/search?q=${encodeURIComponent(query)}`, {
+          signal: controller.signal,
+        });
+        if (!res.ok) throw new Error(`search failed (${res.status})`);
+        const json = (await res.json()) as { foods: Food[] };
+        setResults(json.foods);
+        setSearching(false);
+      } catch {
+        if (!controller.signal.aborted) {
+          setResults([]);
+          setSearching(false);
+        }
+      }
+    }, query ? 250 : 0);
+    return () => {
+      controller.abort();
+      clearTimeout(timer);
+    };
+  }, [open, selected, query]);
 
   const portion = selected ? macrosForPortion(selected, Number(grams) || 0) : null;
   const portionMicros = selected ? microsForPortion(selected, Number(grams) || 0) : null;
@@ -137,10 +151,19 @@ export function AddFoodDialog({
                   ))}
                   {results.length === 0 && (
                     <li className="rounded-lg border border-dashed border-ink-700 px-4 py-8 text-center text-sm text-paper-mute">
-                      Nothing matches “{query}”. Ask your coach to add it to the library.
+                      {searching ? (
+                        "Searching…"
+                      ) : query ? (
+                        <>Nothing matches “{query}”. Ask your coach to add it to the library.</>
+                      ) : (
+                        "No foods in the library yet."
+                      )}
                     </li>
                   )}
                 </ul>
+                <p className="mt-3 text-center text-[10px] text-paper-mute">
+                  Includes Open Food Facts data (ODbL)
+                </p>
               </>
             ) : (
               <div className="mt-4">

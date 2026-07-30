@@ -175,7 +175,8 @@ export async function addPlanItem(formData: FormData) {
   const meal = String(formData.get("meal") ?? "") as MealType;
   const grams = Number(formData.get("grams"));
 
-  if (!planId || !foodId) fail("/admin/plans", "Missing plan or food.");
+  if (!planId) fail("/admin/plans", "Missing plan.");
+  if (!foodId) fail(back, "Pick a food from the search first.");
   if (!MEAL_TYPES.includes(meal)) fail(back, "Pick a valid meal.");
   if (!(grams > 0 && grams <= 5000)) fail(back, "Grams must be between 1 and 5000.");
 
