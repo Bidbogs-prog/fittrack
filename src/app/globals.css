@@ -237,9 +237,12 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* Form primitives */
-.field {
-  @apply w-full rounded-lg border border-ink-700 bg-ink-900 px-3.5 py-2.5 text-sm text-paper placeholder:text-paper-mute outline-none transition-colors focus:border-lime/60 focus:ring-2 focus:ring-lime/15;
+/* Form primitives — layered so per-usage utilities (e.g. `pl-10` on
+   icon-prefixed search inputs) can override the defaults. */
+@layer components {
+  .field {
+    @apply w-full rounded-lg border border-ink-700 bg-ink-900 px-3.5 py-2.5 text-sm text-paper placeholder:text-paper-mute outline-none transition-colors focus:border-lime/60 focus:ring-2 focus:ring-lime/15;
+  }
 }
 
 .field-label {
