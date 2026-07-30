@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { MagnifyingGlass, X } from "@phosphor-icons/react";
+import { FoodImage } from "@/components/food-image";
 import type { Food } from "@/lib/types";
 
 /**
@@ -88,9 +89,10 @@ export function FoodPicker({ name = "food_id" }: { name?: string }) {
                       e.preventDefault();
                       setSelected(food);
                     }}
-                    className="btn-press flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-ink-850"
+                    className="btn-press flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-ink-850"
                   >
-                    <span className="min-w-0">
+                    <FoodImage src={food.image_url} alt="" className="size-9 rounded-md" />
+                    <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-medium text-paper">
                         {food.name}
                       </span>

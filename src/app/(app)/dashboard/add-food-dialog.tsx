@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { CaretRight, MagnifyingGlass, Plus, X } from "@phosphor-icons/react";
+import { FoodImage } from "@/components/food-image";
 import { MICRONUTRIENTS, formatAmount, macrosForPortion, microsForPortion, percentDv } from "@/lib/nutrition";
 import { MICRO_KEYS, type Food, type MealType } from "@/lib/types";
 import { addDiaryEntry } from "./actions";
@@ -135,9 +136,10 @@ export function AddFoodDialog({
                       <button
                         type="button"
                         onClick={() => setSelected(food)}
-                        className="btn-press flex w-full items-center justify-between gap-3 rounded-lg border border-transparent px-3 py-2.5 text-left transition-colors hover:border-ink-700 hover:bg-ink-850"
+                        className="btn-press flex w-full items-center gap-3 rounded-lg border border-transparent px-3 py-2.5 text-left transition-colors hover:border-ink-700 hover:bg-ink-850"
                       >
-                        <span className="min-w-0">
+                        <FoodImage src={food.image_url} alt="" className="size-9 rounded-md" />
+                        <span className="min-w-0 flex-1">
                           <span className="block truncate text-sm font-medium text-paper">
                             {food.name}
                           </span>
