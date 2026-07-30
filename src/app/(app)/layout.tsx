@@ -15,7 +15,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const firstName = profile.full_name?.split(" ")[0] ?? "athlete";
 
   return (
-    <div className="mx-auto flex min-h-[100dvh] w-full max-w-[1400px] flex-col md:flex-row">
+    // Full-width shell: the sidebar pins to the viewport edge; only the
+    // content column is capped and centered (see <main> below).
+    <div className="flex min-h-[100dvh] w-full flex-col md:flex-row">
       {/* sidebar */}
       <aside className="flex flex-col gap-8 border-ink-800 px-5 py-6 max-md:border-b md:sticky md:top-0 md:h-[100dvh] md:w-60 md:shrink-0 md:border-r">
         <Logo href="/dashboard" />
@@ -51,7 +53,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       {/* Stage the gutter: at md the 240px sidebar already claims a third of
           a tablet-portrait viewport — don't double the padding on top of it. */}
       <main className="min-w-0 flex-1 px-5 py-8 md:px-6 md:py-10 lg:px-10">
-        <RouteFx>{children}</RouteFx>
+        <div className="mx-auto w-full max-w-[1100px]">
+          <RouteFx>{children}</RouteFx>
+        </div>
       </main>
     </div>
   );
