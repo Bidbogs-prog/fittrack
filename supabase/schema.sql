@@ -116,6 +116,23 @@ alter table public.foods
   add column if not exists folate_ug       numeric(7, 2) check (folate_ug >= 0),
   add column if not exists vitamin_b12_ug  numeric(7, 2) check (vitamin_b12_ug >= 0);
 
+-- Provenance for imported foods. `barcode` is the natural dedup key for
+-- Open Food Facts imports (and enables barcode scanning later); `source`
+-- lets admins tell imported rows from hand-curated ones.
+alter table public.foods
+  add column if not exists barcode text,
+  add column if not exists source text not null default 'manual';
+
+alter table public.foods drop constraint if exists foods_source_check;
+alter table public.foods add constraint foods_source_check
+  check (source in ('manual', 'off', 'usda'));
+
+create unique index if not exists foods_barcode_key on public.foods (barcode);
+
+-- Generic USDA staples carry no barcode — idempotency is by name instead.
+create unique index if not exists foods_usda_name_key
+  on public.foods (name) where source = 'usda';
+
 alter table public.foods enable row level security;
 
 create policy "foods: read for signed-in users" on public.foods

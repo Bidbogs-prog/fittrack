@@ -72,11 +72,16 @@ export const MICRO_KEYS = [
 export type MicroKey = (typeof MICRO_KEYS)[number];
 export type MicroValues = Record<MicroKey, number | null>;
 
+/** Where a food row came from: hand-curated, Open Food Facts, or USDA import. */
+export type FoodSource = "manual" | "off" | "usda";
+
 /** All nutritional facts are per 100 g. */
 export interface Food extends MicroValues {
   id: string;
   name: string;
   brand: string | null;
+  barcode: string | null;
+  source: FoodSource;
   category: FoodCategory;
   image_url: string | null;
   kcal: number;

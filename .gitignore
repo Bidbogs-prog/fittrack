@@ -42,3 +42,7 @@ next-env.d.ts
 
 # supabase cli local state
 supabase/.temp/
+
+# food-data import caches (scripts/import-off.ts, scripts/import-usda.ts)
+.off-cache/
+.usda-cache/

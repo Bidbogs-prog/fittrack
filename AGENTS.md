@@ -20,6 +20,7 @@ Next.js 16 (App Router, `src/`, `proxy.ts` not `middleware.ts`, `params`/`search
 - `src/app/(app)/` — authenticated shell (onboarding, dashboard, foods, plans).
 - `src/app/admin/` — admin-only (membership = row in `public.admins`). Every admin server action re-verifies membership server-side; UI gating alone is not security.
 - `supabase/schema.sql` — full schema, RLS, storage policies, seed data. Apply in the Supabase SQL editor. Keep in sync with `src/lib/types.ts`.
+- `scripts/import-off.ts` — seeds `foods` from the Open Food Facts CSV export, filtered to Morocco (`npm run import:off`, `--dry-run` to preview). Needs `SUPABASE_SECRET_KEY` in `.env.local`. Imported rows carry `source = 'off'` and a `barcode`; re-runs skip existing barcodes so admin edits survive. OFF data is ODbL — keep attribution in the UI.
 
 ## Conventions
 - Data fetching in Server Components; mutations via server actions with `revalidatePath`. Every action starts with an auth check.

@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "import:off": "node scripts/import-off.ts",
+    "import:usda": "node scripts/import-usda.ts"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
