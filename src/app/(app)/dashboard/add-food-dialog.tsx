@@ -17,6 +17,7 @@ export function AddFoodDialog({
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Food[]>([]);
   const [searching, setSearching] = useState(false);
+  const [searchFailed, setSearchFailed] = useState(false);
   const [selected, setSelected] = useState<Food | null>(null);
   const [grams, setGrams] = useState("100");
   const [error, setError] = useState<string | null>(null);
@@ -36,10 +37,12 @@ export function AddFoodDialog({
         if (!res.ok) throw new Error(`search failed (${res.status})`);
         const json = (await res.json()) as { foods: Food[] };
         setResults(json.foods);
+        setSearchFailed(false);
         setSearching(false);
       } catch {
         if (!controller.signal.aborted) {
           setResults([]);
+          setSearchFailed(true);
           setSearching(false);
         }
       }
@@ -153,6 +156,10 @@ export function AddFoodDialog({
                     <li className="rounded-lg border border-dashed border-ink-700 px-4 py-8 text-center text-sm text-paper-mute">
                       {searching ? (
                         "Searching…"
+                      ) : searchFailed ? (
+                        <span className="text-danger">
+                          Search failed — check your connection and try again.
+                        </span>
                       ) : query ? (
                         <>Nothing matches “{query}”. Ask your coach to add it to the library.</>
                       ) : (

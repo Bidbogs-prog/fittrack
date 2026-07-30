@@ -13,6 +13,7 @@ export function FoodPicker({ name = "food_id" }: { name?: string }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Food[]>([]);
   const [searching, setSearching] = useState(false);
+  const [searchFailed, setSearchFailed] = useState(false);
   const [focused, setFocused] = useState(false);
   const [selected, setSelected] = useState<Food | null>(null);
 
@@ -28,10 +29,12 @@ export function FoodPicker({ name = "food_id" }: { name?: string }) {
         if (!res.ok) throw new Error(`search failed (${res.status})`);
         const json = (await res.json()) as { foods: Food[] };
         setResults(json.foods);
+        setSearchFailed(false);
         setSearching(false);
       } catch {
         if (!controller.signal.aborted) {
           setResults([]);
+          setSearchFailed(true);
           setSearching(false);
         }
       }
@@ -104,7 +107,15 @@ export function FoodPicker({ name = "food_id" }: { name?: string }) {
               ))}
               {results.length === 0 && (
                 <li className="px-3 py-6 text-center text-xs text-paper-mute">
-                  {searching ? "Searching…" : query ? `Nothing matches “${query}”.` : "No foods yet."}
+                  {searching ? (
+                    "Searching…"
+                  ) : searchFailed ? (
+                    <span className="text-danger">Search failed — try again.</span>
+                  ) : query ? (
+                    `Nothing matches “${query}”.`
+                  ) : (
+                    "No foods yet."
+                  )}
                 </li>
               )}
             </ul>

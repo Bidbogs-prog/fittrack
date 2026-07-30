@@ -24,6 +24,8 @@ export async function searchFoods(
     page?: number;
     pageSize?: number;
     orderBy?: "name" | "newest";
+    /** "prefix" matches only names/brands starting with q (for ranking). */
+    match?: "contains" | "prefix";
   }
 ): Promise<{ foods: Food[]; total: number }> {
   const pageSize = opts.pageSize ?? FOODS_PAGE_SIZE;
@@ -35,8 +37,39 @@ export async function searchFoods(
   ).range((page - 1) * pageSize, page * pageSize - 1);
   if (opts.category) query = query.eq("category", opts.category);
   const q = sanitizeSearch(opts.q ?? "");
-  if (q) query = query.or(`name.ilike.%${q}%,brand.ilike.%${q}%`);
+  if (q) {
+    const pattern = opts.match === "prefix" ? `${q}%` : `%${q}%`;
+    query = query.or(`name.ilike.${pattern},brand.ilike.${pattern}`);
+  }
 
   const { data, count } = await query;
   return { foods: (data ?? []) as Food[], total: count ?? 0 };
+}
+
+/**
+ * Relevance-ranked lookup for pickers: names/brands *starting* with the
+ * query outrank substring matches (searching "lait" should surface milk
+ * before every biscuit "au lait"). Alphabetical within each tier.
+ */
+export async function rankFoods(
+  supabase: SupabaseClient,
+  opts: { q?: string; category?: FoodCategory | null; limit: number }
+): Promise<Food[]> {
+  const q = sanitizeSearch(opts.q ?? "");
+  const { foods: prefix } = await searchFoods(supabase, {
+    q,
+    category: opts.category,
+    pageSize: opts.limit,
+    match: "prefix",
+  });
+  if (!q || prefix.length >= opts.limit) return prefix;
+
+  const { foods: contains } = await searchFoods(supabase, {
+    q,
+    category: opts.category,
+    pageSize: opts.limit,
+    match: "contains",
+  });
+  const seen = new Set(prefix.map((f) => f.id));
+  return [...prefix, ...contains.filter((f) => !seen.has(f.id))].slice(0, opts.limit);
 }
