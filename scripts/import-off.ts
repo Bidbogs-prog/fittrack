@@ -222,6 +222,11 @@ async function main() {
       reject("no name");
       continue;
     }
+    // Contributors sometimes type the barcode (or a stray number) as the name.
+    if (/^[0-9][0-9 .\-]*$/.test(name)) {
+      reject("numeric name");
+      continue;
+    }
 
     // Macros: required, per 100 g. kcal falls back to kJ when only energy_100g is set.
     let kcal = num(col(row, "energy-kcal_100g"));
