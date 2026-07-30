@@ -45,9 +45,9 @@ export function Pillars() {
         </p>
       </Reveal>
 
-      <Reveal className="mt-14 grid gap-5 lg:grid-cols-12" stagger={0.12}>
+      <Reveal className="mt-14 grid gap-5 md:grid-cols-12" stagger={0.12}>
         {/* pillar 1 — the equation */}
-        <Shell className="lg:col-span-7">
+        <Shell className="md:col-span-7">
           <ChartLineUp weight="duotone" className="size-7 text-lime" />
           <h3 className="mt-4 font-display text-xl font-semibold tracking-tight text-paper">
             Targets built on science
@@ -71,7 +71,7 @@ export function Pillars() {
                   <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-paper-mute">
                     {label}
                   </p>
-                  <p className={`font-mono text-3xl font-semibold tracking-tight tabular ${label === "Target" ? "text-lime" : "text-paper"}`}>
+                  <p className={`font-mono text-2xl font-semibold tracking-tight tabular lg:text-3xl ${label === "Target" ? "text-lime" : "text-paper"}`}>
                     <CountUp value={value} />
                   </p>
                   <p className="text-[11px] text-paper-mute">{sub}</p>
@@ -82,7 +82,7 @@ export function Pillars() {
         </Shell>
 
         {/* pillar 2 — per-gram precision */}
-        <Shell className="lg:col-span-5">
+        <Shell className="md:col-span-5">
           <ForkKnife weight="duotone" className="size-7 text-lime" />
           <h3 className="mt-4 font-display text-xl font-semibold tracking-tight text-paper">
             Per-gram precision
@@ -121,7 +121,7 @@ export function Pillars() {
         </Shell>
 
         {/* pillar 3 — coach-built plans */}
-        <Shell className="lg:col-span-12">
+        <Shell className="md:col-span-12">
           <div className="grid items-center gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
             <div>
               <Barbell weight="duotone" className="size-7 text-lime" />

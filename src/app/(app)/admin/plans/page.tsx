@@ -44,7 +44,7 @@ export default async function AdminPlansPage({
         <p className="mb-5 mt-1 text-xs text-paper-mute">
           Name it, pick which goal it serves, then build the day from the food library.
         </p>
-        <form action={createPlan} className="grid gap-4 sm:grid-cols-[1fr_180px]">
+        <form action={createPlan} className="grid gap-4 md:grid-cols-[1fr_180px]">
           <div className="space-y-2">
             <label htmlFor="name" className="field-label">Plan name</label>
             <input id="name" name="name" required placeholder="High-protein cut · 4 meals" className="field" />

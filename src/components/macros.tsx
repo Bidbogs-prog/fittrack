@@ -46,7 +46,7 @@ const MACRO_META = [
 /** Four labelled progress bars: eaten vs target grams. */
 export function MacroBars({ eaten, targets }: { eaten: Macros; targets: Macros }) {
   return (
-    <Reveal className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" stagger={0.09}>
+    <Reveal className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" stagger={0.09}>
       {MACRO_META.map(([key, label, color], i) => {
         const value = eaten[key];
         const target = targets[key];

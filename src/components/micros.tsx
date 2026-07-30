@@ -26,7 +26,7 @@ export function MicroPanel({ totals }: { totals: MicroValues }) {
             <h3 className="mb-2.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-paper-mute">
               {group}
             </h3>
-            <ul className="grid gap-x-6 gap-y-2.5 sm:grid-cols-2 lg:grid-cols-3">
+            <ul className="grid gap-x-6 gap-y-2.5 lg:grid-cols-2 xl:grid-cols-3">
               {keys.map((key) => {
                 const def = MICRONUTRIENTS[key];
                 const value = totals[key];

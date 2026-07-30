@@ -26,14 +26,14 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             <p className="truncate text-xs text-paper-mute">{profile.email}</p>
             <a
               href="/onboarding?edit=1"
-              className="mt-2 block text-xs font-medium text-paper-mute underline-offset-4 hover:text-lime hover:underline"
+              className="mt-1 flex min-h-10 items-center text-xs font-medium text-paper-mute underline-offset-4 hover:text-lime hover:underline"
             >
               Update body stats
             </a>
-            <form action={signout} className="mt-3">
+            <form action={signout} className="mt-1">
               <button
                 type="submit"
-                className="btn-press flex items-center gap-2 text-xs font-medium text-paper-mute hover:text-danger"
+                className="btn-press flex min-h-10 items-center gap-2 text-xs font-medium text-paper-mute hover:text-danger"
               >
                 <SignOut className="size-4" />
                 Sign out
@@ -48,7 +48,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <AppNav admin={admin} />
       </div>
 
-      <main className="min-w-0 flex-1 px-5 py-8 md:px-10 md:py-10">
+      {/* Stage the gutter: at md the 240px sidebar already claims a third of
+          a tablet-portrait viewport — don't double the padding on top of it. */}
+      <main className="min-w-0 flex-1 px-5 py-8 md:px-6 md:py-10 lg:px-10">
         <RouteFx>{children}</RouteFx>
       </main>
     </div>

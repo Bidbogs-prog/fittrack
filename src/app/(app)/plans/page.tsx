@@ -45,7 +45,7 @@ export default async function PlansPage({
           <Link
             key={key}
             href={`/plans?g=${key}`}
-            className={`rounded-full px-3.5 py-2 text-xs font-semibold transition-colors sm:py-1.5 ${
+            className={`rounded-full px-3.5 py-2 text-xs font-semibold transition-colors pointer-fine:py-1.5 ${
               goal === key
                 ? "bg-lime text-lime-ink"
                 : "border border-ink-700 text-paper-dim hover:text-paper"
@@ -62,7 +62,7 @@ export default async function PlansPage({
           No {GOALS[goal].label.toLowerCase()} plans yet — your coach is cooking.
         </p>
       ) : (
-        <Reveal as="ul" className="grid gap-4 md:grid-cols-2" stagger={0.08} start="top 92%">
+        <Reveal as="ul" className="grid gap-4 lg:grid-cols-2" stagger={0.08} start="top 92%">
           {plans.map((plan) => {
             const total = sumMacros(plan.items.map((it) => macrosForPortion(it.food, it.grams)));
             return (

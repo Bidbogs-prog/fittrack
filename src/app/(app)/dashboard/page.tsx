@@ -82,13 +82,13 @@ export default async function DashboardPage({
           <Link
             href={`/dashboard?d=${shiftDate(date, -1)}`}
             aria-label="Previous day"
-            className="btn-press rounded-md p-2.5 text-paper-mute hover:bg-ink-800 hover:text-paper"
+            className="btn-press rounded-md p-2.5 text-paper-mute hover:bg-ink-800 hover:text-paper pointer-coarse:p-3"
           >
             <CaretLeft weight="bold" className="size-4" />
           </Link>
           <Link
             href="/dashboard"
-            className={`rounded-md px-3 py-1.5 text-xs font-semibold ${
+            className={`rounded-md px-3 py-1.5 text-xs font-semibold pointer-coarse:py-2.5 ${
               isToday ? "bg-lime text-lime-ink" : "text-paper-dim hover:text-paper"
             }`}
           >
@@ -97,7 +97,7 @@ export default async function DashboardPage({
           <Link
             href={`/dashboard?d=${shiftDate(date, 1)}`}
             aria-label="Next day"
-            className="btn-press rounded-md p-2.5 text-paper-mute hover:bg-ink-800 hover:text-paper"
+            className="btn-press rounded-md p-2.5 text-paper-mute hover:bg-ink-800 hover:text-paper pointer-coarse:p-3"
           >
             <CaretRight weight="bold" className="size-4" />
           </Link>
@@ -109,7 +109,7 @@ export default async function DashboardPage({
         as="section"
         onScroll={false}
         delay={0.1}
-        className="grid gap-6 rounded-2xl border border-ink-800 bg-ink-900/60 p-6 md:grid-cols-[auto_1fr] md:items-center md:gap-10 md:p-8"
+        className="grid gap-6 rounded-2xl border border-ink-800 bg-ink-900/60 p-6 lg:grid-cols-[auto_1fr] lg:items-center lg:gap-10 lg:p-8"
       >
         <CalorieRing eaten={eaten.kcal} target={targets.kcal} />
         <div>
@@ -153,7 +153,7 @@ export default async function DashboardPage({
       <MicroPanel totals={microTotals} />
 
       {/* meals */}
-      <Reveal as="section" className="grid gap-5 lg:grid-cols-2" stagger={0.1} start="top 90%">
+      <Reveal as="section" className="grid gap-5 xl:grid-cols-2" stagger={0.1} start="top 90%">
         {MEAL_TYPES.map((meal) => {
           const mealEntries = entries.filter((e) => e.meal === meal);
           const mealTotal = sumMacros(mealEntries.map((e) => macrosForPortion(e.food, e.grams)));
@@ -163,14 +163,14 @@ export default async function DashboardPage({
               data-reveal
               className="rounded-2xl border border-ink-800 bg-ink-900/60"
             >
-              <header className="flex items-center justify-between border-b border-ink-800 px-5 py-4">
-                <div>
+              <header className="flex flex-wrap items-center justify-between gap-2 border-b border-ink-800 px-5 py-4">
+                <div className="min-w-0">
                   <h2 className="font-display text-base font-semibold capitalize text-paper">
                     {meal}
                   </h2>
                   <MacroInline macros={mealTotal} />
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex shrink-0 items-center gap-3">
                   <span className="font-mono text-sm text-paper-dim tabular">
                     {Math.round(mealTotal.kcal)} kcal
                   </span>
@@ -204,7 +204,7 @@ export default async function DashboardPage({
                           <button
                             type="submit"
                             aria-label={`Remove ${entry.food.name}`}
-                            className="btn-press rounded-md p-2.5 text-paper-mute transition-opacity hover:bg-danger/10 hover:text-danger focus:opacity-100 max-md:opacity-100 md:opacity-0 md:group-hover:opacity-100"
+                            className="btn-press rounded-md p-2.5 text-paper-mute transition-opacity hover:bg-danger/10 hover:text-danger focus-visible:opacity-100 pointer-coarse:text-danger/80 pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100"
                           >
                             <Trash className="size-4" />
                           </button>

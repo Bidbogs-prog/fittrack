@@ -54,7 +54,7 @@ export default async function FoodsPage({
       <nav className="flex flex-wrap gap-2" aria-label="Filter by category">
         <Link
           href={href({ q })}
-          className={`rounded-full px-3.5 py-2 text-xs font-semibold transition-colors sm:py-1.5 ${
+          className={`rounded-full px-3.5 py-2 text-xs font-semibold transition-colors pointer-fine:py-1.5 ${
             !category ? "bg-lime text-lime-ink" : "border border-ink-700 text-paper-dim hover:text-paper"
           }`}
         >
@@ -64,7 +64,7 @@ export default async function FoodsPage({
           <Link
             key={cat}
             href={href({ c: cat, q })}
-            className={`rounded-full px-3.5 py-2 text-xs font-semibold capitalize transition-colors sm:py-1.5 ${
+            className={`rounded-full px-3.5 py-2 text-xs font-semibold capitalize transition-colors pointer-fine:py-1.5 ${
               category === cat
                 ? "bg-lime text-lime-ink"
                 : "border border-ink-700 text-paper-dim hover:text-paper"
@@ -84,9 +84,11 @@ export default async function FoodsPage({
           // Remount on every new result set: client-side navigation swaps the
           // grid's DOM nodes, and the entrance animation only runs on mount —
           // without this, CSS-prehidden cards would stay invisible.
+          // Grid staging accounts for the 240px sidebar from md up: the
+          // content column at md is narrower than at sm.
           key={`${category ?? "all"}|${q}|${page}`}
           as="ul"
-          className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3"
+          className="grid gap-4 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3"
           stagger={0.05}
           start="top 92%"
         >

@@ -89,7 +89,7 @@ export function FoodPicker({ name = "food_id" }: { name?: string }) {
                       e.preventDefault();
                       setSelected(food);
                     }}
-                    className="btn-press flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-ink-850"
+                    className="btn-press flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-ink-850 active:bg-ink-850"
                   >
                     <FoodImage src={food.image_url} alt="" className="size-9 rounded-md" />
                     <span className="min-w-0 flex-1">

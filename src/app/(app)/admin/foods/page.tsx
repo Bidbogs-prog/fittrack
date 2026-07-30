@@ -85,7 +85,9 @@ export default async function AdminFoodsPage({
                   <th className="px-3 py-3 text-right font-semibold">Carbs</th>
                   <th className="px-3 py-3 text-right font-semibold">Fat</th>
                   <th className="px-3 py-3 text-right font-semibold">Fibre</th>
-                  <th className="px-4 py-3 text-right font-semibold">Actions</th>
+                  <th className="sticky right-0 bg-ink-950 px-4 py-3 text-right font-semibold">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-ink-800/70">
@@ -113,7 +115,9 @@ export default async function AdminFoodsPage({
                         </td>
                       )
                     )}
-                    <td className="px-4 py-2.5">
+                    {/* Sticky so edit/delete stay reachable while the wide
+                        table scrolls horizontally on narrow screens. */}
+                    <td className="sticky right-0 bg-ink-900 px-4 py-2.5">
                       <div className="flex items-center justify-end gap-1.5">
                         <Link
                           href={`/admin/foods/${food.id}`}
@@ -127,7 +131,7 @@ export default async function AdminFoodsPage({
                           <button
                             type="submit"
                             aria-label={`Delete ${food.name}`}
-                            className="btn-press rounded-md p-2.5 text-paper-mute hover:bg-danger/10 hover:text-danger"
+                            className="btn-press rounded-md p-2.5 text-paper-mute hover:bg-danger/10 hover:text-danger pointer-coarse:text-danger/80"
                           >
                             <Trash className="size-4" />
                           </button>

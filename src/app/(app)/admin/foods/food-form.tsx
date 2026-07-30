@@ -9,7 +9,7 @@ import { saveFood } from "../actions";
  */
 export function FoodForm({ food }: { food?: Food }) {
   return (
-    <form action={saveFood} className="space-y-5">
+    <form action={saveFood} className="max-w-5xl space-y-5">
       {food && <input type="hidden" name="id" value={food.id} />}
 
       <div className="grid gap-4 sm:grid-cols-2">
@@ -48,7 +48,7 @@ export function FoodForm({ food }: { food?: Food }) {
 
       <fieldset>
         <legend className="field-label mb-2">Nutritional facts per 100 g</legend>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
           {(
             [
               ["kcal", "Calories", food?.kcal],
@@ -91,7 +91,7 @@ export function FoodForm({ food }: { food?: Food }) {
               <legend className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-paper-mute">
                 {group}
               </legend>
-              <div className="grid grid-cols-1 gap-3 min-[400px]:grid-cols-2 sm:grid-cols-4">
+              <div className="grid grid-cols-1 gap-3 min-[400px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
                 {keys.map((key) => (
                   <div key={key} className="space-y-1.5">
                     <label htmlFor={key} className="text-[11px] font-medium text-paper-mute">

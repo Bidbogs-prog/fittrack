@@ -44,7 +44,7 @@ export default async function PlanDetailPage({
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-lime">
           {GOALS[plan.goal].label}
         </p>
-        <h1 className="mt-1.5 font-display text-3xl font-bold tracking-tighter text-paper">
+        <h1 className="mt-1.5 font-display text-3xl font-bold tracking-tighter text-paper md:text-4xl">
           {plan.name}
         </h1>
         {plan.description && (

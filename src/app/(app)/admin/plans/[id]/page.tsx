@@ -87,9 +87,11 @@ export default async function PlanBuilderPage({
       {/* add item */}
       <section className="rounded-2xl border border-ink-800 bg-ink-900/60 p-6">
         <h3 className="mb-4 font-display text-base font-semibold text-paper">Add an item</h3>
-        <form action={addPlanItem} className="grid gap-4 sm:grid-cols-[1fr_160px_120px_auto] sm:items-end">
+        {/* Single column until lg: with the sidebar, a tablet's content area
+            can't fit the fixed 160+120px columns plus a usable picker. */}
+        <form action={addPlanItem} className="grid gap-4 lg:grid-cols-[1fr_160px_120px_auto] lg:items-end">
           <input type="hidden" name="plan_id" value={plan.id} />
-          <div className="space-y-2">
+          <div className="min-w-0 space-y-2">
             <span className="field-label">Food</span>
             <FoodPicker name="food_id" />
           </div>
@@ -160,7 +162,7 @@ export default async function PlanBuilderPage({
                           <button
                             type="submit"
                             aria-label={`Remove ${item.food.name}`}
-                            className="btn-press rounded-md p-2.5 text-paper-mute hover:bg-danger/10 hover:text-danger"
+                            className="btn-press rounded-md p-2.5 text-paper-mute hover:bg-danger/10 hover:text-danger pointer-coarse:text-danger/80"
                           >
                             <Trash className="size-4" />
                           </button>

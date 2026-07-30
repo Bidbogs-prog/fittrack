@@ -47,7 +47,7 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
         onScroll={false}
         delay={0.25}
         stagger={0.12}
-        className="mt-10 grid gap-10 lg:grid-cols-[1fr_320px]"
+        className="mt-10 grid gap-8 md:grid-cols-[1fr_300px] lg:grid-cols-[1fr_320px] lg:gap-10"
       >
       <div className="space-y-10">
         {/* 01 — body */}
@@ -227,7 +227,7 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
       </div>
 
       {/* live preview panel */}
-      <aside data-reveal className="lg:sticky lg:top-8 lg:self-start">
+      <aside data-reveal className="md:sticky md:top-8 md:self-start">
         <div className="rounded-2xl border border-ink-700 bg-ink-900/80 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-paper-mute">
             Your numbers

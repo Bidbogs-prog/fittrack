@@ -25,13 +25,19 @@ export function AddFoodDialog({
   const [pending, startTransition] = useTransition();
   const searchRef = useRef<HTMLInputElement>(null);
 
-  // Lock the page scroll behind the dialog (iOS scrolls the body otherwise).
+  // Lock the page scroll behind the dialog (iOS scrolls the body otherwise)
+  // and close on Escape for keyboard users.
   useEffect(() => {
     if (!open) return;
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("keydown", onKeyDown);
     return () => {
       document.body.style.overflow = previous;
+      document.removeEventListener("keydown", onKeyDown);
     };
   }, [open]);
 
@@ -95,7 +101,7 @@ export function AddFoodDialog({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="btn-press inline-flex items-center gap-1.5 rounded-lg border border-ink-700 px-3 py-1.5 text-xs font-semibold text-paper-dim transition-colors hover:border-lime/50 hover:text-lime max-md:py-2.5"
+        className="btn-press inline-flex items-center gap-1.5 rounded-lg border border-ink-700 px-3 py-1.5 text-xs font-semibold text-paper-dim transition-colors hover:border-lime/50 hover:text-lime pointer-coarse:py-2.5"
       >
         <Plus weight="bold" className="size-3.5" />
         Add food
@@ -106,14 +112,17 @@ export function AddFoodDialog({
           // Centered (not bottom-anchored): iOS keeps the keyboard over a
           // bottom sheet without resizing the layout viewport.
           className="overlay-fade fixed inset-0 z-50 flex items-center justify-center bg-ink-950/80 p-4 backdrop-blur-sm"
-          onClick={reset}
+          // mousedown + self-target: a text-selection drag that ends on the
+          // backdrop must not nuke the dialog state.
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) reset();
+          }}
         >
           <div
             role="dialog"
             aria-modal="true"
             aria-label={`Add food to ${meal}`}
-            className="dialog-pop max-h-[85dvh] w-full max-w-md overflow-y-auto overscroll-contain rounded-2xl border border-ink-700 bg-ink-900 p-5 shadow-[0_40px_80px_-20px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.05)]"
-            onClick={(e) => e.stopPropagation()}
+            className="dialog-pop max-h-[85dvh] w-full max-w-md overflow-y-auto overscroll-contain rounded-2xl border border-ink-700 bg-ink-900 p-5 shadow-[0_40px_80px_-20px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.05)] lg:max-w-lg"
           >
             <div className="flex items-center justify-between">
               <h3 className="font-display text-base font-semibold capitalize text-paper">
@@ -148,7 +157,7 @@ export function AddFoodDialog({
                       <button
                         type="button"
                         onClick={() => setSelected(food)}
-                        className="btn-press flex w-full items-center gap-3 rounded-lg border border-transparent px-3 py-2.5 text-left transition-colors hover:border-ink-700 hover:bg-ink-850"
+                        className="btn-press flex w-full items-center gap-3 rounded-lg border border-transparent px-3 py-2.5 text-left transition-colors hover:border-ink-700 hover:bg-ink-850 active:bg-ink-850"
                       >
                         <FoodImage src={food.image_url} alt="" className="size-9 rounded-md" />
                         <span className="min-w-0 flex-1">

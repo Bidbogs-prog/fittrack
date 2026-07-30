@@ -29,7 +29,7 @@ export function FoodSearch({
   }
 
   return (
-    <div className="relative max-w-md">
+    <div className="relative max-w-md lg:max-w-lg">
       <MagnifyingGlass className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-paper-mute" />
       <input
         type="search"

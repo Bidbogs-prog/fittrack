@@ -108,13 +108,14 @@ export function Hero() {
       ref={scope}
       className="relative mx-auto grid w-full max-w-[1200px] flex-1 items-center gap-14 px-6 pb-20 pt-36 md:pt-44 lg:grid-cols-[1.05fr_0.95fr] lg:gap-10"
     >
-      {/* left: message */}
-      <div>
+      {/* left: message — capped at md so it doesn't orphan-left in the
+          single-column tablet range */}
+      <div className="md:max-w-2xl lg:max-w-none">
         <p className="h-badge mb-6 inline-flex items-center gap-2 rounded-full border border-ink-700 bg-ink-900/70 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-paper-dim" data-reveal>
           <Lightning weight="fill" className="size-3 text-lime" />
           Nutrition, engineered
         </p>
-        <h1 className="font-display text-[2.6rem] font-bold leading-[0.96] tracking-tighter text-paper sm:text-[3.4rem] md:text-7xl xl:text-[5.4rem]">
+        <h1 className="font-display text-[2.6rem] font-bold leading-[0.96] tracking-tighter text-paper sm:text-[3.4rem] md:text-6xl lg:text-[4.25rem] xl:text-[5.4rem]">
           <span className="block overflow-hidden pb-1">
             <span className="h-line block translate-y-[118%] motion-reduce:translate-y-0">
               Train hard.
@@ -177,8 +178,10 @@ export function Hero() {
           className="pointer-events-none absolute inset-0 grid place-items-center"
           style={{ perspective: "900px" }}
         >
-          <div className="orbit-ring absolute size-[320px] rounded-full border border-lime/[0.14] sm:size-[520px] md:size-[620px]" />
-          <div className="orbit-ring-slow absolute size-[250px] rounded-full border border-white/[0.07] sm:size-[400px] md:size-[480px]" />
+          {/* Sized relative to the scene so they scale with the column
+              instead of overflowing it at intermediate widths. */}
+          <div className="orbit-ring absolute aspect-square w-[124%] rounded-full border border-lime/[0.14]" />
+          <div className="orbit-ring-slow absolute aspect-square w-[96%] rounded-full border border-white/[0.07]" />
         </div>
 
         <TiltCard maxTilt={8} className="lg:pl-8">
