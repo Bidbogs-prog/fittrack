@@ -80,7 +80,16 @@ export default async function FoodsPage({
           {q ? <>Nothing matches &ldquo;{q}&rdquo;{category ? " in this category" : ""}.</> : "No foods in this category yet."}
         </p>
       ) : (
-        <Reveal as="ul" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3" stagger={0.05} start="top 92%">
+        <Reveal
+          // Remount on every new result set: client-side navigation swaps the
+          // grid's DOM nodes, and the entrance animation only runs on mount —
+          // without this, CSS-prehidden cards would stay invisible.
+          key={`${category ?? "all"}|${q}|${page}`}
+          as="ul"
+          className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3"
+          stagger={0.05}
+          start="top 92%"
+        >
           {foods.map((food) => {
             const providedMicros = MICRO_KEYS.filter((key) => food[key] != null);
             return (
