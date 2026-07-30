@@ -89,7 +89,7 @@ export default async function PlanDetailPage({
                       <FoodImage src={item.food.image_url} alt="" className="size-10 rounded-lg" />
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium text-paper">{item.food.name}</p>
-                        <p className="text-[11px] text-paper-mute">
+                        <p className="truncate text-[11px] text-paper-mute">
                           {item.grams} g · P {m.protein.toFixed(1)} · C {m.carbs.toFixed(1)} · F{" "}
                           {m.fat.toFixed(1)} · Fb {m.fibre.toFixed(1)}
                         </p>

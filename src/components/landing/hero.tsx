@@ -114,7 +114,7 @@ export function Hero() {
           <Lightning weight="fill" className="size-3 text-lime" />
           Nutrition, engineered
         </p>
-        <h1 className="font-display text-[3.4rem] font-bold leading-[0.96] tracking-tighter text-paper md:text-7xl xl:text-[5.4rem]">
+        <h1 className="font-display text-[2.6rem] font-bold leading-[0.96] tracking-tighter text-paper sm:text-[3.4rem] md:text-7xl xl:text-[5.4rem]">
           <span className="block overflow-hidden pb-1">
             <span className="h-line block translate-y-[118%] motion-reduce:translate-y-0">
               Train hard.
@@ -144,7 +144,7 @@ export function Hero() {
           </Magnetic>
           <Link
             href="/login"
-            className="text-sm font-medium text-paper-dim underline-offset-4 transition-colors hover:text-paper hover:underline"
+            className="inline-flex min-h-11 items-center text-sm font-medium text-paper-dim underline-offset-4 transition-colors hover:text-paper hover:underline"
           >
             I already have an account
           </Link>
@@ -158,7 +158,7 @@ export function Hero() {
               [3, "", "goal programs"],
             ] as const
           ).map(([n, suffix, label]) => (
-            <div key={label} className="px-4 py-4 first:pl-0">
+            <div key={label} className="px-3 py-4 first:pl-0 sm:px-4">
               <dt className="font-mono text-2xl font-semibold tracking-tight text-paper tabular">
                 <CountUp value={n} delay={1} />
                 {suffix}
@@ -177,8 +177,8 @@ export function Hero() {
           className="pointer-events-none absolute inset-0 grid place-items-center"
           style={{ perspective: "900px" }}
         >
-          <div className="orbit-ring absolute size-[520px] rounded-full border border-lime/[0.14] md:size-[620px]" />
-          <div className="orbit-ring-slow absolute size-[400px] rounded-full border border-white/[0.07] md:size-[480px]" />
+          <div className="orbit-ring absolute size-[320px] rounded-full border border-lime/[0.14] sm:size-[520px] md:size-[620px]" />
+          <div className="orbit-ring-slow absolute size-[250px] rounded-full border border-white/[0.07] sm:size-[400px] md:size-[480px]" />
         </div>
 
         <TiltCard maxTilt={8} className="lg:pl-8">
@@ -198,7 +198,7 @@ export function Hero() {
                 <p className="font-mono text-xs text-paper-mute tabular">TDEE 2,840</p>
               </div>
 
-              <div className="mt-5 flex items-center gap-6" data-depth="26">
+              <div className="mt-5 flex flex-col items-center gap-5 min-[400px]:flex-row min-[400px]:gap-6" data-depth="26">
                 <div className="relative size-32 shrink-0">
                   <DrawnRing pct={0.79} radius={56} stroke={9} color="var(--lime)" delay={0.9} className="size-full" />
                   <div className="absolute inset-0 grid place-items-center text-center">
@@ -206,11 +206,11 @@ export function Hero() {
                       <p className="font-mono text-xl font-semibold tracking-tight text-paper tabular">
                         <CountUp value={1962} delay={0.9} />
                       </p>
-                      <p className="text-[10px] text-paper-mute">of 2,490 kcal</p>
+                      <p className="text-[11px] text-paper-mute">of 2,490 kcal</p>
                     </div>
                   </div>
                 </div>
-                <div className="min-w-0 flex-1 space-y-3.5">
+                <div className="w-full min-w-0 flex-1 space-y-3.5">
                   {MOCK_MACROS.map(([name, value, pct, color], i) => (
                     <div key={name}>
                       <div className="flex justify-between text-[11px]">

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Outfit } from "next/font/google";
 import "./globals.css";
 
@@ -17,6 +17,15 @@ const outfit = Outfit({
   subsets: ["latin"],
 });
 
+// viewportFit: "cover" makes env(safe-area-inset-*) resolve on notched
+// phones — the sticky mobile nav pads itself with it.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#090b08",
+};
+
 export const metadata: Metadata = {
   title: {
     default: "FitTrack — eat exact, train hard",
@@ -34,9 +43,11 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${outfit.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${outfit.variable} antialiased`}
     >
-      <body className="grain min-h-full flex flex-col">{children}</body>
+      {/* min-h-[100dvh] (not h-full chains): tracks the iOS dynamic toolbar
+          without leaving a spurious scrollable gap. */}
+      <body className="grain flex min-h-[100dvh] flex-col">{children}</body>
     </html>
   );
 }

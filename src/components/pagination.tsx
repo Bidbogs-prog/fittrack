@@ -2,9 +2,9 @@ import { CaretLeft, CaretRight } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 
 const linkClass =
-  "btn-press inline-flex items-center gap-1.5 rounded-lg border border-ink-700 px-3.5 py-2 text-xs font-semibold text-paper-dim transition-colors hover:border-ink-600 hover:text-paper";
+  "btn-press inline-flex items-center gap-1.5 rounded-lg border border-ink-700 px-3.5 py-2.5 text-xs font-semibold text-paper-dim transition-colors hover:border-ink-600 hover:text-paper";
 const disabledClass =
-  "inline-flex items-center gap-1.5 rounded-lg border border-ink-800 px-3.5 py-2 text-xs font-semibold text-paper-mute opacity-40";
+  "inline-flex items-center gap-1.5 rounded-lg border border-ink-800 px-3.5 py-2.5 text-xs font-semibold text-paper-mute opacity-40";
 
 /** Server-side pagination controls; hidden when everything fits one page. */
 export function Pagination({
@@ -20,7 +20,7 @@ export function Pagination({
 }) {
   if (totalPages <= 1) return null;
   return (
-    <nav className="flex items-center justify-between" aria-label="Pagination">
+    <nav className="flex flex-wrap items-center justify-between gap-3" aria-label="Pagination">
       {page > 1 ? (
         <Link href={makeHref(page - 1)} className={linkClass}>
           <CaretLeft weight="bold" className="size-3.5" />
@@ -32,7 +32,7 @@ export function Pagination({
           Previous
         </span>
       )}
-      <p className="font-mono text-xs text-paper-mute tabular">
+      <p className="order-last w-full text-center font-mono text-xs text-paper-mute tabular sm:order-none sm:w-auto">
         Page {page} of {totalPages} · {total.toLocaleString("en-US")} foods
       </p>
       {page < totalPages ? (

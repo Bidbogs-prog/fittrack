@@ -25,6 +25,16 @@ export function AddFoodDialog({
   const [pending, startTransition] = useTransition();
   const searchRef = useRef<HTMLInputElement>(null);
 
+  // Lock the page scroll behind the dialog (iOS scrolls the body otherwise).
+  useEffect(() => {
+    if (!open) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [open]);
+
   // The library is 5k+ foods, so search runs server-side (route handler).
   useEffect(() => {
     if (!open || selected) return;
@@ -85,7 +95,7 @@ export function AddFoodDialog({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="btn-press inline-flex items-center gap-1.5 rounded-lg border border-ink-700 px-3 py-1.5 text-xs font-semibold text-paper-dim transition-colors hover:border-lime/50 hover:text-lime"
+        className="btn-press inline-flex items-center gap-1.5 rounded-lg border border-ink-700 px-3 py-1.5 text-xs font-semibold text-paper-dim transition-colors hover:border-lime/50 hover:text-lime max-md:py-2.5"
       >
         <Plus weight="bold" className="size-3.5" />
         Add food
@@ -93,14 +103,16 @@ export function AddFoodDialog({
 
       {open && (
         <div
-          className="overlay-fade fixed inset-0 z-50 flex items-end justify-center bg-ink-950/80 p-4 backdrop-blur-sm sm:items-center"
+          // Centered (not bottom-anchored): iOS keeps the keyboard over a
+          // bottom sheet without resizing the layout viewport.
+          className="overlay-fade fixed inset-0 z-50 flex items-center justify-center bg-ink-950/80 p-4 backdrop-blur-sm"
           onClick={reset}
         >
           <div
             role="dialog"
             aria-modal="true"
             aria-label={`Add food to ${meal}`}
-            className="dialog-pop w-full max-w-md rounded-2xl border border-ink-700 bg-ink-900 p-5 shadow-[0_40px_80px_-20px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.05)]"
+            className="dialog-pop max-h-[85dvh] w-full max-w-md overflow-y-auto overscroll-contain rounded-2xl border border-ink-700 bg-ink-900 p-5 shadow-[0_40px_80px_-20px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.05)]"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
@@ -111,7 +123,7 @@ export function AddFoodDialog({
                 type="button"
                 onClick={reset}
                 aria-label="Close"
-                className="btn-press rounded-md p-1.5 text-paper-mute hover:bg-ink-800 hover:text-paper"
+                className="btn-press rounded-md p-2.5 text-paper-mute hover:bg-ink-800 hover:text-paper"
               >
                 <X className="size-4" weight="bold" />
               </button>
@@ -179,7 +191,7 @@ export function AddFoodDialog({
                 <button
                   type="button"
                   onClick={() => setSelected(null)}
-                  className="text-xs font-medium text-paper-mute underline-offset-4 hover:text-paper hover:underline"
+                  className="-m-2 inline-block p-2 text-xs font-medium text-paper-mute underline-offset-4 hover:text-paper hover:underline"
                 >
                   ← back to search
                 </button>
@@ -195,6 +207,7 @@ export function AddFoodDialog({
                   <input
                     id="grams"
                     type="number"
+                    inputMode="decimal"
                     min={1}
                     max={5000}
                     step="1"
@@ -206,7 +219,7 @@ export function AddFoodDialog({
                 </div>
 
                 {portion && (
-                  <dl className="mt-4 grid grid-cols-5 gap-1 rounded-xl bg-lime/[0.07] px-3 py-3 text-center ring-1 ring-inset ring-lime/20">
+                  <dl className="mt-4 grid grid-cols-3 gap-x-1 gap-y-3 rounded-xl bg-lime/[0.07] px-3 py-3 text-center ring-1 ring-inset ring-lime/20 sm:grid-cols-5">
                     {(
                       [
                         ["kcal", portion.kcal, 0],
@@ -228,7 +241,7 @@ export function AddFoodDialog({
 
                 {portionMicros && providedMicros.length > 0 && (
                   <details className="group mt-3">
-                    <summary className="flex cursor-pointer list-none items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-paper-mute transition-colors hover:text-paper [&::-webkit-details-marker]:hidden">
+                    <summary className="flex cursor-pointer list-none items-center gap-1.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-paper-mute transition-colors hover:text-paper [&::-webkit-details-marker]:hidden">
                       <CaretRight weight="bold" className="size-3 transition-transform group-open:rotate-90" />
                       Micronutrients in this portion
                     </summary>

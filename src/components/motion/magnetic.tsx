@@ -23,7 +23,9 @@ export function Magnetic({
       const el = ref.current;
       if (!el) return;
       const mm = gsap.matchMedia();
-      mm.add(NOT_REDUCED, () => {
+      // Fine pointers only — on touch, a drag starting here would slide the
+      // button under the finger mid-scroll.
+      mm.add(`${NOT_REDUCED} and (pointer: fine)`, () => {
         const x = gsap.quickTo(el, "x", { duration: 0.4, ease: "power3.out" });
         const y = gsap.quickTo(el, "y", { duration: 0.4, ease: "power3.out" });
 

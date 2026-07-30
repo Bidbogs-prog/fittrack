@@ -33,20 +33,20 @@ export function LandingNav() {
       <div
         ref={ref}
         data-reveal-self
-        className="pointer-events-auto flex w-full max-w-3xl items-center justify-between gap-3 rounded-full border border-white/10 bg-ink-950/70 py-2 pl-4 pr-2 shadow-[0_16px_40px_-16px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-xl"
+        className="pointer-events-auto flex w-full max-w-3xl items-center justify-between gap-2 rounded-full border border-white/10 bg-ink-950/70 py-2 pl-4 pr-2 shadow-[0_16px_40px_-16px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-xl sm:gap-3"
       >
         <Logo />
         <nav className="flex items-center gap-1">
           <Link
             href="/login"
-            className="btn-press rounded-full px-4 py-2 text-sm font-medium text-paper-dim transition-colors hover:text-paper"
+            className="btn-press rounded-full px-3 py-2.5 text-sm font-medium text-paper-dim transition-colors hover:text-paper sm:px-4"
           >
             Log in
           </Link>
           <Magnetic strength={0.25}>
             <Link
               href="/signup"
-              className="group btn-press flex items-center gap-2.5 rounded-full bg-lime py-1.5 pl-4 pr-1.5 text-sm font-semibold text-lime-ink transition-colors hover:bg-lime-deep"
+              className="group btn-press flex items-center gap-2 whitespace-nowrap rounded-full bg-lime py-1.5 pl-3.5 pr-1.5 text-[13px] font-semibold text-lime-ink transition-colors hover:bg-lime-deep sm:gap-2.5 sm:pl-4 sm:text-sm"
             >
               Get started
               <span className="grid size-7 place-items-center rounded-full bg-lime-ink/10 transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5 group-hover:scale-105">

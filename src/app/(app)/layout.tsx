@@ -44,7 +44,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       </aside>
 
       {/* mobile nav */}
-      <div className="sticky bottom-0 z-30 order-last border-t border-ink-800 bg-ink-950/95 px-2 py-1.5 backdrop-blur md:hidden">
+      <div className="sticky bottom-0 z-30 order-last border-t border-ink-800 bg-ink-950/95 px-2 pt-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] backdrop-blur md:hidden">
         <AppNav admin={admin} />
       </div>
 

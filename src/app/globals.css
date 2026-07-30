@@ -105,7 +105,9 @@ body {
   width: max-content;
   animation: marquee 42s linear infinite;
 }
-.marquee:hover .marquee-track {
+.marquee:hover .marquee-track,
+.marquee:active .marquee-track,
+.marquee:focus-within .marquee-track {
   animation-play-state: paused;
 }
 
@@ -240,13 +242,15 @@ body {
 /* Form primitives — layered so per-usage utilities (e.g. `pl-10` on
    icon-prefixed search inputs) can override the defaults. */
 @layer components {
+  /* text-base at the base breakpoint: iOS Safari force-zooms the page when a
+     focused control is under 16px, and never zooms back out. */
   .field {
-    @apply w-full rounded-lg border border-ink-700 bg-ink-900 px-3.5 py-2.5 text-sm text-paper placeholder:text-paper-mute outline-none transition-colors focus:border-lime/60 focus:ring-2 focus:ring-lime/15;
+    @apply w-full rounded-lg border border-ink-700 bg-ink-900 px-3.5 py-2.5 text-base sm:text-sm text-paper placeholder:text-paper-mute outline-none transition-colors focus:border-lime/60 focus:ring-2 focus:ring-lime/15;
   }
 }
 
 .field-label {
-  @apply block text-[11px] font-semibold uppercase tracking-[0.14em] text-paper-mute;
+  @apply block text-xs font-semibold uppercase tracking-[0.12em] text-paper-mute;
 }
 
 .btn-press {

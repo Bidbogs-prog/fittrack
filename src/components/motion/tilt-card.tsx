@@ -27,7 +27,8 @@ export function TiltCard({
       if (!wrap || !el) return;
 
       const mm = gsap.matchMedia();
-      mm.add(NOT_REDUCED, () => {
+      // Fine pointers only — touch-drags over the card are scroll gestures.
+      mm.add(`${NOT_REDUCED} and (pointer: fine)`, () => {
         // Depth layers are static translateZ — the parent rotation sells the parallax.
         el.querySelectorAll<HTMLElement>("[data-depth]").forEach((layer) => {
           gsap.set(layer, { z: parseFloat(layer.dataset.depth ?? "0") });

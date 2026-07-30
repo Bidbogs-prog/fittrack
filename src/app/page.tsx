@@ -27,7 +27,7 @@ export default function Home() {
       </main>
 
       <footer className="relative border-t border-ink-800">
-        <div className="mx-auto flex w-full max-w-[1200px] items-center justify-between px-6 py-6 text-xs text-paper-mute">
+        <div className="mx-auto flex w-full max-w-[1200px] flex-wrap items-center justify-between gap-2 px-6 pt-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] text-xs text-paper-mute">
           <span>FitTrack — eat exact, train hard.</span>
           <span className="font-mono">v0.2</span>
         </div>

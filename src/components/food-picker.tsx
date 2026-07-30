@@ -61,9 +61,9 @@ export function FoodPicker({ name = "food_id" }: { name?: string }) {
               setQuery("");
             }}
             aria-label="Clear selected food"
-            className="btn-press shrink-0 rounded-md p-1 text-paper-mute hover:bg-ink-800 hover:text-paper"
+            className="btn-press -m-1 shrink-0 rounded-md p-2 text-paper-mute hover:bg-ink-800 hover:text-paper"
           >
-            <X className="size-3.5" weight="bold" />
+            <X className="size-4" weight="bold" />
           </button>
         </div>
       ) : (
@@ -80,7 +80,7 @@ export function FoodPicker({ name = "food_id" }: { name?: string }) {
             className="field pl-10"
           />
           {focused && (
-            <ul className="absolute z-20 mt-2 max-h-72 w-full overflow-y-auto rounded-xl border border-ink-700 bg-ink-900 p-1.5 shadow-[0_24px_48px_-12px_rgba(0,0,0,0.8)]">
+            <ul className="absolute z-50 mt-2 max-h-[40dvh] w-full overflow-y-auto overscroll-contain rounded-xl border border-ink-700 bg-ink-900 p-1.5 shadow-[0_24px_48px_-12px_rgba(0,0,0,0.8)]">
               {results.map((food) => (
                 <li key={food.id}>
                   <button

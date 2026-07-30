@@ -21,9 +21,10 @@ export function LogoMark({ className = "size-8" }: { className?: string }) {
 
 export function Logo({ href = "/" }: { href?: string }) {
   return (
-    <Link href={href} className="group inline-flex items-center gap-2.5">
+    <Link href={href} className="group inline-flex items-center gap-2.5 py-1">
       <LogoMark />
-      <span className="font-display text-lg font-bold tracking-tight text-paper">
+      {/* Wordmark yields to the nav actions on very narrow phones. */}
+      <span className="hidden font-display text-lg font-bold tracking-tight text-paper min-[380px]:inline">
         Fit<span className="text-lime">Track</span>
       </span>
     </Link>

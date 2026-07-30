@@ -91,7 +91,7 @@ export function FoodForm({ food }: { food?: Food }) {
               <legend className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-paper-mute">
                 {group}
               </legend>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <div className="grid grid-cols-1 gap-3 min-[400px]:grid-cols-2 sm:grid-cols-4">
                 {keys.map((key) => (
                   <div key={key} className="space-y-1.5">
                     <label htmlFor={key} className="text-[11px] font-medium text-paper-mute">
@@ -125,13 +125,13 @@ export function FoodForm({ food }: { food?: Food }) {
           name="image"
           type="file"
           accept="image/*"
-          className="block w-full text-sm text-paper-mute file:mr-4 file:cursor-pointer file:rounded-lg file:border-0 file:bg-ink-700 file:px-4 file:py-2.5 file:text-xs file:font-semibold file:text-paper hover:file:bg-ink-600"
+          className="block w-full text-sm text-paper-mute file:mr-4 file:cursor-pointer file:rounded-lg file:border-0 file:bg-ink-700 file:px-4 file:py-3 file:text-sm file:font-semibold file:text-paper hover:file:bg-ink-600"
         />
       </div>
 
       <button
         type="submit"
-        className="btn-press rounded-xl bg-lime px-6 py-3 font-display text-sm font-bold uppercase tracking-wide text-lime-ink hover:bg-lime-deep"
+        className="btn-press w-full rounded-xl bg-lime px-6 py-3 font-display text-sm font-bold uppercase tracking-wide text-lime-ink hover:bg-lime-deep sm:w-auto"
       >
         {food ? "Save changes" : "Add to library"}
       </button>

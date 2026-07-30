@@ -82,7 +82,7 @@ export default async function DashboardPage({
           <Link
             href={`/dashboard?d=${shiftDate(date, -1)}`}
             aria-label="Previous day"
-            className="btn-press rounded-md p-2 text-paper-mute hover:bg-ink-800 hover:text-paper"
+            className="btn-press rounded-md p-2.5 text-paper-mute hover:bg-ink-800 hover:text-paper"
           >
             <CaretLeft weight="bold" className="size-4" />
           </Link>
@@ -97,7 +97,7 @@ export default async function DashboardPage({
           <Link
             href={`/dashboard?d=${shiftDate(date, 1)}`}
             aria-label="Next day"
-            className="btn-press rounded-md p-2 text-paper-mute hover:bg-ink-800 hover:text-paper"
+            className="btn-press rounded-md p-2.5 text-paper-mute hover:bg-ink-800 hover:text-paper"
           >
             <CaretRight weight="bold" className="size-4" />
           </Link>
@@ -134,11 +134,11 @@ export default async function DashboardPage({
                 ["Target", targets.kcal, GOALS[targets.goal].label.toLowerCase()],
               ] as const
             ).map(([label, value, sub]) => (
-              <div key={label} className="px-4 py-3 first:pl-0">
+              <div key={label} className="px-3 py-3 first:pl-0 sm:px-4">
                 <dt className="text-[11px] font-semibold uppercase tracking-[0.14em] text-paper-mute">
                   {label}
                 </dt>
-                <dd className="mt-0.5 font-mono text-xl font-semibold tracking-tight text-paper tabular">
+                <dd className="mt-0.5 font-mono text-lg font-semibold tracking-tight text-paper tabular sm:text-xl">
                   <CountUp value={value} />
                 </dd>
                 <dd className="text-[11px] text-paper-mute">{sub}</dd>
@@ -191,7 +191,7 @@ export default async function DashboardPage({
                           <p className="truncate text-sm font-medium text-paper">
                             {entry.food.name}
                           </p>
-                          <p className="text-[11px] text-paper-mute">
+                          <p className="truncate text-[11px] text-paper-mute">
                             {entry.grams} g · P {m.protein.toFixed(1)} · C {m.carbs.toFixed(1)} · F{" "}
                             {m.fat.toFixed(1)} · Fb {m.fibre.toFixed(1)}
                           </p>
@@ -204,7 +204,7 @@ export default async function DashboardPage({
                           <button
                             type="submit"
                             aria-label={`Remove ${entry.food.name}`}
-                            className="btn-press rounded-md p-1.5 text-paper-mute opacity-0 transition-opacity hover:bg-danger/10 hover:text-danger focus:opacity-100 group-hover:opacity-100"
+                            className="btn-press rounded-md p-2.5 text-paper-mute transition-opacity hover:bg-danger/10 hover:text-danger focus:opacity-100 max-md:opacity-100 md:opacity-0 md:group-hover:opacity-100"
                           >
                             <Trash className="size-4" />
                           </button>

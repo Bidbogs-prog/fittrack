@@ -102,7 +102,7 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
               />
               <p className="text-xs text-paper-mute">Age is part of the BMR equation.</p>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 min-[400px]:grid-cols-2">
               <div className="space-y-2">
                 <label htmlFor="height_cm" className="field-label">Height (cm)</label>
                 <input
@@ -169,7 +169,7 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
                     onChange={() => setActivity(key)}
                     className="sr-only"
                   />
-                  <span>
+                  <span className="min-w-0">
                     <span className={`block text-sm font-medium ${selected ? "text-paper" : "text-paper-dim"}`}>
                       {label}
                     </span>
@@ -263,7 +263,9 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
             {submitting ? "Saving…" : "Lock in my targets"}
           </button>
           <p className="mt-3 text-center text-xs text-paper-mute">
-            You can change all of this later.
+            {complete
+              ? "You can change all of this later."
+              : "Complete all three sections to unlock."}
           </p>
         </div>
       </aside>

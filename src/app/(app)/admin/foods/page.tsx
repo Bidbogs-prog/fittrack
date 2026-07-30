@@ -75,7 +75,7 @@ export default async function AdminFoodsPage({
             {q ? <>Nothing matches &ldquo;{q}&rdquo;.</> : "No foods yet — add your first one above."}
           </p>
         ) : (
-          <div className="overflow-x-auto rounded-2xl border border-ink-800">
+          <div className="overflow-x-auto overscroll-x-contain rounded-2xl border border-ink-800">
             <table className="w-full min-w-[720px] text-sm">
               <thead>
                 <tr className="border-b border-ink-800 text-left text-[11px] uppercase tracking-[0.12em] text-paper-mute">
@@ -114,11 +114,11 @@ export default async function AdminFoodsPage({
                       )
                     )}
                     <td className="px-4 py-2.5">
-                      <div className="flex items-center justify-end gap-1">
+                      <div className="flex items-center justify-end gap-1.5">
                         <Link
                           href={`/admin/foods/${food.id}`}
                           aria-label={`Edit ${food.name}`}
-                          className="btn-press rounded-md p-2 text-paper-mute hover:bg-ink-700 hover:text-paper"
+                          className="btn-press rounded-md p-2.5 text-paper-mute hover:bg-ink-700 hover:text-paper"
                         >
                           <PencilSimple className="size-4" />
                         </Link>
@@ -127,7 +127,7 @@ export default async function AdminFoodsPage({
                           <button
                             type="submit"
                             aria-label={`Delete ${food.name}`}
-                            className="btn-press rounded-md p-2 text-paper-mute hover:bg-danger/10 hover:text-danger"
+                            className="btn-press rounded-md p-2.5 text-paper-mute hover:bg-danger/10 hover:text-danger"
                           >
                             <Trash className="size-4" />
                           </button>

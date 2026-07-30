@@ -28,9 +28,10 @@ export function OAuthButtons({ next }: { next?: string }) {
             value={id}
             aria-label={`Continue with ${label}`}
             title={`Continue with ${label}`}
-            className="btn-press flex items-center justify-center rounded-xl border border-ink-700 bg-ink-900 py-3 text-paper transition-colors hover:border-ink-600 hover:text-lime"
+            className="btn-press flex flex-col items-center justify-center gap-1 rounded-xl border border-ink-700 bg-ink-900 py-2.5 text-paper transition-colors hover:border-ink-600 hover:text-lime"
           >
             <Icon className="size-5" weight="bold" />
+            <span className="text-[11px] font-medium text-paper-mute">{label}</span>
           </button>
         ))}
       </form>

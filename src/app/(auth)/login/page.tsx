@@ -21,13 +21,13 @@ export default async function LoginPage({
       {message && (
         <p data-reveal className="mt-5 flex items-start gap-2 rounded-lg border border-lime/25 bg-lime/[0.06] px-3.5 py-3 text-sm text-lime">
           <Info className="mt-0.5 size-4 shrink-0" weight="bold" />
-          {message}
+          <span className="min-w-0 break-words">{message}</span>
         </p>
       )}
       {error && (
         <p data-reveal className="mt-5 flex items-start gap-2 rounded-lg border border-danger/30 bg-danger/[0.08] px-3.5 py-3 text-sm text-danger">
           <WarningCircle className="mt-0.5 size-4 shrink-0" weight="bold" />
-          {error}
+          <span className="min-w-0 break-words">{error}</span>
         </p>
       )}
 

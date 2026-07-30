@@ -15,7 +15,7 @@ function Shell({
       data-reveal
       className={`card-lift rounded-[1.9rem] border border-white/[0.08] bg-white/[0.03] p-2 ${className}`}
     >
-      <div className="h-full rounded-[calc(1.9rem-0.5rem)] border border-white/[0.05] bg-ink-900/80 p-7 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] md:p-8">
+      <div className="h-full rounded-[calc(1.9rem-0.5rem)] border border-white/[0.05] bg-ink-900/80 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] sm:p-7 md:p-8">
         {children}
       </div>
     </div>
@@ -33,7 +33,7 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
 /** Asymmetric bento — the three product pillars, each with a live visual. */
 export function Pillars() {
   return (
-    <section className="relative mx-auto w-full max-w-[1200px] px-6 py-24 md:py-32">
+    <section className="relative mx-auto w-full max-w-[1200px] px-4 py-24 sm:px-6 md:py-32">
       <Reveal className="max-w-2xl">
         <Eyebrow>The system</Eyebrow>
         <h2 className="mt-5 font-display text-4xl font-bold tracking-tighter text-paper md:text-5xl" data-reveal>

@@ -14,7 +14,7 @@ export function FinalCta() {
       />
       <Reveal className="relative mx-auto w-full max-w-[1200px] px-6 py-28 text-center md:py-36">
         <h2
-          className="mx-auto max-w-[16ch] font-display text-5xl font-bold leading-[0.98] tracking-tighter text-paper md:text-7xl"
+          className="mx-auto max-w-[16ch] font-display text-4xl font-bold leading-[0.98] tracking-tighter text-paper sm:text-5xl md:text-7xl"
           data-reveal
         >
           Stop guessing. <span className="text-lime">Start weighing.</span>
@@ -27,9 +27,10 @@ export function FinalCta() {
           <Magnetic strength={0.3}>
             <Link
               href="/signup"
-              className="group btn-press flex items-center gap-3 rounded-full bg-lime py-3 pl-7 pr-3 font-display text-sm font-bold uppercase tracking-wide text-lime-ink shadow-[0_16px_48px_-12px_var(--lime)] transition-colors hover:bg-lime-deep"
+              className="group btn-press flex items-center gap-2 whitespace-nowrap rounded-full bg-lime py-3 pl-5 pr-2 font-display text-[13px] font-bold uppercase tracking-wide text-lime-ink shadow-[0_16px_48px_-12px_var(--lime)] transition-colors hover:bg-lime-deep sm:gap-3 sm:pl-7 sm:pr-3 sm:text-sm"
             >
-              Create your free account
+              <span className="sm:hidden">Create free account</span>
+              <span className="hidden sm:inline">Create your free account</span>
               <span className="grid size-9 place-items-center rounded-full bg-lime-ink/10 transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:-translate-y-px group-hover:translate-x-0.5 group-hover:scale-105">
                 <ArrowRight weight="bold" className="size-4" />
               </span>

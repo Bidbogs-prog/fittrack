@@ -45,7 +45,7 @@ export default async function PlansPage({
           <Link
             key={key}
             href={`/plans?g=${key}`}
-            className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+            className={`rounded-full px-3.5 py-2 text-xs font-semibold transition-colors sm:py-1.5 ${
               goal === key
                 ? "bg-lime text-lime-ink"
                 : "border border-ink-700 text-paper-dim hover:text-paper"
@@ -95,9 +95,9 @@ export default async function PlansPage({
                         ["Fb", Math.round(total.fibre)],
                       ] as const
                     ).map(([label, value]) => (
-                      <div key={label} className="bg-ink-900 px-2 py-2 text-center">
+                      <div key={label} className="bg-ink-900 px-1 py-2 text-center sm:px-2">
                         <dt className="text-[10px] uppercase tracking-wide text-paper-mute">{label}</dt>
-                        <dd className="mt-0.5 font-mono text-sm font-medium text-paper tabular">
+                        <dd className="mt-0.5 font-mono text-[13px] font-medium text-paper tabular sm:text-sm">
                           {value.toLocaleString()}
                         </dd>
                       </div>

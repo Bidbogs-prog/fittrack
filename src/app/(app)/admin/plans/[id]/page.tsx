@@ -39,7 +39,7 @@ export default async function PlanBuilderPage({
       <div className="flex items-center justify-between gap-4">
         <Link
           href="/admin/plans"
-          className="inline-flex items-center gap-1.5 text-xs font-medium text-paper-mute hover:text-paper"
+          className="-my-2 inline-flex items-center gap-1.5 py-2 text-xs font-medium text-paper-mute hover:text-paper"
         >
           <ArrowLeft className="size-3.5" weight="bold" />
           All plans
@@ -48,7 +48,7 @@ export default async function PlanBuilderPage({
           <input type="hidden" name="id" value={plan.id} />
           <button
             type="submit"
-            className="btn-press inline-flex items-center gap-1.5 rounded-lg border border-danger/30 px-3 py-1.5 text-xs font-semibold text-danger hover:bg-danger/10"
+            className="btn-press inline-flex items-center gap-1.5 rounded-lg border border-danger/30 px-3.5 py-2.5 text-xs font-semibold text-danger hover:bg-danger/10"
           >
             <Trash className="size-3.5" />
             Delete plan
@@ -109,6 +109,7 @@ export default async function PlanBuilderPage({
               id="grams"
               name="grams"
               type="number"
+              inputMode="numeric"
               min={1}
               max={5000}
               step="1"
@@ -159,7 +160,7 @@ export default async function PlanBuilderPage({
                           <button
                             type="submit"
                             aria-label={`Remove ${item.food.name}`}
-                            className="btn-press rounded-md p-1.5 text-paper-mute hover:bg-danger/10 hover:text-danger"
+                            className="btn-press rounded-md p-2.5 text-paper-mute hover:bg-danger/10 hover:text-danger"
                           >
                             <Trash className="size-4" />
                           </button>
