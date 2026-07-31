@@ -20,6 +20,7 @@ Next.js 16 (App Router, `src/`, `proxy.ts` not `middleware.ts`, `params`/`search
 - `src/app/(app)/` — authenticated shell (onboarding, dashboard, foods, plans).
 - `src/app/admin/` — admin-only (membership = row in `public.admins`). Every admin server action re-verifies membership server-side; UI gating alone is not security.
 - `supabase/schema.sql` — full schema, RLS, storage policies, seed data. Apply in the Supabase SQL editor. Keep in sync with `src/lib/types.ts`.
+- `src/lib/gemini.ts` — server-only Gemini REST helper (no SDK). AI insights on the dashboard (`src/app/(app)/dashboard/insights.ts` + `src/components/ai-insights.tsx`) use it with a dietitian system prompt. Needs `GEMINI_API_KEY` in `.env.local` (optional `GEMINI_MODEL`, default `gemini-2.5-flash`); the UI degrades to a friendly error without it. Keep the "not medical advice" disclaimer.
 - `scripts/import-off.ts` — seeds `foods` from the Open Food Facts CSV export, filtered to Morocco (`npm run import:off`, `--dry-run` to preview). Needs `SUPABASE_SECRET_KEY` in `.env.local`. Imported rows carry `source = 'off'` and a `barcode`; re-runs skip existing barcodes so admin edits survive. OFF data is ODbL — keep attribution in the UI.
 
 ## Conventions

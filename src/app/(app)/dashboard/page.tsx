@@ -1,6 +1,7 @@
 import { CaretLeft, CaretRight, Trash } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { AiInsights } from "@/components/ai-insights";
 import { CalorieRing, MacroBars, MacroInline } from "@/components/macros";
 import { MicroPanel } from "@/components/micros";
 import { CountUp } from "@/components/motion/count-up";
@@ -147,6 +148,8 @@ export default async function DashboardPage({
           </dl>
         </div>
       </Reveal>
+
+      <AiInsights key={date} date={date} hasEntries={entries.length > 0} />
 
       <MacroBars eaten={eaten} targets={targets} />
 
