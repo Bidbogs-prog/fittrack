@@ -4,11 +4,11 @@
  * actions or route handlers exclusively.
  *
  * Uses the free-tier generateContent endpoint with structured JSON output.
- * Override the model with GEMINI_MODEL (default: gemini-2.5-flash).
+ * Override the model with GEMINI_MODEL (default: gemini-3.6-flash).
  */
 
 const GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models";
-const DEFAULT_MODEL = "gemini-2.5-flash";
+const DEFAULT_MODEL = "gemini-3.6-flash";
 
 /** Subset of Gemini's OpenAPI-style response schema we use. */
 export interface GeminiSchema {
