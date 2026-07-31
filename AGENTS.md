@@ -15,7 +15,7 @@ Next.js 16 (App Router, `src/`, `proxy.ts` not `middleware.ts`, `params`/`search
 
 ## Architecture
 - `src/lib/supabase/` — `client.ts` (browser), `server.ts` (RSC/actions), `proxy.ts` (session refresh). One client per request; protect pages with `supabase.auth.getClaims()`, never `getSession()` on the server.
-- `src/lib/nutrition.ts` — single source of truth for BMR (Mifflin-St Jeor), TDEE activity multipliers, goal calorie/macro targets, and per-gram scaling of per-100g food facts. Never duplicate this math in components.
+- `src/lib/nutrition.ts` — single source of truth for BMR (Mifflin-St Jeor), TDEE activity multipliers, goal calorie/macro targets, and per-gram scaling of per-100g food facts. Never duplicate this math in components. Macro targets honour a per-user split (`profiles.protein_pct/carbs_pct/fat_pct`, percent of calories summing to 100, presets in `MACRO_PRESETS`); all-null means the default coach formula (protein g/kg, fat 25%, carbs remainder).
 - `src/app/(auth)/` — login/signup + server actions; `src/app/auth/confirm/` — email OTP confirmation.
 - `src/app/(app)/` — authenticated shell (onboarding, dashboard, foods, plans).
 - `src/app/admin/` — admin-only (membership = row in `public.admins`). Every admin server action re-verifies membership server-side; UI gating alone is not security.

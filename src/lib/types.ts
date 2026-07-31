@@ -38,6 +38,13 @@ export interface Profile {
   weight_kg: number | null;
   activity_level: ActivityLevel | null;
   goal: Goal | null;
+  /**
+   * Custom macro split as percent of daily calories; the three must sum
+   * to 100. All null = use the default coach formula (see calcTargets).
+   */
+  protein_pct: number | null;
+  carbs_pct: number | null;
+  fat_pct: number | null;
   onboarded: boolean;
 }
 

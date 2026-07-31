@@ -51,6 +51,50 @@ export interface Macros {
   fibre: number;
 }
 
+/** Share of daily calories per macro, in percent. Must sum to 100. */
+export interface MacroSplit {
+  protein: number;
+  carbs: number;
+  fat: number;
+}
+
+/** Ratio presets offered in onboarding; "custom" is free-form on top of these. */
+export const MACRO_PRESETS = [
+  {
+    key: "balanced",
+    label: "Balanced",
+    detail: "An even, sustainable middle ground.",
+    split: { protein: 30, carbs: 40, fat: 30 },
+  },
+  {
+    key: "highcarb",
+    label: "Higher carb",
+    detail: "Fuel-first for endurance or heavy training days.",
+    split: { protein: 25, carbs: 50, fat: 25 },
+  },
+  {
+    key: "lowcarb",
+    label: "Low carb",
+    detail: "Fat becomes the main fuel, carbs stay minimal.",
+    split: { protein: 30, carbs: 20, fat: 50 },
+  },
+] as const;
+
+/** Bounds for any custom percentage (also enforced by the DB check). */
+export const MACRO_PCT_MIN = 5;
+export const MACRO_PCT_MAX = 80;
+
+/**
+ * The user's saved macro split, or null when they use the coach formula
+ * (protein per kg bodyweight, fat 25% of calories, carbs the remainder).
+ */
+export function macroSplitFromProfile(profile: Profile): MacroSplit | null {
+  const { protein_pct, carbs_pct, fat_pct } = profile;
+  if (protein_pct == null || carbs_pct == null || fat_pct == null) return null;
+  if (protein_pct + carbs_pct + fat_pct !== 100) return null;
+  return { protein: protein_pct, carbs: carbs_pct, fat: fat_pct };
+}
+
 export interface EnergyProfile extends Macros {
   bmr: number;
   tdee: number;
@@ -58,9 +102,10 @@ export interface EnergyProfile extends Macros {
 }
 
 /**
- * Daily targets: calories from TDEE +/- goal delta (floor 1200),
- * protein per kg bodyweight, fat 25% of calories, carbs the remainder,
- * fibre 14 g per 1000 kcal.
+ * Daily targets: calories from TDEE +/- goal delta (floor 1200), fibre
+ * 14 g per 1000 kcal. Macros come from the user's saved split when they
+ * set one; otherwise the coach formula: protein per kg bodyweight,
+ * fat 25% of calories, carbs the remainder.
  */
 export function calcTargets(profile: Profile): EnergyProfile | null {
   const { gender, birth_date, height_cm, weight_kg, activity_level } = profile;
@@ -71,9 +116,17 @@ export function calcTargets(profile: Profile): EnergyProfile | null {
   const tdee = calcTdee(bmr, activity_level);
   const kcal = Math.max(1200, tdee + GOALS[goal].kcalDelta);
 
-  const protein = Math.round(GOALS[goal].proteinPerKg * weight_kg);
-  const fat = Math.round((kcal * 0.25) / 9);
-  const carbs = Math.max(0, Math.round((kcal - protein * 4 - fat * 9) / 4));
+  const split = macroSplitFromProfile(profile);
+  let protein: number, carbs: number, fat: number;
+  if (split) {
+    protein = Math.round((kcal * split.protein) / 100 / 4);
+    carbs = Math.round((kcal * split.carbs) / 100 / 4);
+    fat = Math.round((kcal * split.fat) / 100 / 9);
+  } else {
+    protein = Math.round(GOALS[goal].proteinPerKg * weight_kg);
+    fat = Math.round((kcal * 0.25) / 9);
+    carbs = Math.max(0, Math.round((kcal - protein * 4 - fat * 9) / 4));
+  }
   const fibre = Math.round((kcal / 1000) * 14);
 
   return { bmr, tdee, kcal, protein, carbs, fat, fibre, goal };

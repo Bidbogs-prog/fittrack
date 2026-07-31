@@ -1,13 +1,19 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { GenderFemale, GenderMale } from "@phosphor-icons/react";
 import {
   ACTIVITY_LEVELS,
   GOALS,
+  MACRO_PCT_MAX,
+  MACRO_PCT_MIN,
+  MACRO_PRESETS,
   ageFromBirthDate,
   calcBmr,
+  calcTargets,
   calcTdee,
+  macroSplitFromProfile,
+  type MacroSplit,
 } from "@/lib/nutrition";
 import { Reveal } from "@/components/motion/reveal";
 import type { ActivityLevel, Gender, Goal, Profile } from "@/lib/types";
@@ -15,6 +21,11 @@ import { completeOnboarding } from "./actions";
 
 const LEVEL_KEYS = Object.keys(ACTIVITY_LEVELS) as ActivityLevel[];
 const GOAL_KEYS = Object.keys(GOALS) as Goal[];
+
+type MacroMode = "auto" | (typeof MACRO_PRESETS)[number]["key"] | "custom";
+
+const sameSplit = (a: MacroSplit, b: MacroSplit) =>
+  a.protein === b.protein && a.carbs === b.carbs && a.fat === b.fat;
 
 export function OnboardingForm({ profile }: { profile?: Profile | null }) {
   const [gender, setGender] = useState<Gender | null>(profile?.gender ?? null);
@@ -25,7 +36,32 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
   const [goal, setGoal] = useState<Goal | null>(profile?.goal ?? null);
   const [submitting, setSubmitting] = useState(false);
 
-  const preview = useMemo(() => {
+  const savedSplit = profile ? macroSplitFromProfile(profile) : null;
+  const [macroMode, setMacroMode] = useState<MacroMode>(
+    savedSplit
+      ? (MACRO_PRESETS.find((p) => sameSplit(p.split, savedSplit))?.key ?? "custom")
+      : "auto"
+  );
+  const [custom, setCustom] = useState<MacroSplit>(
+    savedSplit ?? { protein: 30, carbs: 40, fat: 30 }
+  );
+
+  const activeSplit: MacroSplit | null =
+    macroMode === "auto"
+      ? null
+      : macroMode === "custom"
+        ? custom
+        : MACRO_PRESETS.find((p) => p.key === macroMode)!.split;
+
+  const customSum = custom.protein + custom.carbs + custom.fat;
+  const customValid =
+    customSum === 100 &&
+    [custom.protein, custom.carbs, custom.fat].every(
+      (v) => Number.isInteger(v) && v >= MACRO_PCT_MIN && v <= MACRO_PCT_MAX
+    );
+
+  // Cheap enough to derive on every render; keeps the macro math in one place.
+  const preview = (() => {
     const h = Number(height);
     const w = Number(weight);
     if (!gender || !birthDate || !(h > 0) || !(w > 0)) return null;
@@ -35,11 +71,32 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
     const tdee = activity ? calcTdee(bmr, activity) : null;
     const target =
       tdee !== null && goal ? Math.max(1200, tdee + GOALS[goal].kcalDelta) : null;
-    return { bmr, tdee, target };
-  }, [gender, birthDate, height, weight, activity, goal]);
+    // Full targets (incl. macro grams) via the single source of truth.
+    const targets =
+      activity && goal && (macroMode !== "custom" || customValid)
+        ? calcTargets({
+            id: "",
+            email: null,
+            full_name: null,
+            gender,
+            birth_date: birthDate,
+            height_cm: h,
+            weight_kg: w,
+            activity_level: activity,
+            goal,
+            protein_pct: activeSplit?.protein ?? null,
+            carbs_pct: activeSplit?.carbs ?? null,
+            fat_pct: activeSplit?.fat ?? null,
+            onboarded: true,
+          })
+        : null;
+    return { bmr, tdee, target, targets };
+  })();
 
   const complete =
-    Boolean(gender && birthDate && height && weight && activity && goal) && preview !== null;
+    Boolean(gender && birthDate && height && weight && activity && goal) &&
+    preview !== null &&
+    (macroMode !== "custom" || customValid);
 
   return (
     <form action={completeOnboarding} onSubmit={() => setSubmitting(true)}>
@@ -224,6 +281,151 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
             })}
           </div>
         </section>
+
+        {/* 04 — macro split */}
+        <section data-reveal>
+          <h2 className="flex items-baseline gap-3 font-display text-lg font-semibold text-paper">
+            <span className="font-mono text-xs text-lime">04</span> Macro split
+          </h2>
+          <p className="mt-1 text-xs text-paper-mute">
+            How your calories divide into protein, carbs and fat. Pick what suits how you like to
+            eat — you can change it any time.
+          </p>
+
+          <input type="hidden" name="macro_mode" value={macroMode === "auto" ? "auto" : "custom"} />
+          {macroMode !== "auto" && macroMode !== "custom" && activeSplit && (
+            <>
+              <input type="hidden" name="protein_pct" value={activeSplit.protein} />
+              <input type="hidden" name="carbs_pct" value={activeSplit.carbs} />
+              <input type="hidden" name="fat_pct" value={activeSplit.fat} />
+            </>
+          )}
+
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            <label
+              className={`btn-press cursor-pointer rounded-xl border px-4 py-4 transition-colors sm:col-span-2 ${
+                macroMode === "auto"
+                  ? "border-lime/60 bg-lime/[0.08]"
+                  : "border-ink-700 bg-ink-900 hover:border-ink-600"
+              }`}
+            >
+              <input
+                type="radio"
+                name="macro_mode_choice"
+                checked={macroMode === "auto"}
+                onChange={() => setMacroMode("auto")}
+                className="sr-only"
+              />
+              <span className={`block font-display text-sm font-semibold ${macroMode === "auto" ? "text-lime" : "text-paper"}`}>
+                Coach formula
+              </span>
+              <span className="mt-1 block text-xs leading-relaxed text-paper-mute">
+                Protein pinned to your bodyweight ({goal ? GOALS[goal].proteinPerKg : "1.8–2.2"} g/kg
+                for your goal), fat at 25% of calories, carbs fill the rest. Protein-forward — heavier
+                than some people want.
+              </span>
+            </label>
+
+            {MACRO_PRESETS.map(({ key, label, detail, split }) => {
+              const selected = macroMode === key;
+              return (
+                <label
+                  key={key}
+                  className={`btn-press cursor-pointer rounded-xl border px-4 py-4 transition-colors ${
+                    selected
+                      ? "border-lime/60 bg-lime/[0.08]"
+                      : "border-ink-700 bg-ink-900 hover:border-ink-600"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="macro_mode_choice"
+                    checked={selected}
+                    onChange={() => setMacroMode(key)}
+                    className="sr-only"
+                  />
+                  <span className="flex items-center justify-between gap-2">
+                    <span className={`font-display text-sm font-semibold ${selected ? "text-lime" : "text-paper"}`}>
+                      {label}
+                    </span>
+                    <span className={`rounded-md px-2 py-1 font-mono text-[11px] tabular ${selected ? "bg-lime text-lime-ink" : "bg-ink-800 text-paper-mute"}`}>
+                      {split.protein}·{split.carbs}·{split.fat}
+                    </span>
+                  </span>
+                  <span className="mt-1 block text-xs leading-relaxed text-paper-mute">{detail}</span>
+                </label>
+              );
+            })}
+
+            <label
+              className={`btn-press cursor-pointer rounded-xl border px-4 py-4 transition-colors ${
+                macroMode === "custom"
+                  ? "border-lime/60 bg-lime/[0.08]"
+                  : "border-ink-700 bg-ink-900 hover:border-ink-600"
+              }`}
+            >
+              <input
+                type="radio"
+                name="macro_mode_choice"
+                checked={macroMode === "custom"}
+                onChange={() => setMacroMode("custom")}
+                className="sr-only"
+              />
+              <span className={`block font-display text-sm font-semibold ${macroMode === "custom" ? "text-lime" : "text-paper"}`}>
+                Custom
+              </span>
+              <span className="mt-1 block text-xs leading-relaxed text-paper-mute">
+                Set your own percentages — they just need to total 100.
+              </span>
+            </label>
+          </div>
+
+          {macroMode === "custom" && (
+            <div className="mt-4 rounded-xl border border-ink-700 bg-ink-900 p-4">
+              <div className="grid grid-cols-3 gap-3">
+                {(
+                  [
+                    ["protein_pct", "Protein", "protein", "bg-protein"],
+                    ["carbs_pct", "Carbs", "carbs", "bg-carbs"],
+                    ["fat_pct", "Fat", "fat", "bg-fat"],
+                  ] as const
+                ).map(([name, label, key, dot]) => (
+                  <div key={key} className="space-y-2">
+                    <label htmlFor={name} className="field-label flex items-center gap-1.5">
+                      <span className={`size-2 rounded-full ${dot}`} aria-hidden />
+                      {label} %
+                    </label>
+                    <input
+                      id={name}
+                      name={name}
+                      type="number"
+                      inputMode="numeric"
+                      min={MACRO_PCT_MIN}
+                      max={MACRO_PCT_MAX}
+                      step={1}
+                      required
+                      value={custom[key]}
+                      onChange={(e) =>
+                        setCustom((c) => ({ ...c, [key]: Math.round(Number(e.target.value)) }))
+                      }
+                      className="field tabular"
+                    />
+                  </div>
+                ))}
+              </div>
+              <p
+                className={`mt-3 font-mono text-xs tabular ${
+                  customValid ? "text-lime" : "text-danger"
+                }`}
+                role={customValid ? undefined : "alert"}
+              >
+                {customValid
+                  ? "Adds up to 100% — you're set."
+                  : `Currently ${customSum}% — the three must total 100% (${MACRO_PCT_MIN}–${MACRO_PCT_MAX}% each).`}
+              </p>
+            </div>
+          )}
+        </section>
       </div>
 
       {/* live preview panel */}
@@ -254,6 +456,31 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
                 <span className="ml-1 text-sm opacity-70">kcal</span>
               </dd>
             </div>
+            {preview?.targets && (
+              <div>
+                <dt className="text-xs text-paper-mute">Daily macros</dt>
+                <dd className="mt-2 grid grid-cols-3 divide-x divide-ink-700 border-y border-ink-700">
+                  {(
+                    [
+                      ["Protein", preview.targets.protein, "bg-protein"],
+                      ["Carbs", preview.targets.carbs, "bg-carbs"],
+                      ["Fat", preview.targets.fat, "bg-fat"],
+                    ] as const
+                  ).map(([label, grams, dot]) => (
+                    <div key={label} className="px-3 py-2.5 first:pl-0">
+                      <p className="flex items-center gap-1.5 text-[11px] text-paper-mute">
+                        <span className={`size-1.5 rounded-full ${dot}`} aria-hidden />
+                        {label}
+                      </p>
+                      <p className="mt-0.5 font-mono text-base font-semibold text-paper tabular">
+                        {grams}
+                        <span className="ml-0.5 text-xs text-paper-mute">g</span>
+                      </p>
+                    </div>
+                  ))}
+                </dd>
+              </div>
+            )}
           </dl>
           <button
             type="submit"

@@ -14,6 +14,14 @@ create table if not exists public.profiles (
   weight_kg numeric(5, 1) check (weight_kg between 25 and 400),
   activity_level text check (activity_level in ('sedentary', 'light', 'moderate', 'active', 'athlete')),
   goal text check (goal in ('lose', 'maintain', 'gain')),
+  -- Custom macro split as percent of daily calories; all null = coach formula.
+  protein_pct integer check (protein_pct between 5 and 80),
+  carbs_pct integer check (carbs_pct between 5 and 80),
+  fat_pct integer check (fat_pct between 5 and 80),
+  constraint macro_split_sums_to_100 check (
+    (protein_pct is null and carbs_pct is null and fat_pct is null)
+    or protein_pct + carbs_pct + fat_pct = 100
+  ),
   onboarded boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
