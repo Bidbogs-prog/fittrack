@@ -296,6 +296,60 @@ export async function logWater(input: { date: string; delta: number }) {
   return { error: null };
 }
 
+/** Manual workout logging (roadmap 2.4); kcal is user-estimated. */
+export async function addExercise(formData: FormData) {
+  const { supabase, userId } = await requireUser();
+
+  const date = String(formData.get("date") ?? "");
+  const name = String(formData.get("name") ?? "").trim().slice(0, 80);
+  const kcal = Math.round(Number(formData.get("kcal")));
+  const minutesRaw = String(formData.get("minutes") ?? "").trim();
+  const minutes = minutesRaw === "" ? null : Math.round(Number(minutesRaw));
+
+  if (!DATE_RE.test(date) || !name) return { error: "Give the workout a name." };
+  if (!(kcal >= 1 && kcal <= 5000)) return { error: "Calories must be between 1 and 5000." };
+  if (minutes != null && !(minutes >= 1 && minutes <= 1440)) {
+    return { error: "Minutes must be between 1 and 1440." };
+  }
+
+  const { error } = await supabase
+    .from("exercise_logs")
+    .insert({ user_id: userId, log_date: date, name, minutes, kcal });
+  if (error) return { error: error.message };
+
+  revalidatePath("/dashboard");
+  return { error: null };
+}
+
+export async function deleteExercise(formData: FormData) {
+  const { supabase, userId } = await requireUser();
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
+
+  await supabase.from("exercise_logs").delete().eq("id", id).eq("user_id", userId);
+  revalidatePath("/dashboard");
+}
+
+/** Manual daily step count (roadmap 2.4) — absolute value, upserted. */
+export async function logSteps(formData: FormData) {
+  const { supabase, userId } = await requireUser();
+
+  const date = String(formData.get("date") ?? "");
+  const steps = Math.round(Number(formData.get("steps")));
+  if (!DATE_RE.test(date) || !(steps >= 0 && steps <= 200000)) {
+    return { error: "Steps must be between 0 and 200000." };
+  }
+
+  const { error } = await supabase.from("step_logs").upsert(
+    { user_id: userId, log_date: date, steps, updated_at: new Date().toISOString() },
+    { onConflict: "user_id,log_date" }
+  );
+  if (error) return { error: error.message };
+
+  revalidatePath("/dashboard");
+  return { error: null };
+}
+
 export async function deleteDiaryEntry(formData: FormData) {
   const { supabase, userId } = await requireUser();
   const id = String(formData.get("id") ?? "");

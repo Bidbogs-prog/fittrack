@@ -1,8 +1,24 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
+import { LOCALES, LOCALE_COOKIE } from "@/i18n/request";
+
+/** Switch the app language (roadmap 2.3) — cookie-based, per device. */
+export async function setLocale(formData: FormData) {
+  await requireUser();
+
+  const locale = String(formData.get("locale") ?? "");
+  if (!(LOCALES as readonly string[]).includes(locale)) redirect("/account");
+
+  const store = await cookies();
+  store.set(LOCALE_COOKIE, locale, { path: "/", maxAge: 60 * 60 * 24 * 365 });
+
+  revalidatePath("/", "layout");
+  redirect("/account");
+}
 
 export async function changePassword(formData: FormData) {
   const { supabase } = await requireUser();
@@ -18,6 +34,29 @@ export async function changePassword(formData: FormData) {
   if (error) redirect(`/account?error=${encodeURIComponent(error.message)}`);
 
   redirect(`/account?message=${encodeURIComponent("Password updated.")}`);
+}
+
+/** Switch display units (roadmap 2.2). Storage stays metric everywhere. */
+export async function saveUnits(formData: FormData) {
+  const { supabase, userId } = await requireUser();
+
+  const units = String(formData.get("units") ?? "");
+  if (units !== "metric" && units !== "imperial") {
+    redirect(`/account?error=${encodeURIComponent("Pick metric or imperial.")}`);
+  }
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ units, updated_at: new Date().toISOString() })
+    .eq("id", userId);
+  if (error) redirect(`/account?error=${encodeURIComponent(error.message)}`);
+
+  revalidatePath("/", "layout");
+  redirect(
+    `/account?message=${encodeURIComponent(
+      units === "imperial" ? "Showing imperial units (lb, ft/in)." : "Showing metric units."
+    )}`
+  );
 }
 
 /** Save or clear the optional intermittent-fasting eating window (roadmap 1.5). */

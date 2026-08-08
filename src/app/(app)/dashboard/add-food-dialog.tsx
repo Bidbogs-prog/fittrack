@@ -13,6 +13,7 @@ import {
   X,
 } from "@phosphor-icons/react";
 import { BarcodeScanner } from "@/components/barcode-scanner";
+import { enqueue, type QueuedKind } from "@/lib/offline-queue";
 import { AiLogView } from "./ai-log-view";
 import { FoodImage } from "@/components/food-image";
 import type { RecipeSuggestion } from "@/lib/diary";
@@ -144,11 +145,28 @@ export function AddFoodDialog({
     setError(null);
   }
 
-  function run(action: () => Promise<{ error: string | null } | undefined>) {
+  /**
+   * Run a log action. A thrown error means the network is gone (server
+   * errors return, they don't throw) — the entry goes to the offline
+   * queue (roadmap 2.1) and syncs when the connection returns.
+   */
+  function run(
+    action: (fd: FormData) => Promise<{ error: string | null } | undefined>,
+    fd: FormData,
+    kind: QueuedKind
+  ) {
     startTransition(async () => {
-      const res = await action();
-      if (res?.error) setError(res.error);
-      else reset();
+      try {
+        const res = await action(fd);
+        if (res?.error) setError(res.error);
+        else reset();
+      } catch {
+        const fields = Object.fromEntries(
+          [...fd.entries()].map(([k, v]) => [k, String(v)])
+        );
+        enqueue(kind, fields);
+        reset();
+      }
     });
   }
 
@@ -158,7 +176,7 @@ export function AddFoodDialog({
     fd.set("meal", meal);
     fd.set("entry_date", entryDate);
     fd.set("grams", grams);
-    run(() => addDiaryEntry(fd));
+    run(addDiaryEntry, fd, "food");
   }
 
   function submitRecipe(recipe: RecipeSuggestion) {
@@ -167,13 +185,13 @@ export function AddFoodDialog({
     fd.set("meal", meal);
     fd.set("entry_date", entryDate);
     fd.set("servings", servings);
-    run(() => addRecipeEntry(fd));
+    run(addRecipeEntry, fd, "recipe");
   }
 
   function submitQuick(fd: FormData) {
     fd.set("meal", meal);
     fd.set("entry_date", entryDate);
-    run(() => addQuickEntry(fd));
+    run(addQuickEntry, fd, "quick");
   }
 
   async function handleBarcode(code: string) {
@@ -714,6 +732,29 @@ function FoodPortion({
           onChange={(e) => setGrams(e.target.value)}
           className="field tabular"
         />
+        {/* Household serving shortcuts (roadmap 2.2) — grams stay the truth. */}
+        {food.serving_grams != null && (
+          <div className="flex flex-wrap gap-2 pt-1">
+            {([0.5, 1, 2] as const).map((n) => {
+              const g = Math.round(food.serving_grams! * n * 10) / 10;
+              return (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => setGrams(String(g))}
+                  className={`btn-press rounded-full border px-3 py-1.5 text-xs transition-colors pointer-coarse:py-2 ${
+                    Number(grams) === g
+                      ? "border-lime/60 bg-lime/10 text-lime"
+                      : "border-ink-700 text-paper-dim hover:border-lime/40 hover:text-paper"
+                  }`}
+                >
+                  {n === 0.5 ? "½" : n} × {food.serving_name ?? "serving"}
+                  <span className="ml-1 font-mono tabular">({g} g)</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       <MacroPreview macros={portion} />

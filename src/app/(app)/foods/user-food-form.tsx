@@ -70,6 +70,35 @@ export function UserFoodForm({
         </div>
       </div>
 
+      <div className="grid gap-5 sm:grid-cols-2">
+        <div className="space-y-2">
+          <label htmlFor="serving_name" className="field-label">Serving name (optional)</label>
+          <input
+            id="serving_name"
+            name="serving_name"
+            maxLength={60}
+            defaultValue={food?.serving_name ?? ""}
+            placeholder="e.g. 1 cup, 1 medium egg"
+            className="field"
+          />
+        </div>
+        <div className="space-y-2">
+          <label htmlFor="serving_grams" className="field-label">Serving weight (g)</label>
+          <input
+            id="serving_grams"
+            name="serving_grams"
+            type="number"
+            inputMode="decimal"
+            min={1}
+            max={5000}
+            step="0.1"
+            defaultValue={food?.serving_grams ?? ""}
+            placeholder="e.g. 240"
+            className="field tabular"
+          />
+        </div>
+      </div>
+
       <div className="space-y-2">
         <label htmlFor="barcode" className="field-label">Barcode (optional)</label>
         <input

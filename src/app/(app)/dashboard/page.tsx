@@ -12,12 +12,21 @@ import { getProfile } from "@/lib/auth";
 import { entryMacros, entryMicros } from "@/lib/diary";
 import { GOALS, calcWaterTargetMl, sumMacros, sumMicros } from "@/lib/nutrition";
 import { calcStreaks } from "@/lib/streak";
-import { MEAL_TYPES, type DiaryEntry, type MealType, type WeightLog } from "@/lib/types";
+import { displayWeight, weightUnit } from "@/lib/units";
+import {
+  MEAL_TYPES,
+  type DiaryEntry,
+  type ExerciseLog,
+  type MealType,
+  type WeightLog,
+} from "@/lib/types";
 import { trendDelta, weightTrend } from "@/lib/weight";
+import { ActivityCard } from "./activity-card";
 import { AddFoodDialog } from "./add-food-dialog";
 import { copyDiaryEntries } from "./actions";
 import { EntryRow } from "./entry-row";
 import { Habits } from "./habits";
+import { OfflineSync } from "./offline-sync";
 import { WeightCard } from "./weight-card";
 
 export const metadata = { title: "Today" };
@@ -78,20 +87,33 @@ export default async function DashboardPage({
         .maybeSingle(),
     ]);
 
-  const [{ data: streakData }, { data: waterData }] = await Promise.all([
-    supabase
-      .from("diary_entries")
-      .select("entry_date")
-      .eq("user_id", userId)
-      .gte("entry_date", shiftDate(today, -219))
-      .lte("entry_date", today),
-    supabase
-      .from("water_logs")
-      .select("ml")
-      .eq("user_id", userId)
-      .eq("log_date", date)
-      .maybeSingle(),
-  ]);
+  const [{ data: streakData }, { data: waterData }, { data: exerciseData }, { data: stepData }] =
+    await Promise.all([
+      supabase
+        .from("diary_entries")
+        .select("entry_date")
+        .eq("user_id", userId)
+        .gte("entry_date", shiftDate(today, -219))
+        .lte("entry_date", today),
+      supabase
+        .from("water_logs")
+        .select("ml")
+        .eq("user_id", userId)
+        .eq("log_date", date)
+        .maybeSingle(),
+      supabase
+        .from("exercise_logs")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("log_date", date)
+        .order("created_at"),
+      supabase
+        .from("step_logs")
+        .select("steps")
+        .eq("user_id", userId)
+        .eq("log_date", date)
+        .maybeSingle(),
+    ]);
   const streaks = calcStreaks(
     (streakData ?? []).map((r) => r.entry_date as string),
     today
@@ -103,7 +125,14 @@ export default async function DashboardPage({
 
   const eaten = sumMacros(entries.map(entryMacros));
   const microTotals = sumMicros(entries.map(entryMicros));
-  const remaining = Math.round(targets.kcal - eaten.kcal);
+
+  // Exercise raises the day's calorie target — but only for formula
+  // targets. Adaptive TDEE already measures total burn, so crediting
+  // workouts on top would double-count them.
+  const exercises = (exerciseData ?? []) as ExerciseLog[];
+  const burned = exercises.reduce((sum, e) => sum + e.kcal, 0);
+  const kcalTarget = adaptive ? targets.kcal : targets.kcal + burned;
+  const remaining = Math.round(kcalTarget - eaten.kcal);
   const isToday = date === today;
   const dateLabel = new Date(date + "T12:00:00").toLocaleDateString("en-GB", {
     weekday: "long",
@@ -150,6 +179,8 @@ export default async function DashboardPage({
         </nav>
       </Reveal>
 
+      <OfflineSync />
+
       {/* energy hero */}
       <Reveal
         as="section"
@@ -157,7 +188,7 @@ export default async function DashboardPage({
         delay={0.1}
         className="grid gap-6 rounded-2xl border border-ink-800 bg-ink-900/60 p-6 lg:grid-cols-[auto_1fr] lg:items-center lg:gap-10 lg:p-8"
       >
-        <CalorieRing eaten={eaten.kcal} target={targets.kcal} />
+        <CalorieRing eaten={eaten.kcal} target={kcalTarget} />
         <div>
           <p className="font-display text-xl font-semibold tracking-tight text-paper">
             {remaining >= 0 ? (
@@ -177,7 +208,13 @@ export default async function DashboardPage({
               [
                 ["BMR", targets.bmr, "resting burn"],
                 ["TDEE", targets.tdee, adaptive ? "adaptive burn" : "daily burn"],
-                ["Target", targets.kcal, GOALS[targets.goal].label.toLowerCase()],
+                [
+                  "Target",
+                  kcalTarget,
+                  burned > 0 && !adaptive
+                    ? `incl. +${burned} exercise`
+                    : GOALS[targets.goal].label.toLowerCase(),
+                ],
               ] as const
             ).map(([label, value, sub]) => (
               <div key={label} className="px-3 py-3 first:pl-0 sm:px-4">
@@ -197,9 +234,9 @@ export default async function DashboardPage({
               <span className="font-mono text-paper-dim tabular">{adaptive.intakeAvg}</span> kcal/day
               while your trend weight {adaptive.weightDeltaKg <= 0 ? "dropped" : "rose"}{" "}
               <span className="font-mono text-paper-dim tabular">
-                {Math.abs(adaptive.weightDeltaKg).toFixed(1)}
+                {displayWeight(Math.abs(adaptive.weightDeltaKg), profile.units).toFixed(1)}
               </span>{" "}
-              kg, so your measured burn is{" "}
+              {weightUnit(profile.units)}, so your measured burn is{" "}
               <span className="font-mono text-paper-dim tabular">{adaptive.tdee}</span> kcal.
               Recalibrates every Monday from your diary and weigh-ins.
             </p>
@@ -223,6 +260,14 @@ export default async function DashboardPage({
         date={date}
         isToday={isToday}
         defaultWeight={profile.weight_kg}
+        units={profile.units}
+      />
+
+      <ActivityCard
+        date={date}
+        exercises={exercises}
+        steps={stepData?.steps ?? null}
+        adaptive={adaptive != null}
       />
 
       <AiInsights

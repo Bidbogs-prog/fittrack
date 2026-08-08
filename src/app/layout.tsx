@@ -1,5 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Outfit } from "next/font/google";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages } from "next-intl/server";
+import { SwRegister } from "@/components/sw-register";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -33,21 +36,39 @@ export const metadata: Metadata = {
   },
   description:
     "Fitness tracker with precise per-gram nutrition, TDEE-based targets and coach-built meal plans.",
+  // PWA (roadmap 2.1): the manifest link comes from src/app/manifest.ts.
+  appleWebApp: {
+    capable: true,
+    title: "FitTrack",
+    statusBarStyle: "black-translucent",
+  },
+  icons: {
+    apple: "/icons/apple-touch-icon.png",
+  },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Locale comes from the cookie (src/i18n/request.ts); Arabic flips the
+  // whole document to RTL.
+  const locale = await getLocale();
+  const messages = await getMessages();
+
   return (
     <html
-      lang="en"
+      lang={locale}
+      dir={locale === "ar" ? "rtl" : "ltr"}
       className={`${geistSans.variable} ${geistMono.variable} ${outfit.variable} antialiased`}
     >
       {/* min-h-[100dvh] (not h-full chains): tracks the iOS dynamic toolbar
           without leaving a spurious scrollable gap. */}
-      <body className="grain flex min-h-[100dvh] flex-col">{children}</body>
+      <body className="grain flex min-h-[100dvh] flex-col">
+        <NextIntlClientProvider messages={messages}>{children}</NextIntlClientProvider>
+        <SwRegister />
+      </body>
     </html>
   );
 }

@@ -390,7 +390,7 @@ export function MacroChart({ days }: { days: DayStat[] }) {
 
 // ---------- Weight ----------
 
-export function WeightChart({ points }: { points: TrendPoint[] }) {
+export function WeightChart({ points, unit = "kg" }: { points: TrendPoint[]; unit?: string }) {
   const { ref, idx, onPointerMove, onPointerLeave } = usePointerIndex(points.length);
   const values = points.flatMap((p) => [p.weight, p.trend]);
   const min = Math.floor(Math.min(...values) - 0.5);
@@ -464,8 +464,8 @@ export function WeightChart({ points }: { points: TrendPoint[] }) {
             n={points.length}
             title={shortDate(hovered.date)}
             rows={[
-              { label: "Trend", value: `${hovered.trend.toFixed(1)} kg`, swatch: "var(--color-lime)" },
-              { label: "Scale", value: `${hovered.weight.toFixed(1)} kg` },
+              { label: "Trend", value: `${hovered.trend.toFixed(1)} ${unit}`, swatch: "var(--color-lime)" },
+              { label: "Scale", value: `${hovered.weight.toFixed(1)} ${unit}` },
             ]}
           />
         )}

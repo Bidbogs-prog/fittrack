@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   ChartLineUp,
   ForkKnife,
@@ -11,22 +12,23 @@ import {
   type Icon,
 } from "@phosphor-icons/react";
 
-const LINKS: { href: string; label: string; short: string; icon: Icon }[] = [
-  { href: "/dashboard", label: "Today", short: "Today", icon: Gauge },
-  { href: "/history", label: "History", short: "History", icon: ChartLineUp },
-  { href: "/foods", label: "Food library", short: "Foods", icon: ForkKnife },
-  { href: "/plans", label: "Meal plans", short: "Plans", icon: ListChecks },
+const LINKS: { href: string; labelKey: string; shortKey: string; icon: Icon }[] = [
+  { href: "/dashboard", labelKey: "today", shortKey: "today", icon: Gauge },
+  { href: "/history", labelKey: "history", shortKey: "history", icon: ChartLineUp },
+  { href: "/foods", labelKey: "foodLibrary", shortKey: "foods", icon: ForkKnife },
+  { href: "/plans", labelKey: "plans", shortKey: "plansShort", icon: ListChecks },
 ];
 
-const ADMIN_LINK = { href: "/admin", label: "Admin", short: "Admin", icon: ShieldStar };
+const ADMIN_LINK = { href: "/admin", labelKey: "admin", shortKey: "admin", icon: ShieldStar };
 
 export function AppNav({ admin }: { admin: boolean }) {
+  const t = useTranslations("nav");
   const pathname = usePathname();
   const links = admin ? [...LINKS, ADMIN_LINK] : LINKS;
 
   return (
     <nav className="flex gap-1 max-md:w-full max-md:justify-around md:flex-col">
-      {links.map(({ href, label, short, icon: Icon }) => {
+      {links.map(({ href, labelKey, shortKey, icon: Icon }) => {
         const active = pathname === href || pathname.startsWith(href + "/");
         return (
           <Link
@@ -40,8 +42,8 @@ export function AppNav({ admin }: { admin: boolean }) {
             }`}
           >
             <Icon weight={active ? "fill" : "regular"} className="size-5 shrink-0" />
-            <span className="md:hidden">{short}</span>
-            <span className="max-md:hidden">{label}</span>
+            <span className="md:hidden">{t(shortKey)}</span>
+            <span className="max-md:hidden">{t(labelKey)}</span>
           </Link>
         );
       })}

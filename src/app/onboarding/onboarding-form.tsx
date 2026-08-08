@@ -89,6 +89,7 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
             fat_pct: activeSplit?.fat ?? null,
             eating_window_start: null,
             eating_window_end: null,
+            units: "metric",
             onboarded: true,
           })
         : null;

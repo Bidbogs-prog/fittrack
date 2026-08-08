@@ -15,6 +15,8 @@ interface UserFoodValues {
   carbs_g: number;
   fat_g: number;
   fibre_g: number;
+  serving_name: string | null;
+  serving_grams: number | null;
 }
 
 /** Per-100 g facts for a user-created food; returns an error message or values. */
@@ -44,6 +46,19 @@ function parseUserFood(formData: FormData): { values: UserFoodValues } | { error
     return { error: "Macros per 100 g must be between 0 and 100." };
   }
 
+  // Optional household serving (roadmap 2.2): both fields or neither.
+  const servingName = String(formData.get("serving_name") ?? "").trim().slice(0, 60) || null;
+  const servingGramsRaw = String(formData.get("serving_grams") ?? "").trim();
+  let servingGrams: number | null = null;
+  if (servingGramsRaw !== "") {
+    const n = Number(servingGramsRaw);
+    if (!(n > 0 && n <= 5000)) return { error: "Serving weight must be between 1 and 5000 g." };
+    servingGrams = Math.round(n * 10) / 10;
+  }
+  if ((servingName == null) !== (servingGrams == null)) {
+    return { error: "A serving needs both a name and a weight — or leave both empty." };
+  }
+
   return {
     values: {
       name,
@@ -55,6 +70,8 @@ function parseUserFood(formData: FormData): { values: UserFoodValues } | { error
       carbs_g: carbs,
       fat_g: fat,
       fibre_g: fibre,
+      serving_name: servingName,
+      serving_grams: servingGrams,
     },
   };
 }

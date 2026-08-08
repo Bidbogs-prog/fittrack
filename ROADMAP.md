@@ -98,25 +98,27 @@ This is a living document. Check items off as they ship, add notes/links to PRs,
 ## P2 — Platform & reach
 
 ### 2.1 PWA
-- [ ] Manifest + service worker + installability
-- [ ] Offline diary queue (log offline, sync later)
-- [ ] Push reminders: meal-time nudges, streak protection, weigh-in reminder
+- [x] Manifest (`src/app/manifest.ts` + generated icons in `public/icons/`), service worker (`public/sw.js`: network-first pages with `/offline.html` fallback, cache-first static assets), registered in production by `sw-register.tsx` — installable on Android/desktop, apple-touch-icon for iOS
+- [x] Offline diary queue: failed log actions (network throw) land in localStorage (`src/lib/offline-queue.ts`); `offline-sync.tsx` on the dashboard replays them through the same server actions when the connection returns, with a visible banner
+- [ ] Push reminders: needs web-push infra outside this repo (VAPID keys, subscriptions table, scheduled sender — pair with a Supabase Edge Function cron)
 
 ### 2.2 Units & servings
-- [ ] Household serving sizes ("1 cup", "1 medium egg") — grams stay the default and source of truth
-- [ ] Imperial display option (lb, ft/in)
+- [x] Household serving sizes: `foods.serving_name/serving_grams` (nullable), editable on user foods, ½/1/2 shortcut chips in the portion picker — grams stay the source of truth
+- [x] Imperial display option: `profiles.units` + `src/lib/units.ts`, account toggle; weight card (incl. lb input converted to kg), history chart/tiles and the adaptive explanation all convert at the display edge. Storage stays metric everywhere
 
 ### 2.3 i18n — French + Arabic (RTL) first
-- [ ] The food DB is Morocco-filtered (French/Arabic product names) while UI is English-only — fix the mismatch with the seed market
-- [ ] RTL layout audit
+- [x] Infrastructure: next-intl (cookie locale, no URL restructure), `messages/{en,fr,ar}.json`, language switcher on `/account`, `html lang` + `dir=rtl` for Arabic
+- [x] First translated surfaces: nav, login, forgot-password, account
+- [ ] Remaining surfaces: signup/reset, dashboard, add-food dialog, foods, plans, history, onboarding (extract strings into the existing namespaces — pattern established)
+- [ ] RTL layout audit (physical `pl-*`/`left-*` utilities need logical or `rtl:` variants once Arabic content is real)
 
 ### 2.4 Exercise & integrations
-- [ ] Manual workout logging with calorie adjustment to the daily target
-- [ ] Steps
-- [ ] Apple Health / Google Fit sync — realistically needs the native wrapper (see 3.2); schedule together
+- [x] Manual workout logging (`exercise_logs`, activity card on the dashboard); burned kcal raises the day's target for formula targets only — adaptive TDEE already measures total burn, so no double credit. Exercise is also fed to the AI coach prompt
+- [x] Steps: manual daily count (`step_logs`), informational
+- [ ] Apple Health / Google Fit sync — needs the native wrapper (see 3.2); schedule together
 
 ### 2.5 Data export
-- [ ] CSV/JSON export of diary + weight history (cheap; trust signal reviewers check)
+- [x] CSV/JSON export of diary + weight history (`/api/export`, derived through the same diary helpers the UI uses), download cards on `/account`
 
 ---
 

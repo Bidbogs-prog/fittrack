@@ -36,6 +36,12 @@ alter table public.profiles
   add column if not exists eating_window_start time,
   add column if not exists eating_window_end time;
 
+-- Display units (roadmap 2.2). Storage stays metric everywhere; imperial
+-- is a presentation choice (lb, ft/in) converted at the edges.
+alter table public.profiles
+  add column if not exists units text not null default 'metric'
+    check (units in ('metric', 'imperial'));
+
 alter table public.profiles enable row level security;
 
 drop policy if exists "profiles: read own" on public.profiles;
@@ -147,6 +153,13 @@ alter table public.foods
 alter table public.foods drop constraint if exists foods_source_check;
 alter table public.foods add constraint foods_source_check
   check (source in ('manual', 'off', 'usda'));
+
+-- Household serving sizes (roadmap 2.2): purely presentational shortcuts —
+-- grams remain the source of truth for every calculation.
+alter table public.foods
+  add column if not exists serving_name text,
+  add column if not exists serving_grams numeric(6, 1)
+    check (serving_grams > 0 and serving_grams <= 5000);
 
 -- Users can create private foods: `owner_id` set = visible to that user
 -- only, null = global (curated/imported). `created_by` stays provenance.
@@ -333,6 +346,78 @@ $$;
 
 revoke execute on function public.log_water(date, integer) from public, anon;
 grant execute on function public.log_water(date, integer) to authenticated;
+
+-- ---------- EXERCISE & STEPS (roadmap 2.4) ----------
+-- Manual workout logging; kcal burned adjusts the day's calorie target
+-- (formula targets only — adaptive TDEE already measures total burn).
+create table if not exists public.exercise_logs (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users (id) on delete cascade default auth.uid(),
+  log_date date not null default current_date,
+  name text not null,
+  minutes integer check (minutes between 1 and 1440),
+  kcal integer not null check (kcal between 1 and 5000),
+  created_at timestamptz not null default now()
+);
+
+create index if not exists exercise_logs_user_date_idx
+  on public.exercise_logs (user_id, log_date);
+
+alter table public.exercise_logs enable row level security;
+
+drop policy if exists "exercise: read own" on public.exercise_logs;
+create policy "exercise: read own" on public.exercise_logs
+  for select to authenticated
+  using ((select auth.uid()) = user_id);
+
+drop policy if exists "exercise: insert own" on public.exercise_logs;
+create policy "exercise: insert own" on public.exercise_logs
+  for insert to authenticated
+  with check ((select auth.uid()) = user_id);
+
+drop policy if exists "exercise: update own" on public.exercise_logs;
+create policy "exercise: update own" on public.exercise_logs
+  for update to authenticated
+  using ((select auth.uid()) = user_id)
+  with check ((select auth.uid()) = user_id);
+
+drop policy if exists "exercise: delete own" on public.exercise_logs;
+create policy "exercise: delete own" on public.exercise_logs
+  for delete to authenticated
+  using ((select auth.uid()) = user_id);
+
+-- Daily step counts, manually entered (HealthKit/Google Fit sync needs
+-- the native wrapper, roadmap 3.2). Informational — no calorie credit.
+create table if not exists public.step_logs (
+  user_id uuid not null references auth.users (id) on delete cascade default auth.uid(),
+  log_date date not null default current_date,
+  steps integer not null check (steps between 0 and 200000),
+  updated_at timestamptz not null default now(),
+  primary key (user_id, log_date)
+);
+
+alter table public.step_logs enable row level security;
+
+drop policy if exists "steps: read own" on public.step_logs;
+create policy "steps: read own" on public.step_logs
+  for select to authenticated
+  using ((select auth.uid()) = user_id);
+
+drop policy if exists "steps: insert own" on public.step_logs;
+create policy "steps: insert own" on public.step_logs
+  for insert to authenticated
+  with check ((select auth.uid()) = user_id);
+
+drop policy if exists "steps: update own" on public.step_logs;
+create policy "steps: update own" on public.step_logs
+  for update to authenticated
+  using ((select auth.uid()) = user_id)
+  with check ((select auth.uid()) = user_id);
+
+drop policy if exists "steps: delete own" on public.step_logs;
+create policy "steps: delete own" on public.step_logs
+  for delete to authenticated
+  using ((select auth.uid()) = user_id);
 
 -- ---------- FAVORITE FOODS ----------
 create table if not exists public.favorite_foods (

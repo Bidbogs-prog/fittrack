@@ -3,6 +3,7 @@ import { Reveal } from "@/components/motion/reveal";
 import { getActiveTargets, weekStart } from "@/lib/adaptive";
 import { getProfile } from "@/lib/auth";
 import { entryMacros } from "@/lib/diary";
+import { displayWeight, weightUnit } from "@/lib/units";
 import type { DiaryEntry, WeightLog } from "@/lib/types";
 import { trendDelta, weightTrend } from "@/lib/weight";
 import { CalorieChart, MacroChart, WeightChart, type DayStat } from "./charts";
@@ -143,7 +144,7 @@ export default async function HistoryPage() {
       label: "Weight, 30 days",
       value:
         weightDelta != null
-          ? `${weightDelta >= 0 ? "+" : ""}${weightDelta.toFixed(1)} kg`
+          ? `${weightDelta >= 0 ? "+" : ""}${displayWeight(weightDelta, profile.units).toFixed(1)} ${weightUnit(profile.units)}`
           : "—",
       unit: weightDelta != null ? "smoothed trend" : "log weigh-ins to unlock",
     },
@@ -238,7 +239,14 @@ export default async function HistoryPage() {
               Log at least two weigh-ins on the dashboard to see your trend.
             </p>
           ) : (
-            <WeightChart points={trendPoints} />
+            <WeightChart
+              points={trendPoints.map((p) => ({
+                ...p,
+                weight: displayWeight(p.weight, profile.units),
+                trend: displayWeight(p.trend, profile.units),
+              }))}
+              unit={weightUnit(profile.units)}
+            />
           )}
         </div>
       </section>

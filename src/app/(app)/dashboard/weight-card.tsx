@@ -2,6 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { TrendDown, TrendUp } from "@phosphor-icons/react";
+import { displayWeight, inputWeightToKg, weightUnit } from "@/lib/units";
+import type { Units } from "@/lib/types";
 import type { TrendPoint } from "@/lib/weight";
 import { logWeight } from "./actions";
 
@@ -46,8 +48,9 @@ export function WeightCard({
   date,
   isToday,
   defaultWeight,
+  units = "metric",
 }: {
-  /** EWMA trend points, oldest first. */
+  /** EWMA trend points, oldest first. Always kg — display converts. */
   points: TrendPoint[];
   /** Trend change over the trailing week, kg. */
   delta: number | null;
@@ -55,20 +58,29 @@ export function WeightCard({
   date: string;
   isToday: boolean;
   defaultWeight: number | null;
+  units?: Units;
 }) {
+  const unit = weightUnit(units);
   const logged = points.find((p) => p.date === date) ?? null;
   const last = points[points.length - 1] ?? null;
+  // The input works in display units; storage stays kg.
   const [weight, setWeight] = useState(
-    logged ? String(logged.weight) : defaultWeight ? String(defaultWeight) : ""
+    logged
+      ? String(displayWeight(logged.weight, units))
+      : defaultWeight
+        ? String(displayWeight(defaultWeight, units))
+        : ""
   );
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+
+  const inputKg = inputWeightToKg(Number(weight) || 0, units);
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
     const fd = new FormData();
     fd.set("date", date);
-    fd.set("weight_kg", weight);
+    fd.set("weight_kg", String(inputKg));
     startTransition(async () => {
       const res = await logWeight(fd);
       setError(res?.error ?? null);
@@ -85,7 +97,7 @@ export function WeightCard({
         </p>
         <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <span className="font-mono text-2xl font-semibold tracking-tight text-paper tabular">
-            {last ? `${last.trend.toFixed(1)} kg` : "—"}
+            {last ? `${displayWeight(last.trend, units).toFixed(1)} ${unit}` : "—"}
           </span>
           {delta != null && (
             <span
@@ -99,7 +111,7 @@ export function WeightCard({
                 <TrendUp weight="bold" className="size-3.5" />
               )}
               {delta >= 0 ? "+" : ""}
-              {delta.toFixed(1)} kg / 7d
+              {displayWeight(delta, units).toFixed(1)} {unit} / 7d
             </span>
           )}
         </div>
@@ -122,17 +134,17 @@ export function WeightCard({
               id="weight_kg"
               type="number"
               inputMode="decimal"
-              min={25}
-              max={400}
+              min={units === "imperial" ? 55 : 25}
+              max={units === "imperial" ? 880 : 400}
               step="0.1"
               value={weight}
               onChange={(e) => setWeight(e.target.value)}
-              placeholder="kg"
+              placeholder={unit}
               className="field w-28 tabular"
             />
             <button
               type="submit"
-              disabled={pending || !(Number(weight) >= 25 && Number(weight) <= 400)}
+              disabled={pending || !(inputKg >= 25 && inputKg <= 400)}
               className="btn-press rounded-xl bg-lime px-4 py-2.5 font-display text-xs font-bold uppercase tracking-wide text-lime-ink hover:bg-lime-deep disabled:cursor-not-allowed disabled:opacity-40"
             >
               {pending ? "Saving…" : logged ? "Update" : "Log"}

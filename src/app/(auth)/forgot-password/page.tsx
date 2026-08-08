@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { WarningCircle } from "@phosphor-icons/react/dist/ssr";
+import { getTranslations } from "next-intl/server";
 import { Reveal } from "@/components/motion/reveal";
 import { forgotPassword } from "../actions";
 
@@ -10,15 +11,15 @@ export default async function ForgotPasswordPage({
 }: {
   searchParams: Promise<{ error?: string }>;
 }) {
-  const { error } = await searchParams;
+  const [{ error }, t] = await Promise.all([searchParams, getTranslations("auth")]);
 
   return (
     <Reveal className="w-full max-w-sm" onScroll={false} stagger={0.06} y={16}>
       <h1 data-reveal className="font-display text-3xl font-bold tracking-tight text-paper">
-        Forgot your password?
+        {t("forgotTitle")}
       </h1>
       <p data-reveal className="mt-2 text-sm text-paper-mute">
-        Enter your email and we&rsquo;ll send a link to set a new one.
+        {t("forgotSubtitle")}
       </p>
 
       {error && (
@@ -33,7 +34,7 @@ export default async function ForgotPasswordPage({
 
       <form action={forgotPassword} className="mt-7 space-y-5">
         <div data-reveal className="space-y-2">
-          <label htmlFor="email" className="field-label">Email</label>
+          <label htmlFor="email" className="field-label">{t("email")}</label>
           <input
             id="email"
             name="email"
@@ -49,14 +50,14 @@ export default async function ForgotPasswordPage({
           type="submit"
           className="btn-press w-full rounded-xl bg-lime px-5 py-3 font-display text-sm font-bold uppercase tracking-wide text-lime-ink transition-colors hover:bg-lime-deep"
         >
-          Send reset link
+          {t("sendResetLink")}
         </button>
       </form>
 
       <p data-reveal className="mt-6 text-sm text-paper-mute">
-        Remembered it?{" "}
+        {t("rememberedIt")}{" "}
         <Link href="/login" className="font-medium text-paper underline-offset-4 hover:underline">
-          Back to log in
+          {t("backToLogin")}
         </Link>
       </p>
     </Reveal>

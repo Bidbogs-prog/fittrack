@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Offline · FitTrack</title>
+  <style>
+    body {
+      margin: 0;
+      min-height: 100dvh;
+      display: grid;
+      place-items: center;
+      background: #090b08;
+      color: #f2f4ee;
+      font-family: system-ui, -apple-system, sans-serif;
+      text-align: center;
+      padding: 24px;
+    }
+    .card { max-width: 26rem; }
+    h1 { font-size: 1.4rem; letter-spacing: -0.02em; margin: 0 0 0.5rem; }
+    p { color: #9aa392; font-size: 0.95rem; line-height: 1.5; margin: 0 0 1.25rem; }
+    a {
+      display: inline-block;
+      background: #bef264;
+      color: #090b08;
+      font-weight: 700;
+      text-decoration: none;
+      padding: 10px 20px;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>You're offline</h1>
+    <p>
+      No connection right now. Pages you've already visited still work —
+      and anything you quick-log while offline syncs when you're back.
+    </p>
+    <a href="/dashboard">Try again</a>
+  </div>
+</body>
+</html>

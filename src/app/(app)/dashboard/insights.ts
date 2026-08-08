@@ -15,7 +15,13 @@ import {
   sumMacros,
   sumMicros,
 } from "@/lib/nutrition";
-import { MEAL_TYPES, MICRO_KEYS, type DiaryEntry, type Profile } from "@/lib/types";
+import {
+  MEAL_TYPES,
+  MICRO_KEYS,
+  type DiaryEntry,
+  type ExerciseLog,
+  type Profile,
+} from "@/lib/types";
 
 export interface DayInsight {
   /** win = on track, watch = needs attention, tip = practical adjustment or fact. */
@@ -84,10 +90,23 @@ function describeDay(
   profile: Profile,
   entries: DiaryEntry[],
   entryDate: string,
-  active: ActiveTargets
+  active: ActiveTargets,
+  exercises: ExerciseLog[]
 ): string {
   const { targets, adaptive } = active;
   const eaten = sumMacros(entries.map(entryMacros));
+  const burned = exercises.reduce((sum, e) => sum + e.kcal, 0);
+  const exerciseBlock =
+    exercises.length === 0
+      ? "EXERCISE: none logged"
+      : `EXERCISE (${burned} kcal total${
+          adaptive
+            ? "; already part of the adaptive TDEE, no extra calorie credit"
+            : `; the calorie target for this day is raised to ${targets.kcal + burned} kcal`
+        })
+${exercises
+  .map((e) => `- ${e.name}${e.minutes != null ? `, ${e.minutes} min` : ""}: ${e.kcal} kcal`)
+  .join("\n")}`;
   const isToday = entryDate === new Date().toLocaleDateString("en-CA");
 
   const meals = MEAL_TYPES.map((meal) => {
@@ -122,6 +141,8 @@ DAY BEING ANALYSED: ${entryDate}${isToday ? " (today — the day is still in pro
 
 TOTAL EATEN: ${Math.round(eaten.kcal)} kcal · protein ${round1(eaten.protein)} g · carbs ${round1(eaten.carbs)} g · fat ${round1(eaten.fat)} g · fibre ${round1(eaten.fibre)} g
 
+${exerciseBlock}
+
 MEALS
 ${meals}
 
@@ -142,13 +163,22 @@ export async function generateDayInsights(
     return { data: null, error: "Finish onboarding so the coach knows your targets." };
   }
 
-  const { data: entriesData } = await supabase
-    .from("diary_entries")
-    .select("*, food:foods(*)")
-    .eq("user_id", userId)
-    .eq("entry_date", entryDate)
-    .order("created_at");
+  const [{ data: entriesData }, { data: exerciseData }] = await Promise.all([
+    supabase
+      .from("diary_entries")
+      .select("*, food:foods(*)")
+      .eq("user_id", userId)
+      .eq("entry_date", entryDate)
+      .order("created_at"),
+    supabase
+      .from("exercise_logs")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("log_date", entryDate)
+      .order("created_at"),
+  ]);
   const entries = (entriesData ?? []) as DiaryEntry[];
+  const exercises = (exerciseData ?? []) as ExerciseLog[];
 
   if (entries.length === 0) {
     return { data: null, error: "Nothing logged for this day yet — add a meal first." };
@@ -157,7 +187,7 @@ export async function generateDayInsights(
   try {
     const data = await generateJson<DayInsights>({
       systemPrompt: SYSTEM_PROMPT,
-      userPrompt: describeDay(profile, entries, entryDate, active),
+      userPrompt: describeDay(profile, entries, entryDate, active, exercises),
       schema: INSIGHTS_SCHEMA,
     });
     if (!data.summary || !Array.isArray(data.insights) || data.insights.length === 0) {

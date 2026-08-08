@@ -1,6 +1,8 @@
-import { Info, WarningCircle } from "@phosphor-icons/react/dist/ssr";
+import { DownloadSimple, Info, WarningCircle } from "@phosphor-icons/react/dist/ssr";
+import { getLocale, getTranslations } from "next-intl/server";
 import { getProfile } from "@/lib/auth";
-import { changePassword, deleteAccount, saveFastingWindow } from "./actions";
+import { LOCALES, LOCALE_LABELS } from "@/i18n/request";
+import { changePassword, deleteAccount, saveFastingWindow, saveUnits, setLocale } from "./actions";
 
 export const metadata = { title: "Account" };
 
@@ -9,7 +11,12 @@ export default async function AccountPage({
 }: {
   searchParams: Promise<{ error?: string; message?: string }>;
 }) {
-  const [{ profile }, { error, message }] = await Promise.all([getProfile(), searchParams]);
+  const [{ profile }, { error, message }, t, locale] = await Promise.all([
+    getProfile(),
+    searchParams,
+    getTranslations("account"),
+    getLocale(),
+  ]);
 
   return (
     <div className="space-y-8">
@@ -18,7 +25,7 @@ export default async function AccountPage({
           {profile.email}
         </p>
         <h1 className="mt-1.5 font-display text-3xl font-bold tracking-tighter text-paper md:text-4xl">
-          Account
+          {t("title")}
         </h1>
       </header>
 
@@ -36,10 +43,44 @@ export default async function AccountPage({
       )}
 
       <section className="max-w-xl rounded-2xl border border-ink-800 bg-ink-900/60 p-5 lg:p-6">
-        <h2 className="font-display text-base font-semibold text-paper">Change password</h2>
+        <h2 className="font-display text-base font-semibold text-paper">{t("language")}</h2>
+        <p className="mt-2 text-sm text-paper-dim">{t("languageHint")}</p>
+        <form action={setLocale} className="mt-4 flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={t("language")}>
+            {LOCALES.map((code) => (
+              <label
+                key={code}
+                className={`btn-press cursor-pointer rounded-full border px-4 py-2 text-xs font-semibold transition-colors ${
+                  locale === code
+                    ? "border-lime/60 bg-lime/10 text-lime"
+                    : "border-ink-700 text-paper-dim hover:text-paper"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="locale"
+                  value={code}
+                  defaultChecked={locale === code}
+                  className="sr-only"
+                />
+                {LOCALE_LABELS[code]}
+              </label>
+            ))}
+          </div>
+          <button
+            type="submit"
+            className="btn-press rounded-xl bg-lime px-5 py-2 font-display text-xs font-bold uppercase tracking-wide text-lime-ink hover:bg-lime-deep"
+          >
+            {t("save")}
+          </button>
+        </form>
+      </section>
+
+      <section className="max-w-xl rounded-2xl border border-ink-800 bg-ink-900/60 p-5 lg:p-6">
+        <h2 className="font-display text-base font-semibold text-paper">{t("changePassword")}</h2>
         <form action={changePassword} className="mt-4 space-y-4">
           <div className="space-y-2">
-            <label htmlFor="password" className="field-label">New password</label>
+            <label htmlFor="password" className="field-label">{t("newPassword")}</label>
             <input
               id="password"
               name="password"
@@ -48,28 +89,64 @@ export default async function AccountPage({
               minLength={8}
               required
               className="field"
-              placeholder="At least 8 characters"
+              placeholder={t("passwordPlaceholder")}
             />
           </div>
           <button
             type="submit"
             className="btn-press rounded-xl bg-lime px-5 py-2.5 font-display text-xs font-bold uppercase tracking-wide text-lime-ink hover:bg-lime-deep"
           >
-            Update password
+            {t("updatePassword")}
           </button>
         </form>
       </section>
 
       <section className="max-w-xl rounded-2xl border border-ink-800 bg-ink-900/60 p-5 lg:p-6">
-        <h2 className="font-display text-base font-semibold text-paper">Intermittent fasting</h2>
-        <p className="mt-2 text-sm text-paper-dim">
-          Optional: set your daily eating window and the dashboard shows whether it&rsquo;s open.
-          A window past midnight (e.g. 20:00 to 04:00) works too. Clear both fields to disable.
-        </p>
+        <h2 className="font-display text-base font-semibold text-paper">{t("units")}</h2>
+        <p className="mt-2 text-sm text-paper-dim">{t("unitsHint")}</p>
+        <form action={saveUnits} className="mt-4 flex flex-wrap items-center gap-3">
+          <div className="flex gap-2" role="radiogroup" aria-label={t("units")}>
+            {(
+              [
+                ["metric", t("unitsMetric")],
+                ["imperial", t("unitsImperial")],
+              ] as const
+            ).map(([value, label]) => (
+              <label
+                key={value}
+                className={`btn-press cursor-pointer rounded-full border px-4 py-2 text-xs font-semibold transition-colors ${
+                  profile.units === value
+                    ? "border-lime/60 bg-lime/10 text-lime"
+                    : "border-ink-700 text-paper-dim hover:text-paper"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="units"
+                  value={value}
+                  defaultChecked={profile.units === value}
+                  className="sr-only"
+                />
+                {label}
+              </label>
+            ))}
+          </div>
+          <button
+            type="submit"
+            className="btn-press rounded-xl bg-lime px-5 py-2 font-display text-xs font-bold uppercase tracking-wide text-lime-ink hover:bg-lime-deep"
+          >
+            {t("save")}
+          </button>
+        </form>
+      </section>
+
+      <section className="max-w-xl rounded-2xl border border-ink-800 bg-ink-900/60 p-5 lg:p-6">
+        <h2 className="font-display text-base font-semibold text-paper">{t("fasting")}</h2>
+        <p className="mt-2 text-sm text-paper-dim">{t("fastingHint")}</p>
         <form action={saveFastingWindow} className="mt-4 space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <label htmlFor="fasting-start" className="field-label">First meal</label>
+              <label htmlFor="fasting-start" className="field-label">{t("firstMeal")}</label>
               <input
                 id="fasting-start"
                 name="start"
@@ -79,7 +156,7 @@ export default async function AccountPage({
               />
             </div>
             <div className="space-y-2">
-              <label htmlFor="fasting-end" className="field-label">Last meal</label>
+              <label htmlFor="fasting-end" className="field-label">{t("lastMeal")}</label>
               <input
                 id="fasting-end"
                 name="end"
@@ -93,21 +170,50 @@ export default async function AccountPage({
             type="submit"
             className="btn-press rounded-xl bg-lime px-5 py-2.5 font-display text-xs font-bold uppercase tracking-wide text-lime-ink hover:bg-lime-deep"
           >
-            Save window
+            {t("saveWindow")}
           </button>
         </form>
       </section>
 
+      <section className="max-w-xl rounded-2xl border border-ink-800 bg-ink-900/60 p-5 lg:p-6">
+        <h2 className="font-display text-base font-semibold text-paper">{t("yourData")}</h2>
+        <p className="mt-2 text-sm text-paper-dim">{t("yourDataHint")}</p>
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {(
+            [
+              [t("foodDiary"), "diary"],
+              [t("weightHistory"), "weight"],
+            ] as const
+          ).map(([label, what]) => (
+            <div key={what} className="rounded-xl border border-ink-700 px-4 py-3">
+              <p className="text-sm font-medium text-paper">{label}</p>
+              <p className="mt-2 flex gap-2">
+                {(["csv", "json"] as const).map((format) => (
+                  <a
+                    key={format}
+                    href={`/api/export?what=${what}&format=${format}`}
+                    download
+                    className="btn-press inline-flex items-center gap-1.5 rounded-lg border border-ink-700 px-3 py-1.5 text-xs font-semibold uppercase text-paper-dim transition-colors hover:border-lime/50 hover:text-lime"
+                  >
+                    <DownloadSimple weight="bold" className="size-3.5" />
+                    {format}
+                  </a>
+                ))}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
       <section className="max-w-xl rounded-2xl border border-danger/30 bg-danger/[0.04] p-5 lg:p-6">
-        <h2 className="font-display text-base font-semibold text-danger">Delete account</h2>
-        <p className="mt-2 text-sm text-paper-dim">
-          Permanently removes your account and everything in it — profile, diary,
-          weight history, favorites, recipes and foods you created. There is no undo.
-        </p>
+        <h2 className="font-display text-base font-semibold text-danger">{t("deleteAccount")}</h2>
+        <p className="mt-2 text-sm text-paper-dim">{t("deleteHint")}</p>
         <form action={deleteAccount} className="mt-4 space-y-4">
           <div className="space-y-2">
             <label htmlFor="confirm" className="field-label">
-              Type <span className="font-mono text-danger">delete</span> to confirm
+              {t.rich("deleteConfirmLabel", {
+                keyword: (chunks) => <span className="font-mono text-danger">{chunks}</span>,
+              })}
             </label>
             <input
               id="confirm"
@@ -122,7 +228,7 @@ export default async function AccountPage({
             type="submit"
             className="btn-press rounded-xl border border-danger/50 px-5 py-2.5 font-display text-xs font-bold uppercase tracking-wide text-danger transition-colors hover:bg-danger/10"
           >
-            Delete my account
+            {t("deleteButton")}
           </button>
         </form>
       </section>

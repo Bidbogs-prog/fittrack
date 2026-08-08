@@ -1,0 +1,53 @@
+{
+  "nav": {
+    "today": "Aujourd'hui",
+    "history": "Historique",
+    "foodLibrary": "Bibliothèque d'aliments",
+    "foods": "Aliments",
+    "plans": "Plans repas",
+    "plansShort": "Plans",
+    "admin": "Admin"
+  },
+  "auth": {
+    "welcomeBack": "Bon retour",
+    "loginSubtitle": "Connectez-vous pour garder votre série en vie.",
+    "email": "E-mail",
+    "password": "Mot de passe",
+    "forgotPassword": "Mot de passe oublié ?",
+    "logIn": "Se connecter",
+    "newHere": "Nouveau ici ?",
+    "createAccount": "Créer un compte",
+    "forgotTitle": "Mot de passe oublié ?",
+    "forgotSubtitle": "Entrez votre e-mail et nous vous enverrons un lien pour en définir un nouveau.",
+    "sendResetLink": "Envoyer le lien",
+    "rememberedIt": "Vous vous en souvenez ?",
+    "backToLogin": "Retour à la connexion"
+  },
+  "account": {
+    "title": "Compte",
+    "language": "Langue",
+    "languageHint": "La langue de l'application. Les noms d'aliments restent tels qu'ils ont été saisis.",
+    "save": "Enregistrer",
+    "units": "Unités",
+    "unitsHint": "Comment les poids et tailles sont affichés. Vos données restent stockées en métrique.",
+    "unitsMetric": "Métrique (kg, cm)",
+    "unitsImperial": "Impérial (lb, ft/in)",
+    "fasting": "Jeûne intermittent",
+    "fastingHint": "Optionnel : définissez votre fenêtre alimentaire quotidienne et le tableau de bord indique si elle est ouverte. Une fenêtre passant minuit (ex. 20:00 à 04:00) fonctionne aussi. Videz les deux champs pour désactiver.",
+    "firstMeal": "Premier repas",
+    "lastMeal": "Dernier repas",
+    "saveWindow": "Enregistrer la fenêtre",
+    "yourData": "Vos données",
+    "yourDataHint": "Téléchargez tout ce que vous avez enregistré. Ce sont vos données — emportez-les où vous voulez.",
+    "foodDiary": "Journal alimentaire",
+    "weightHistory": "Historique de poids",
+    "changePassword": "Changer le mot de passe",
+    "newPassword": "Nouveau mot de passe",
+    "passwordPlaceholder": "Au moins 8 caractères",
+    "updatePassword": "Mettre à jour",
+    "deleteAccount": "Supprimer le compte",
+    "deleteHint": "Supprime définitivement votre compte et tout ce qu'il contient — profil, journal, historique de poids, favoris, recettes et aliments créés. Aucun retour en arrière possible.",
+    "deleteConfirmLabel": "Tapez <keyword>delete</keyword> pour confirmer",
+    "deleteButton": "Supprimer mon compte"
+  }
+}

@@ -51,13 +51,32 @@ export interface Profile {
    */
   eating_window_start: string | null;
   eating_window_end: string | null;
+  /** Display units; storage is always metric (see src/lib/units.ts). */
+  units: Units;
   onboarded: boolean;
 }
+
+export type Units = "metric" | "imperial";
 
 export interface WaterLog {
   user_id: string;
   log_date: string;
   ml: number;
+}
+
+export interface ExerciseLog {
+  id: string;
+  user_id: string;
+  log_date: string;
+  name: string;
+  minutes: number | null;
+  kcal: number;
+}
+
+export interface StepLog {
+  user_id: string;
+  log_date: string;
+  steps: number;
 }
 
 /**
@@ -110,6 +129,12 @@ export interface Food extends MicroValues {
   carbs_g: number;
   fat_g: number;
   fibre_g: number;
+  /**
+   * Optional household serving ("1 cup", "1 medium egg") as a portion
+   * shortcut; null = unknown. Grams stay the source of truth.
+   */
+  serving_name: string | null;
+  serving_grams: number | null;
 }
 
 /**
