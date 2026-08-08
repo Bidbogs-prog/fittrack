@@ -167,7 +167,7 @@ export function CalorieChart({ days, target }: { days: DayStat[]; target: number
   const max = niceMax(Math.max(target * 1.25, ...days.map((d) => d.kcal ?? 0)));
   const yFor = (v: number) => PAD.t + PLOT_H - (v / max) * PLOT_H;
   const slot = PLOT_W / Math.max(1, days.length);
-  const barW = Math.max(4, slot - 2); // 2px surface gap between fills
+  const barW = Math.max(4, Math.min(slot - 2, 40)); // 2px surface gap between fills
 
   const hovered = idx != null ? days[idx] : null;
 
@@ -185,7 +185,12 @@ export function CalorieChart({ days, target }: { days: DayStat[]; target: number
         {days.map((d, i) => {
           if (d.kcal == null) return null;
           const y = yFor(d.kcal);
-          const x = PAD.l + i * slot + (slot - barW) / 2;
+          // Center bars on the same point scale as the x labels, hover
+          // index and tooltip; clamp the edge bars into the plot area.
+          const x = Math.min(
+            W - PAD.r - barW,
+            Math.max(PAD.l, xFor(i, days.length) - barW / 2)
+          );
           return (
             <rect
               key={d.date}
@@ -248,26 +253,39 @@ const MACRO_SERIES = [
   { key: "fat", label: "Fat", color: "var(--color-fat)" },
 ] as const;
 
-/** Split logged days into consecutive runs so gaps stay gaps, not lines. */
-function seriesPaths(
+/**
+ * Split logged days into consecutive runs so gaps stay gaps, not lines.
+ * Runs of 2+ days become line paths; an isolated logged day (both
+ * neighbours unlogged) becomes a dot — a 1-point path draws nothing, which
+ * made sparse logging look like an empty chart.
+ */
+function seriesMarks(
   days: DayStat[],
   key: (typeof MACRO_SERIES)[number]["key"],
   yFor: (v: number) => number
-): string[] {
+): { paths: string[]; dots: { x: number; y: number }[] } {
   const paths: string[] = [];
-  let current: string[] = [];
+  const dots: { x: number; y: number }[] = [];
+  let run: { x: number; y: number }[] = [];
+  const flush = () => {
+    if (run.length === 1) dots.push(run[0]);
+    if (run.length > 1) {
+      paths.push(
+        run.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" ")
+      );
+    }
+    run = [];
+  };
   days.forEach((d, i) => {
     const value = d[key];
     if (value == null) {
-      if (current.length > 1) paths.push(current.join(" "));
-      current = [];
+      flush();
       return;
     }
-    const x = xFor(i, days.length);
-    current.push(`${current.length === 0 ? "M" : "L"}${x.toFixed(1)} ${yFor(value).toFixed(1)}`);
+    run.push({ x: xFor(i, days.length), y: yFor(value) });
   });
-  if (current.length > 1) paths.push(current.join(" "));
-  return paths;
+  flush();
+  return { paths, dots };
 }
 
 export function MacroChart({ days }: { days: DayStat[] }) {
@@ -300,19 +318,27 @@ export function MacroChart({ days }: { days: DayStat[] }) {
           yTicks={[0, max / 2, max].map((v) => ({ y: yFor(v), label: `${Math.round(v)}g` }))}
           xLabels={buildXLabels(days.map((d) => d.date))}
         >
-          {MACRO_SERIES.map((s) =>
-            seriesPaths(days, s.key, yFor).map((d, i) => (
-              <path
-                key={`${s.key}-${i}`}
-                d={d}
-                fill="none"
-                stroke={s.color}
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            ))
-          )}
+          {MACRO_SERIES.map((s) => {
+            const { paths, dots } = seriesMarks(days, s.key, yFor);
+            return (
+              <g key={s.key}>
+                {paths.map((d, i) => (
+                  <path
+                    key={i}
+                    d={d}
+                    fill="none"
+                    stroke={s.color}
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                ))}
+                {dots.map((p, i) => (
+                  <circle key={`dot-${i}`} cx={p.x} cy={p.y} r="3" fill={s.color} />
+                ))}
+              </g>
+            );
+          })}
           {/* direct end labels so identity survives without the legend */}
           {lastLogged &&
             MACRO_SERIES.map((s) => {
