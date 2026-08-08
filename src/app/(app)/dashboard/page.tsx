@@ -2,18 +2,22 @@ import { CaretLeft, CaretRight, CopySimple } from "@phosphor-icons/react/dist/ss
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AiInsights } from "@/components/ai-insights";
+import type { DayInsights } from "./insights";
 import { CalorieRing, MacroBars, MacroInline } from "@/components/macros";
 import { MicroPanel } from "@/components/micros";
 import { CountUp } from "@/components/motion/count-up";
 import { Reveal } from "@/components/motion/reveal";
+import { getActiveTargets } from "@/lib/adaptive";
 import { getProfile } from "@/lib/auth";
 import { entryMacros, entryMicros } from "@/lib/diary";
-import { GOALS, calcTargets, sumMacros, sumMicros } from "@/lib/nutrition";
+import { GOALS, calcWaterTargetMl, sumMacros, sumMicros } from "@/lib/nutrition";
+import { calcStreaks } from "@/lib/streak";
 import { MEAL_TYPES, type DiaryEntry, type MealType, type WeightLog } from "@/lib/types";
 import { trendDelta, weightTrend } from "@/lib/weight";
 import { AddFoodDialog } from "./add-food-dialog";
 import { copyDiaryEntries } from "./actions";
 import { EntryRow } from "./entry-row";
+import { Habits } from "./habits";
 import { WeightCard } from "./weight-card";
 
 export const metadata = { title: "Today" };
@@ -38,14 +42,15 @@ export default async function DashboardPage({
     searchParams,
   ]);
 
-  const targets = calcTargets(profile);
-  if (!targets) redirect("/onboarding");
+  const active = await getActiveTargets(supabase, userId, profile);
+  if (!active) redirect("/onboarding");
+  const { targets, adaptive } = active;
 
   const today = toDateString(new Date());
   const date = params.d && /^\d{4}-\d{2}-\d{2}$/.test(params.d) ? params.d : today;
 
   const yesterday = shiftDate(date, -1);
-  const [{ data: entriesData }, { data: weightData }, { data: yesterdayData }] =
+  const [{ data: entriesData }, { data: weightData }, { data: yesterdayData }, { data: savedInsight }] =
     await Promise.all([
       supabase
         .from("diary_entries")
@@ -64,7 +69,33 @@ export default async function DashboardPage({
         .select("meal")
         .eq("user_id", userId)
         .eq("entry_date", yesterday),
+      supabase
+        .from("ai_insights")
+        .select("payload, updated_at")
+        .eq("user_id", userId)
+        .eq("scope", "day")
+        .eq("period_start", date)
+        .maybeSingle(),
     ]);
+
+  const [{ data: streakData }, { data: waterData }] = await Promise.all([
+    supabase
+      .from("diary_entries")
+      .select("entry_date")
+      .eq("user_id", userId)
+      .gte("entry_date", shiftDate(today, -219))
+      .lte("entry_date", today),
+    supabase
+      .from("water_logs")
+      .select("ml")
+      .eq("user_id", userId)
+      .eq("log_date", date)
+      .maybeSingle(),
+  ]);
+  const streaks = calcStreaks(
+    (streakData ?? []).map((r) => r.entry_date as string),
+    today
+  );
 
   const entries = (entriesData ?? []) as DiaryEntry[];
   const trendPoints = weightTrend((weightData ?? []) as WeightLog[]);
@@ -145,7 +176,7 @@ export default async function DashboardPage({
             {(
               [
                 ["BMR", targets.bmr, "resting burn"],
-                ["TDEE", targets.tdee, "daily burn"],
+                ["TDEE", targets.tdee, adaptive ? "adaptive burn" : "daily burn"],
                 ["Target", targets.kcal, GOALS[targets.goal].label.toLowerCase()],
               ] as const
             ).map(([label, value, sub]) => (
@@ -160,8 +191,31 @@ export default async function DashboardPage({
               </div>
             ))}
           </dl>
+          {adaptive && (
+            <p className="mt-3 text-[11px] leading-relaxed text-paper-mute">
+              Adaptive target: over {adaptive.spanDays} days you averaged{" "}
+              <span className="font-mono text-paper-dim tabular">{adaptive.intakeAvg}</span> kcal/day
+              while your trend weight {adaptive.weightDeltaKg <= 0 ? "dropped" : "rose"}{" "}
+              <span className="font-mono text-paper-dim tabular">
+                {Math.abs(adaptive.weightDeltaKg).toFixed(1)}
+              </span>{" "}
+              kg, so your measured burn is{" "}
+              <span className="font-mono text-paper-dim tabular">{adaptive.tdee}</span> kcal.
+              Recalibrates every Monday from your diary and weigh-ins.
+            </p>
+          )}
         </div>
       </Reveal>
+
+      <Habits
+        streaks={streaks}
+        waterMl={waterData?.ml ?? 0}
+        waterTarget={calcWaterTargetMl(profile.weight_kg)}
+        date={date}
+        isToday={isToday}
+        fastingStart={profile.eating_window_start}
+        fastingEnd={profile.eating_window_end}
+      />
 
       <WeightCard
         points={trendPoints}
@@ -171,7 +225,13 @@ export default async function DashboardPage({
         defaultWeight={profile.weight_kg}
       />
 
-      <AiInsights key={date} date={date} hasEntries={entries.length > 0} />
+      <AiInsights
+        key={date}
+        date={date}
+        hasEntries={entries.length > 0}
+        initial={(savedInsight?.payload as DayInsights | undefined) ?? null}
+        generatedAt={savedInsight?.updated_at ?? null}
+      />
 
       <MacroBars eaten={eaten} targets={targets} />
 

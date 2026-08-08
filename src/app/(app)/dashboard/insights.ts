@@ -1,6 +1,7 @@
 "use server";
 
 import { GeminiError, generateJson, type GeminiSchema } from "@/lib/gemini";
+import { getActiveTargets, type ActiveTargets } from "@/lib/adaptive";
 import { getProfile } from "@/lib/auth";
 import { entryAmountLabel, entryMacros, entryMicros, entryName } from "@/lib/diary";
 import {
@@ -8,7 +9,6 @@ import {
   GOALS,
   MICRONUTRIENTS,
   ageFromBirthDate,
-  calcTargets,
   formatAmount,
   percentDv,
   round1,
@@ -80,8 +80,13 @@ function describeMicros(entries: DiaryEntry[]): string {
   }).join("\n");
 }
 
-function describeDay(profile: Profile, entries: DiaryEntry[], entryDate: string): string {
-  const targets = calcTargets(profile)!;
+function describeDay(
+  profile: Profile,
+  entries: DiaryEntry[],
+  entryDate: string,
+  active: ActiveTargets
+): string {
+  const { targets, adaptive } = active;
   const eaten = sumMacros(entries.map(entryMacros));
   const isToday = entryDate === new Date().toLocaleDateString("en-CA");
 
@@ -106,7 +111,11 @@ function describeDay(profile: Profile, entries: DiaryEntry[], entryDate: string)
 - Activity: ${ACTIVITY_LEVELS[profile.activity_level!].label}
 - Goal: ${GOALS[targets.goal].label}
 
-DAILY TARGETS (calculated: Mifflin-St Jeor BMR ${targets.bmr} kcal, TDEE ${targets.tdee} kcal)
+DAILY TARGETS (${
+    adaptive
+      ? `adaptive: TDEE ${targets.tdee} kcal measured from ${adaptive.loggedDays} logged days of intake vs the weight trend over ${adaptive.spanDays} days; BMR ${targets.bmr} kcal`
+      : `calculated: Mifflin-St Jeor BMR ${targets.bmr} kcal, TDEE ${targets.tdee} kcal`
+  })
 - Calories ${targets.kcal} kcal · protein ${targets.protein} g · carbs ${targets.carbs} g · fat ${targets.fat} g · fibre ${targets.fibre} g
 
 DAY BEING ANALYSED: ${entryDate}${isToday ? " (today — the day is still in progress)" : " (a completed past day)"}
@@ -128,7 +137,8 @@ export async function generateDayInsights(
   if (!/^\d{4}-\d{2}-\d{2}$/.test(entryDate)) {
     return { data: null, error: "Invalid date." };
   }
-  if (!calcTargets(profile)) {
+  const active = await getActiveTargets(supabase, userId, profile);
+  if (!active) {
     return { data: null, error: "Finish onboarding so the coach knows your targets." };
   }
 
@@ -147,12 +157,24 @@ export async function generateDayInsights(
   try {
     const data = await generateJson<DayInsights>({
       systemPrompt: SYSTEM_PROMPT,
-      userPrompt: describeDay(profile, entries, entryDate),
+      userPrompt: describeDay(profile, entries, entryDate, active),
       schema: INSIGHTS_SCHEMA,
     });
     if (!data.summary || !Array.isArray(data.insights) || data.insights.length === 0) {
       return { data: null, error: "The coach came back empty-handed. Try again." };
     }
+    // Persist so the analysis survives navigation (roadmap 1.3); best-effort,
+    // the generated result is still returned if the write fails.
+    await supabase.from("ai_insights").upsert(
+      {
+        user_id: userId,
+        scope: "day",
+        period_start: entryDate,
+        payload: data,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "user_id,scope,period_start" }
+    );
     return { data, error: null };
   } catch (err) {
     if (err instanceof GeminiError) return { data: null, error: err.message };

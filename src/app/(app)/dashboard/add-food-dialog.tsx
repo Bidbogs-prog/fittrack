@@ -8,10 +8,12 @@ import {
   Lightning,
   MagnifyingGlass,
   Plus,
+  Sparkle,
   Star,
   X,
 } from "@phosphor-icons/react";
 import { BarcodeScanner } from "@/components/barcode-scanner";
+import { AiLogView } from "./ai-log-view";
 import { FoodImage } from "@/components/food-image";
 import type { RecipeSuggestion } from "@/lib/diary";
 import {
@@ -37,6 +39,7 @@ type View =
   | { kind: "food"; food: Food }
   | { kind: "recipe"; recipe: RecipeSuggestion }
   | { kind: "quick" }
+  | { kind: "ai" }
   | { kind: "scan" }
   | { kind: "scanMiss"; code: string };
 
@@ -269,7 +272,18 @@ export function AddFoodDialog({
                   />
                 </div>
 
-                <div className="mt-3 flex gap-2">
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setView({ kind: "ai" });
+                      setError(null);
+                    }}
+                    className="btn-press inline-flex items-center gap-1.5 rounded-lg border border-lime/40 px-3 py-2 text-xs font-semibold text-lime transition-colors hover:border-lime hover:bg-lime/10"
+                  >
+                    <Sparkle weight="bold" className="size-3.5" />
+                    Describe meal
+                  </button>
                   <button
                     type="button"
                     onClick={() => {
@@ -474,6 +488,15 @@ export function AddFoodDialog({
                   {pending ? "Logging…" : "Log recipe"}
                 </button>
               </div>
+            )}
+
+            {view.kind === "ai" && (
+              <AiLogView
+                meal={meal}
+                entryDate={entryDate}
+                onBack={backToBrowse}
+                onLogged={reset}
+              />
             )}
 
             {view.kind === "quick" && (

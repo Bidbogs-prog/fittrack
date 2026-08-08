@@ -20,6 +20,39 @@ export async function changePassword(formData: FormData) {
   redirect(`/account?message=${encodeURIComponent("Password updated.")}`);
 }
 
+/** Save or clear the optional intermittent-fasting eating window (roadmap 1.5). */
+export async function saveFastingWindow(formData: FormData) {
+  const { supabase, userId } = await requireUser();
+
+  const start = String(formData.get("start") ?? "").trim();
+  const end = String(formData.get("end") ?? "").trim();
+  const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+  if ((start === "") !== (end === "")) {
+    redirect(`/account?error=${encodeURIComponent("Set both times, or clear both to disable.")}`);
+  }
+  if (start !== "" && (!TIME_RE.test(start) || !TIME_RE.test(end) || start === end)) {
+    redirect(`/account?error=${encodeURIComponent("The eating window needs two different times.")}`);
+  }
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      eating_window_start: start || null,
+      eating_window_end: end || null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", userId);
+  if (error) redirect(`/account?error=${encodeURIComponent(error.message)}`);
+
+  revalidatePath("/dashboard");
+  redirect(
+    `/account?message=${encodeURIComponent(
+      start ? `Eating window set: ${start} to ${end}.` : "Fasting window disabled."
+    )}`
+  );
+}
+
 /**
  * Self-service account deletion (GDPR). The delete_account() RPC removes the
  * auth user; every table cascades from it (profile, diary, weight logs,

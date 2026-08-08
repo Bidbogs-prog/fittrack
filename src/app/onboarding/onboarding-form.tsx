@@ -87,6 +87,8 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
             protein_pct: activeSplit?.protein ?? null,
             carbs_pct: activeSplit?.carbs ?? null,
             fat_pct: activeSplit?.fat ?? null,
+            eating_window_start: null,
+            eating_window_end: null,
             onboarded: true,
           })
         : null;

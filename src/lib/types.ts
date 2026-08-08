@@ -45,7 +45,19 @@ export interface Profile {
   protein_pct: number | null;
   carbs_pct: number | null;
   fat_pct: number | null;
+  /**
+   * Optional intermittent-fasting eating window ("HH:MM:SS", local time);
+   * both set or both null. start > end means the window wraps midnight.
+   */
+  eating_window_start: string | null;
+  eating_window_end: string | null;
   onboarded: boolean;
+}
+
+export interface WaterLog {
+  user_id: string;
+  log_date: string;
+  ml: number;
 }
 
 /**
@@ -124,6 +136,23 @@ export interface DiaryEntry {
   quick_fibre_g: number | null;
 }
 
+/**
+ * Persisted AI coach output (roadmap 1.3): scope "day" keys on the diary
+ * date, scope "week" on the analysed week's Monday. payload holds the
+ * rendered JSON (DayInsights / WeekReport).
+ */
+export type InsightScope = "day" | "week";
+
+export interface AiInsightRow {
+  id: string;
+  user_id: string;
+  scope: InsightScope;
+  period_start: string;
+  payload: unknown;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface WeightLog {
   id: string;
   user_id: string;
@@ -154,6 +183,8 @@ export interface MealPlan {
   name: string;
   goal: Goal;
   description: string | null;
+  /** null = global admin-authored plan; set = private AI-generated plan. */
+  owner_id: string | null;
   items: MealPlanItem[];
 }
 

@@ -8,6 +8,7 @@ import { Reveal } from "@/components/motion/reveal";
 import { getProfile } from "@/lib/auth";
 import { GOALS, calcTargets, macrosForPortion, sumMacros } from "@/lib/nutrition";
 import { MEAL_TYPES, type MealPlan } from "@/lib/types";
+import { PlanActions } from "./plan-actions";
 
 export const metadata = { title: "Meal plan" };
 
@@ -16,7 +17,7 @@ export default async function PlanDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const [{ supabase, profile }, { id }] = await Promise.all([getProfile(), params]);
+  const [{ supabase, userId, profile }, { id }] = await Promise.all([getProfile(), params]);
 
   const { data } = await supabase
     .from("meal_plans")
@@ -65,6 +66,13 @@ export default async function PlanDetailPage({
               {fitPct}% of your {targets!.kcal.toLocaleString()} kcal target
             </p>
           )}
+        </div>
+        <div className="mt-6">
+          <PlanActions
+            planId={plan.id}
+            date={new Date().toLocaleDateString("en-CA")}
+            canDelete={plan.owner_id === userId}
+          />
         </div>
       </Reveal>
 

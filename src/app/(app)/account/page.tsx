@@ -1,6 +1,6 @@
 import { Info, WarningCircle } from "@phosphor-icons/react/dist/ssr";
 import { getProfile } from "@/lib/auth";
-import { changePassword, deleteAccount } from "./actions";
+import { changePassword, deleteAccount, saveFastingWindow } from "./actions";
 
 export const metadata = { title: "Account" };
 
@@ -56,6 +56,44 @@ export default async function AccountPage({
             className="btn-press rounded-xl bg-lime px-5 py-2.5 font-display text-xs font-bold uppercase tracking-wide text-lime-ink hover:bg-lime-deep"
           >
             Update password
+          </button>
+        </form>
+      </section>
+
+      <section className="max-w-xl rounded-2xl border border-ink-800 bg-ink-900/60 p-5 lg:p-6">
+        <h2 className="font-display text-base font-semibold text-paper">Intermittent fasting</h2>
+        <p className="mt-2 text-sm text-paper-dim">
+          Optional: set your daily eating window and the dashboard shows whether it&rsquo;s open.
+          A window past midnight (e.g. 20:00 to 04:00) works too. Clear both fields to disable.
+        </p>
+        <form action={saveFastingWindow} className="mt-4 space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <label htmlFor="fasting-start" className="field-label">First meal</label>
+              <input
+                id="fasting-start"
+                name="start"
+                type="time"
+                defaultValue={profile.eating_window_start?.slice(0, 5) ?? ""}
+                className="field tabular"
+              />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="fasting-end" className="field-label">Last meal</label>
+              <input
+                id="fasting-end"
+                name="end"
+                type="time"
+                defaultValue={profile.eating_window_end?.slice(0, 5) ?? ""}
+                className="field tabular"
+              />
+            </div>
+          </div>
+          <button
+            type="submit"
+            className="btn-press rounded-xl bg-lime px-5 py-2.5 font-display text-xs font-bold uppercase tracking-wide text-lime-ink hover:bg-lime-deep"
+          >
+            Save window
           </button>
         </form>
       </section>

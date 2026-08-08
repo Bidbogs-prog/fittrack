@@ -4,6 +4,7 @@ import { Reveal } from "@/components/motion/reveal";
 import { getProfile } from "@/lib/auth";
 import { GOALS, macrosForPortion, sumMacros } from "@/lib/nutrition";
 import type { Goal, MealPlan } from "@/lib/types";
+import { GeneratePlan } from "./generate-plan";
 
 export const metadata = { title: "Meal plans" };
 
@@ -40,6 +41,8 @@ export default async function PlansPage({
         </p>
       </header>
 
+      <GeneratePlan />
+
       <nav className="flex flex-wrap gap-2" aria-label="Filter by goal">
         {GOAL_KEYS.map((key) => (
           <Link
@@ -74,6 +77,11 @@ export default async function PlansPage({
                   <div className="flex items-start justify-between gap-3">
                     <h2 className="font-display text-base font-semibold tracking-tight text-paper">
                       {plan.name}
+                      {plan.owner_id != null && (
+                        <span className="ml-2 align-middle rounded-full bg-lime/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-lime ring-1 ring-inset ring-lime/25">
+                          Yours
+                        </span>
+                      )}
                     </h2>
                     <ArrowRight
                       weight="bold"

@@ -1,11 +1,13 @@
 import { redirect } from "next/navigation";
 import { Reveal } from "@/components/motion/reveal";
+import { getActiveTargets, weekStart } from "@/lib/adaptive";
 import { getProfile } from "@/lib/auth";
 import { entryMacros } from "@/lib/diary";
-import { calcTargets } from "@/lib/nutrition";
 import type { DiaryEntry, WeightLog } from "@/lib/types";
 import { trendDelta, weightTrend } from "@/lib/weight";
 import { CalorieChart, MacroChart, WeightChart, type DayStat } from "./charts";
+import { WeekReportCard } from "./week-report";
+import type { WeekReport } from "./report";
 
 export const metadata = { title: "History" };
 
@@ -29,8 +31,9 @@ function rangeLabel(from: string, to: string): string {
 
 export default async function HistoryPage() {
   const { supabase, userId, profile } = await getProfile();
-  const targets = calcTargets(profile);
-  if (!targets) redirect("/onboarding");
+  const active = await getActiveTargets(supabase, userId, profile);
+  if (!active) redirect("/onboarding");
+  const { targets } = active;
 
   const today = toDateString(new Date());
   const since = shiftDate(today, -(DAYS - 1));
@@ -89,6 +92,20 @@ export default async function HistoryPage() {
 
   const trendPoints = weightTrend((weightData ?? []) as WeightLog[]);
   const weightDelta = trendDelta(trendPoints, 30);
+
+  // Last completed Monday-to-Sunday week, for the AI weekly report.
+  const lastWeekStart = shiftDate(weekStart(), -7);
+  const lastWeekEnd = shiftDate(lastWeekStart, 6);
+  const lastWeekLogged = days.filter(
+    (d) => d.date >= lastWeekStart && d.date <= lastWeekEnd && d.kcal != null
+  ).length;
+  const { data: savedReport } = await supabase
+    .from("ai_insights")
+    .select("payload")
+    .eq("user_id", userId)
+    .eq("scope", "week")
+    .eq("period_start", lastWeekStart)
+    .maybeSingle();
 
   // Weekly rollup: four 7-day blocks ending today.
   const weeks = [3, 2, 1, 0].map((offset) => {
@@ -169,6 +186,13 @@ export default async function HistoryPage() {
           </div>
         ))}
       </section>
+
+      <WeekReportCard
+        weekStart={lastWeekStart}
+        label={rangeLabel(lastWeekStart, lastWeekEnd)}
+        loggedDays={lastWeekLogged}
+        initial={(savedReport?.payload as WeekReport | undefined) ?? null}
+      />
 
       {/* calories */}
       <section className="rounded-2xl border border-ink-800 bg-ink-900/60 p-5 lg:p-6">

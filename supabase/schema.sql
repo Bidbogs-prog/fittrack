@@ -29,6 +29,13 @@ create table if not exists public.profiles (
   updated_at timestamptz not null default now()
 );
 
+-- Optional intermittent-fasting eating window (roadmap 1.5); both set or
+-- both null. Times are local wall-clock; an overnight window (start >
+-- end) is valid and wraps midnight.
+alter table public.profiles
+  add column if not exists eating_window_start time,
+  add column if not exists eating_window_end time;
+
 alter table public.profiles enable row level security;
 
 drop policy if exists "profiles: read own" on public.profiles;
@@ -275,6 +282,39 @@ create policy "weight: delete own" on public.weight_logs
   for delete to authenticated
   using ((select auth.uid()) = user_id);
 
+-- ---------- WATER LOGS (roadmap 1.5) ----------
+-- One row per user per day; the ml total is upserted by +glass taps.
+create table if not exists public.water_logs (
+  user_id uuid not null references auth.users (id) on delete cascade default auth.uid(),
+  log_date date not null default current_date,
+  ml integer not null default 0 check (ml between 0 and 20000),
+  updated_at timestamptz not null default now(),
+  primary key (user_id, log_date)
+);
+
+alter table public.water_logs enable row level security;
+
+drop policy if exists "water: read own" on public.water_logs;
+create policy "water: read own" on public.water_logs
+  for select to authenticated
+  using ((select auth.uid()) = user_id);
+
+drop policy if exists "water: insert own" on public.water_logs;
+create policy "water: insert own" on public.water_logs
+  for insert to authenticated
+  with check ((select auth.uid()) = user_id);
+
+drop policy if exists "water: update own" on public.water_logs;
+create policy "water: update own" on public.water_logs
+  for update to authenticated
+  using ((select auth.uid()) = user_id)
+  with check ((select auth.uid()) = user_id);
+
+drop policy if exists "water: delete own" on public.water_logs;
+create policy "water: delete own" on public.water_logs
+  for delete to authenticated
+  using ((select auth.uid()) = user_id);
+
 -- ---------- FAVORITE FOODS ----------
 create table if not exists public.favorite_foods (
   user_id uuid not null references auth.users (id) on delete cascade default auth.uid(),
@@ -297,6 +337,48 @@ create policy "favorites: insert own" on public.favorite_foods
 
 drop policy if exists "favorites: delete own" on public.favorite_foods;
 create policy "favorites: delete own" on public.favorite_foods
+  for delete to authenticated
+  using ((select auth.uid()) = user_id);
+
+-- ---------- AI INSIGHTS (persisted coach output, roadmap 1.3) ----------
+-- One row per user + scope + period: scope 'day' keys on the diary date,
+-- scope 'week' on the Monday of the analysed week. payload is the exact
+-- JSON the UI renders (DayInsights / WeekReport in TypeScript); upserts
+-- overwrite on regeneration.
+create table if not exists public.ai_insights (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users (id) on delete cascade default auth.uid(),
+  scope text not null check (scope in ('day', 'week')),
+  period_start date not null,
+  payload jsonb not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (user_id, scope, period_start)
+);
+
+create index if not exists ai_insights_user_scope_idx
+  on public.ai_insights (user_id, scope, period_start);
+
+alter table public.ai_insights enable row level security;
+
+drop policy if exists "ai_insights: read own" on public.ai_insights;
+create policy "ai_insights: read own" on public.ai_insights
+  for select to authenticated
+  using ((select auth.uid()) = user_id);
+
+drop policy if exists "ai_insights: insert own" on public.ai_insights;
+create policy "ai_insights: insert own" on public.ai_insights
+  for insert to authenticated
+  with check ((select auth.uid()) = user_id);
+
+drop policy if exists "ai_insights: update own" on public.ai_insights;
+create policy "ai_insights: update own" on public.ai_insights
+  for update to authenticated
+  using ((select auth.uid()) = user_id)
+  with check ((select auth.uid()) = user_id);
+
+drop policy if exists "ai_insights: delete own" on public.ai_insights;
+create policy "ai_insights: delete own" on public.ai_insights
   for delete to authenticated
   using ((select auth.uid()) = user_id);
 
@@ -392,7 +474,9 @@ alter table public.diary_entries add constraint diary_entry_shape check (
   )
 );
 
--- ---------- MEAL PLANS (admin-authored, readable by everyone signed in) ----------
+-- ---------- MEAL PLANS ----------
+-- Admin-authored plans are global (owner_id null, readable by everyone);
+-- AI-generated plans (roadmap 1.4) are private to their owner.
 create table if not exists public.meal_plans (
   id uuid primary key default gen_random_uuid(),
   name text not null,
@@ -402,28 +486,50 @@ create table if not exists public.meal_plans (
   created_at timestamptz not null default now()
 );
 
+alter table public.meal_plans
+  add column if not exists owner_id uuid references auth.users (id) on delete cascade;
+
+create index if not exists meal_plans_owner_idx
+  on public.meal_plans (owner_id) where owner_id is not null;
+
 alter table public.meal_plans enable row level security;
 
 drop policy if exists "plans: read for signed-in users" on public.meal_plans;
 create policy "plans: read for signed-in users" on public.meal_plans
   for select to authenticated
-  using (true);
+  using (owner_id is null or owner_id = (select auth.uid()));
 
 drop policy if exists "plans: admin insert" on public.meal_plans;
-create policy "plans: admin insert" on public.meal_plans
+drop policy if exists "plans: insert own or admin" on public.meal_plans;
+create policy "plans: insert own or admin" on public.meal_plans
   for insert to authenticated
-  with check (exists (select 1 from public.admins a where a.user_id = (select auth.uid())));
+  with check (
+    owner_id = (select auth.uid())
+    or (owner_id is null
+        and exists (select 1 from public.admins a where a.user_id = (select auth.uid())))
+  );
 
 drop policy if exists "plans: admin update" on public.meal_plans;
-create policy "plans: admin update" on public.meal_plans
+drop policy if exists "plans: update own or admin" on public.meal_plans;
+create policy "plans: update own or admin" on public.meal_plans
   for update to authenticated
-  using (exists (select 1 from public.admins a where a.user_id = (select auth.uid())))
-  with check (exists (select 1 from public.admins a where a.user_id = (select auth.uid())));
+  using (
+    owner_id = (select auth.uid())
+    or exists (select 1 from public.admins a where a.user_id = (select auth.uid()))
+  )
+  with check (
+    owner_id = (select auth.uid())
+    or exists (select 1 from public.admins a where a.user_id = (select auth.uid()))
+  );
 
 drop policy if exists "plans: admin delete" on public.meal_plans;
-create policy "plans: admin delete" on public.meal_plans
+drop policy if exists "plans: delete own or admin" on public.meal_plans;
+create policy "plans: delete own or admin" on public.meal_plans
   for delete to authenticated
-  using (exists (select 1 from public.admins a where a.user_id = (select auth.uid())));
+  using (
+    owner_id = (select auth.uid())
+    or exists (select 1 from public.admins a where a.user_id = (select auth.uid()))
+  );
 
 create table if not exists public.meal_plan_items (
   id uuid primary key default gen_random_uuid(),
@@ -441,23 +547,45 @@ alter table public.meal_plan_items enable row level security;
 drop policy if exists "plan items: read for signed-in users" on public.meal_plan_items;
 create policy "plan items: read for signed-in users" on public.meal_plan_items
   for select to authenticated
-  using (true);
+  using (exists (
+    select 1 from public.meal_plans p
+    where p.id = plan_id and (p.owner_id is null or p.owner_id = (select auth.uid()))
+  ));
 
 drop policy if exists "plan items: admin insert" on public.meal_plan_items;
-create policy "plan items: admin insert" on public.meal_plan_items
+drop policy if exists "plan items: insert own or admin" on public.meal_plan_items;
+create policy "plan items: insert own or admin" on public.meal_plan_items
   for insert to authenticated
-  with check (exists (select 1 from public.admins a where a.user_id = (select auth.uid())));
+  with check (
+    exists (select 1 from public.meal_plans p
+            where p.id = plan_id and p.owner_id = (select auth.uid()))
+    or exists (select 1 from public.admins a where a.user_id = (select auth.uid()))
+  );
 
 drop policy if exists "plan items: admin update" on public.meal_plan_items;
-create policy "plan items: admin update" on public.meal_plan_items
+drop policy if exists "plan items: update own or admin" on public.meal_plan_items;
+create policy "plan items: update own or admin" on public.meal_plan_items
   for update to authenticated
-  using (exists (select 1 from public.admins a where a.user_id = (select auth.uid())))
-  with check (exists (select 1 from public.admins a where a.user_id = (select auth.uid())));
+  using (
+    exists (select 1 from public.meal_plans p
+            where p.id = plan_id and p.owner_id = (select auth.uid()))
+    or exists (select 1 from public.admins a where a.user_id = (select auth.uid()))
+  )
+  with check (
+    exists (select 1 from public.meal_plans p
+            where p.id = plan_id and p.owner_id = (select auth.uid()))
+    or exists (select 1 from public.admins a where a.user_id = (select auth.uid()))
+  );
 
 drop policy if exists "plan items: admin delete" on public.meal_plan_items;
-create policy "plan items: admin delete" on public.meal_plan_items
+drop policy if exists "plan items: delete own or admin" on public.meal_plan_items;
+create policy "plan items: delete own or admin" on public.meal_plan_items
   for delete to authenticated
-  using (exists (select 1 from public.admins a where a.user_id = (select auth.uid())));
+  using (
+    exists (select 1 from public.meal_plans p
+            where p.id = plan_id and p.owner_id = (select auth.uid()))
+    or exists (select 1 from public.admins a where a.user_id = (select auth.uid()))
+  );
 
 -- ---------- STORAGE: food images ----------
 insert into storage.buckets (id, name, public)

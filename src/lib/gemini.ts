@@ -32,13 +32,16 @@ export class GeminiError extends Error {}
 
 /**
  * Ask Gemini for a JSON object matching `schema` and parse it.
- * Throws GeminiError with a user-presentable message on any failure.
+ * Pass `image` (base64, no data: prefix) for multimodal prompts — the
+ * image is sent before the text part. Throws GeminiError with a
+ * user-presentable message on any failure.
  */
 export async function generateJson<T>(options: {
   systemPrompt: string;
   userPrompt: string;
   schema: GeminiSchema;
   temperature?: number;
+  image?: { mimeType: string; base64: string };
 }): Promise<T> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
@@ -56,7 +59,17 @@ export async function generateJson<T>(options: {
       headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: options.systemPrompt }] },
-        contents: [{ role: "user", parts: [{ text: options.userPrompt }] }],
+        contents: [
+          {
+            role: "user",
+            parts: [
+              ...(options.image
+                ? [{ inlineData: { mimeType: options.image.mimeType, data: options.image.base64 } }]
+                : []),
+              { text: options.userPrompt },
+            ],
+          },
+        ],
         generationConfig: {
           temperature: options.temperature ?? 0.6,
           responseMimeType: "application/json",

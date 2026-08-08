@@ -111,9 +111,25 @@ export function calcTargets(profile: Profile): EnergyProfile | null {
   const { gender, birth_date, height_cm, weight_kg, activity_level } = profile;
   if (!gender || !birth_date || !height_cm || !weight_kg || !activity_level) return null;
 
-  const goal: Goal = profile.goal ?? "maintain";
   const bmr = calcBmr(gender, weight_kg, height_cm, ageFromBirthDate(birth_date));
-  const tdee = calcTdee(bmr, activity_level);
+  return targetsFromTdee(profile, bmr, calcTdee(bmr, activity_level));
+}
+
+/**
+ * Targets with the TDEE replaced by a measured estimate (adaptive TDEE,
+ * roadmap 1.2 — see src/lib/adaptive.ts). Same goal delta, floor and
+ * macro rules as calcTargets; only the energy baseline differs.
+ */
+export function calcTargetsWithTdee(profile: Profile, tdee: number): EnergyProfile | null {
+  const { gender, birth_date, height_cm, weight_kg } = profile;
+  if (!gender || !birth_date || !height_cm || !weight_kg) return null;
+  const bmr = calcBmr(gender, weight_kg, height_cm, ageFromBirthDate(birth_date));
+  return targetsFromTdee(profile, bmr, tdee);
+}
+
+function targetsFromTdee(profile: Profile, bmr: number, tdee: number): EnergyProfile {
+  const goal: Goal = profile.goal ?? "maintain";
+  const weight_kg = profile.weight_kg!;
   const kcal = Math.max(1200, tdee + GOALS[goal].kcalDelta);
 
   const split = macroSplitFromProfile(profile);
@@ -130,6 +146,12 @@ export function calcTargets(profile: Profile): EnergyProfile | null {
   const fibre = Math.round((kcal / 1000) * 14);
 
   return { bmr, tdee, kcal, protein, carbs, fat, fibre, goal };
+}
+
+/** Daily water target: ~35 ml/kg, rounded to a 250 ml glass, kept sane. */
+export function calcWaterTargetMl(weightKg: number | null): number {
+  if (!weightKg) return 2000;
+  return Math.min(4000, Math.max(1500, Math.round((weightKg * 35) / 250) * 250));
 }
 
 /** Scale a food's per-100 g facts to a portion in grams. */

@@ -276,6 +276,30 @@ export async function logWeight(formData: FormData) {
   return { error: null };
 }
 
+/** Water tracking (roadmap 1.5): each tap adds/removes a glass for the day. */
+export async function logWater(formData: FormData) {
+  const { supabase, userId } = await requireUser();
+
+  const date = String(formData.get("date") ?? "");
+  const delta = Number(formData.get("delta"));
+  if (!DATE_RE.test(date) || !Number.isFinite(delta) || Math.abs(delta) > 2000) return;
+
+  const { data: existing } = await supabase
+    .from("water_logs")
+    .select("ml")
+    .eq("user_id", userId)
+    .eq("log_date", date)
+    .maybeSingle();
+
+  const ml = Math.min(20000, Math.max(0, (existing?.ml ?? 0) + Math.round(delta)));
+  await supabase.from("water_logs").upsert(
+    { user_id: userId, log_date: date, ml, updated_at: new Date().toISOString() },
+    { onConflict: "user_id,log_date" }
+  );
+
+  revalidatePath("/dashboard");
+}
+
 export async function deleteDiaryEntry(formData: FormData) {
   const { supabase, userId } = await requireUser();
   const id = String(formData.get("id") ?? "");

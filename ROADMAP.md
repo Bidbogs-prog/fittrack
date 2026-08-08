@@ -68,32 +68,30 @@ This is a living document. Check items off as they ship, add notes/links to PRs,
 > Turn existing strengths into headline features.
 
 ### 1.1 AI logging (photo + natural language)
-- [ ] "Describe your meal" text entry → Gemini parses → matches against own food DB with portion estimates → user confirms
-- [ ] Photo logging: Gemini is multimodal; extend `src/lib/gemini.ts` (structured output like `insights.ts`)
-- [ ] Always user-confirmable before saving (accuracy expectations: even MFP's Meal Scan is ~71%)
-
-*Shortest path to a marquee feature — the pipeline and prompt discipline already exist.*
+- [x] "Describe your meal" text entry → Gemini parses (`dashboard/ai-log.ts`) → items matched against the food DB via `rankFoods` with portion estimates → review UI (`ai-log-view.tsx`) in the add-food dialog
+- [x] Photo logging: `generateJson` in `src/lib/gemini.ts` now takes an inline image; photos are downscaled client-side (1280 px JPEG) and server actions accept up to 4 MB (`next.config.ts`)
+- [x] Always user-confirmable before saving: each item is a library match (macros derived per convention) or an AI-estimate quick-add snapshot, grams editable, nothing inserted until "Log"
 
 ### 1.2 Adaptive TDEE (MacroFactor's moat)
-- [ ] Derive actual TDEE from logged intake vs. weight trend (needs 0.1 + consistent logging)
-- [ ] Weekly auto-adjustment of calorie/macro targets, with user-visible explanation
-- [ ] Keep static Mifflin-St Jeor as the cold-start default in `nutrition.ts`; never duplicate the math elsewhere
+- [x] `src/lib/adaptive.ts`: TDEE ≈ avg intake − (Δ EWMA weight trend × 7700)/days over a 28-day window, with quality gates (≥5 weigh-ins spanning ≥14 days, ≥10 logged days, ≥50% coverage) and a 0.9–2.5×BMR clamp
+- [x] Weekly auto-adjustment: window always ends the Sunday before the current week, so targets are stable within a week and refresh Mondays; the dashboard hero explains the numbers ("you averaged X kcal while trend weight moved Y kg")
+- [x] Mifflin-St Jeor stays the cold-start default; `calcTargetsWithTdee` in `nutrition.ts` reuses the same macro/floor rules. Dashboard, history and the AI coach all read `getActiveTargets`
 
 ### 1.3 AI coach v2
-- [ ] Persist insights (`ai_insights` table keyed by user+date) — today they vanish on navigation
-- [ ] Weekly trend analysis, not just single-day
-- [ ] Auto-generated weekly report (with 0.5 data)
-- [ ] Keep the "not medical advice" disclaimer (project rule)
+- [x] Persist insights: `ai_insights` table (user + scope day/week + period_start, jsonb payload, RLS own rows); day insights hydrate the dashboard card on load
+- [x] Weekly trend analysis: `history/report.ts` reviews Mon–Sun with day-by-day data, averages vs targets, previous-week comparison and weight trend
+- [x] Weekly report on `/history` (`week-report.tsx`), on-demand + persisted; needs ≥3 logged days
+- [x] "Not medical advice" disclaimer kept on both cards
 
 ### 1.4 Actionable plans
-- [ ] "Apply plan to my diary" one-tap (plans are read-only reference today)
-- [ ] AI-generated meal plans from user target + food preferences, using the real food DB
+- [x] "Log this day to my diary" one-tap on plan pages (`plans/actions.ts` → `applyPlanToDiary`, redirects to the dashboard)
+- [x] AI-generated meal plans (`generateAiPlan`): composed strictly from real food ids (seed library + own foods + favorites), grams ground-truthed via `nutrition.ts` and scaled onto the kcal target; saved as private plans (`meal_plans.owner_id`, RLS split global/own)
 
 ### 1.5 Engagement mechanics
-- [ ] Real streaks + consistency score (landing page already advertises a fake "18-day streak")
-- [ ] Water tracking
-- [ ] Optional intermittent fasting windows (Yazio's wedge)
-- [ ] No emojis in UI; Phosphor icons only (project rule)
+- [x] Real streaks + 30-day consistency (`src/lib/streak.ts`, habit strip on the dashboard) — an unlogged today doesn't break yesterday's run
+- [x] Water tracking: `water_logs` table, one-tap ±250 ml glasses, target ~35 ml/kg (`calcWaterTargetMl`)
+- [x] Optional intermittent fasting window (`profiles.eating_window_start/end`, set on `/account`, live open/fasting chip on the dashboard; overnight windows wrap midnight)
+- [x] No emojis; Phosphor icons only
 
 ---
 
