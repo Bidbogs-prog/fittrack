@@ -276,28 +276,24 @@ export async function logWeight(formData: FormData) {
   return { error: null };
 }
 
-/** Water tracking (roadmap 1.5): each tap adds/removes a glass for the day. */
-export async function logWater(formData: FormData) {
-  const { supabase, userId } = await requireUser();
+/**
+ * Water tracking (roadmap 1.5): each tap adds/removes a glass for the day.
+ * The log_water RPC increments atomically so rapid taps can't lose glasses.
+ */
+export async function logWater(input: { date: string; delta: number }) {
+  const { supabase } = await requireUser();
 
-  const date = String(formData.get("date") ?? "");
-  const delta = Number(formData.get("delta"));
-  if (!DATE_RE.test(date) || !Number.isFinite(delta) || Math.abs(delta) > 2000) return;
+  const date = String(input.date ?? "");
+  const delta = Math.round(Number(input.delta));
+  if (!DATE_RE.test(date) || !Number.isFinite(delta) || delta === 0 || Math.abs(delta) > 2000) {
+    return { error: "Invalid request." };
+  }
 
-  const { data: existing } = await supabase
-    .from("water_logs")
-    .select("ml")
-    .eq("user_id", userId)
-    .eq("log_date", date)
-    .maybeSingle();
-
-  const ml = Math.min(20000, Math.max(0, (existing?.ml ?? 0) + Math.round(delta)));
-  await supabase.from("water_logs").upsert(
-    { user_id: userId, log_date: date, ml, updated_at: new Date().toISOString() },
-    { onConflict: "user_id,log_date" }
-  );
+  const { error } = await supabase.rpc("log_water", { p_date: date, p_delta: delta });
+  if (error) return { error: error.message };
 
   revalidatePath("/dashboard");
+  return { error: null };
 }
 
 export async function deleteDiaryEntry(formData: FormData) {

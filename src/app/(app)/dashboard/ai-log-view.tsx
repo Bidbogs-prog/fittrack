@@ -250,7 +250,7 @@ export function AiLogView({
                   type="button"
                   onClick={() => setItems((prev) => prev?.filter((_, i) => i !== index) ?? null)}
                   aria-label={`Remove ${item.base.name}`}
-                  className="btn-press -m-1 shrink-0 rounded-md p-1.5 text-paper-mute hover:text-paper"
+                  className="btn-press -m-1 shrink-0 rounded-md p-1.5 text-paper-mute hover:text-paper pointer-coarse:p-2.5"
                 >
                   <X weight="bold" className="size-3.5" />
                 </button>
@@ -269,7 +269,8 @@ export function AiLogView({
                 ))}
                 <option value="est">AI estimate · {Math.round(item.base.est.kcal)} kcal as described</option>
               </select>
-              <div className="mt-2 flex items-center gap-3">
+              {/* flex-wrap: on narrow phones the macro preview drops to its own line */}
+              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5">
                 <label className="flex items-center gap-2 text-xs text-paper-mute">
                   <input
                     type="number"
@@ -283,7 +284,7 @@ export function AiLogView({
                   />
                   g
                 </label>
-                <span className="ml-auto font-mono text-xs text-paper-dim tabular">
+                <span className="ml-auto text-right font-mono text-xs text-paper-dim tabular">
                   {Math.round(macros.kcal)} kcal · P {round1(macros.protein)} · C{" "}
                   {round1(macros.carbs)} · F {round1(macros.fat)}
                 </span>

@@ -1,7 +1,7 @@
-import { CalendarCheck, Drop, Fire, Minus, Plus, Timer } from "@phosphor-icons/react/dist/ssr";
+import { CalendarCheck, Fire, Timer } from "@phosphor-icons/react/dist/ssr";
 import type { Streaks } from "@/lib/streak";
-import { logWater } from "./actions";
 import { FastingStatus } from "./fasting-status";
+import { WaterTile } from "./water-tile";
 
 /**
  * Habit strip (roadmap 1.5): real logging streak + 30-day consistency,
@@ -25,7 +25,6 @@ export function Habits({
   fastingStart: string | null;
   fastingEnd: string | null;
 }) {
-  const waterPct = Math.min(100, Math.round((waterMl / waterTarget) * 100));
   const hasFasting = fastingStart != null && fastingEnd != null;
 
   return (
@@ -61,63 +60,10 @@ export function Habits({
         <p className="text-[11px] text-paper-mute">of the last 30 days logged</p>
       </div>
 
-      <div className="rounded-2xl border border-ink-800 bg-ink-900/60 p-4">
-        <div className="flex items-start justify-between gap-2">
-          <div>
-            <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-paper-mute">
-              <Drop weight="fill" className={`size-3.5 ${waterPct >= 100 ? "text-lime" : ""}`} />
-              Water
-            </p>
-            <p className="mt-1 font-mono text-2xl font-semibold tracking-tight text-paper tabular">
-              {(waterMl / 1000).toFixed(waterMl % 1000 === 0 ? 0 : 2)}
-              <span className="ml-1.5 text-sm font-normal text-paper-mute">
-                / {(waterTarget / 1000).toFixed(waterTarget % 1000 === 0 ? 0 : 2)} L
-              </span>
-            </p>
-          </div>
-          <div className="flex shrink-0 gap-1">
-            <form action={logWater}>
-              <input type="hidden" name="date" value={date} />
-              <input type="hidden" name="delta" value={-250} />
-              <button
-                type="submit"
-                disabled={waterMl <= 0}
-                aria-label="Remove a 250 ml glass"
-                className="btn-press rounded-lg border border-ink-700 p-2 text-paper-mute transition-colors hover:text-paper disabled:opacity-30"
-              >
-                <Minus weight="bold" className="size-3.5" />
-              </button>
-            </form>
-            <form action={logWater}>
-              <input type="hidden" name="date" value={date} />
-              <input type="hidden" name="delta" value={250} />
-              <button
-                type="submit"
-                aria-label="Add a 250 ml glass"
-                className="btn-press rounded-lg border border-ink-700 p-2 text-paper-dim transition-colors hover:border-lime/50 hover:text-lime"
-              >
-                <Plus weight="bold" className="size-3.5" />
-              </button>
-            </form>
-          </div>
-        </div>
-        <div
-          role="progressbar"
-          aria-valuenow={waterMl}
-          aria-valuemin={0}
-          aria-valuemax={waterTarget}
-          aria-label="Water drunk"
-          className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-ink-800"
-        >
-          <div
-            className="h-full rounded-full bg-lime transition-[width] duration-300"
-            style={{ width: `${waterPct}%` }}
-          />
-        </div>
-      </div>
+      <WaterTile ml={waterMl} target={waterTarget} date={date} />
 
       {hasFasting && (
-        <div className="rounded-2xl border border-ink-800 bg-ink-900/60 p-4">
+        <div className="col-span-2 rounded-2xl border border-ink-800 bg-ink-900/60 p-4 lg:col-span-1">
           <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-paper-mute">
             <Timer weight="fill" className="size-3.5" />
             Eating window

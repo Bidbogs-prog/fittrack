@@ -315,6 +315,25 @@ create policy "water: delete own" on public.water_logs
   for delete to authenticated
   using ((select auth.uid()) = user_id);
 
+-- Atomic increment: read-modify-write from the app loses taps when two
+-- glasses are added quickly. Runs as invoker, so RLS still applies.
+create or replace function public.log_water(p_date date, p_delta integer)
+returns integer
+language sql
+set search_path = ''
+as $$
+  insert into public.water_logs (user_id, log_date, ml)
+  values (auth.uid(), p_date, greatest(0, least(20000, p_delta)))
+  on conflict (user_id, log_date)
+  do update set
+    ml = greatest(0, least(20000, public.water_logs.ml + p_delta)),
+    updated_at = now()
+  returning ml;
+$$;
+
+revoke execute on function public.log_water(date, integer) from public, anon;
+grant execute on function public.log_water(date, integer) to authenticated;
+
 -- ---------- FAVORITE FOODS ----------
 create table if not exists public.favorite_foods (
   user_id uuid not null references auth.users (id) on delete cascade default auth.uid(),
