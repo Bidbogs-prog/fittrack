@@ -27,39 +27,39 @@ This is a living document. Check items off as they ship, add notes/links to PRs,
 > Nothing else matters until logging is fast and the app has memory.
 
 ### 0.1 Weight log + trend line
-- [ ] `weight_logs` table (user_id, date, weight_kg, RLS: own rows) — replaces overwrite-only `profiles.weight_kg` as source of history (keep profile field as "current weight" cache or derive it)
-- [ ] One-tap daily weight entry on the dashboard
-- [ ] Smoothed trend line (e.g. exponentially weighted moving average) — raw daily weights are noise
-- [ ] Keep `supabase/schema.sql` and `src/lib/types.ts` in sync (project convention)
+- [x] `weight_logs` table (user_id, date, weight_kg, RLS: own rows) — `profiles.weight_kg` kept as "current weight" cache, refreshed by the log action
+- [x] One-tap daily weight entry on the dashboard (`weight-card.tsx`, logs against the viewed date)
+- [x] Smoothed trend line — EWMA in `src/lib/weight.ts` (alpha 0.3), sparkline on dashboard, full chart on `/history`
+- [x] Keep `supabase/schema.sql` and `src/lib/types.ts` in sync (project convention)
 
 *Why first: it's the retention loop (users return to see progress) AND the prerequisite for adaptive TDEE (P1.2).*
 
 ### 0.2 Kill logging friction
-- [ ] Recents / frequent foods / favorites surfaced before the search box in `add-food-dialog.tsx`
-- [ ] `updateDiaryEntry` server action + edit-in-place UI (today: delete + re-add only)
-- [ ] Copy meal / copy yesterday
-- [ ] Quick-add calories (log kcal/macros without picking a food)
+- [x] Recents / frequent foods / favorites surfaced before the search box (`/api/foods/suggestions` + shelves in `add-food-dialog.tsx`; `favorite_foods` table, star toggle)
+- [x] `updateDiaryEntry` server action + edit-in-place UI (`entry-row.tsx`: tap any diary line to edit portion/meal/macros)
+- [x] Copy meal / copy yesterday (`copyDiaryEntries`; per-meal + whole-day buttons on the dashboard)
+- [x] Quick-add calories (snapshot entries: `quick_*` columns, macros optional, micros stay unknown)
 
 ### 0.3 User-created foods & recipes
-- [ ] Relax `foods` RLS: users can create their own foods (`created_by`, visible to self; admin foods stay global). Keep per-100g convention.
-- [ ] Recipes: multi-ingredient saved meals (`recipes` + `recipe_items` tables), logged as one unit, macros derived via `nutrition.ts`
-- [ ] User food management UI (create/edit under `/foods`)
+- [x] Relax `foods` RLS: `owner_id` column (null = global, set = private to owner); barcode uniqueness now global-only. Per-100 g convention kept.
+- [x] Recipes: `recipes` + `recipe_items`, logged as one unit — macros snapshotted at log time (recipe edits/deletes never rewrite diary history), builder at `/recipes`
+- [x] User food management UI (`/foods/new`, `/foods/[id]/edit`, "Your foods" filter)
 
 ### 0.4 Barcode scanner
-- [ ] Scan UI in the add-food dialog: `BarcodeDetector` API with zxing-js fallback (Safari)
-- [ ] Lookup against the already-populated `foods.barcode` column (OFF import)
-- [ ] Miss path: "not found — create food?" (depends on 0.3)
+- [x] Scan UI in the add-food dialog: `BarcodeDetector` API with lazy-imported `@zxing/browser` fallback (Safari)
+- [x] Lookup against `foods.barcode` (`/api/foods/barcode`; a user's private food outranks a global row with the same code)
+- [x] Miss path: "not found — create food?" prefills the barcode on `/foods/new`
 
 *Cheap win: the data side already exists.*
 
 ### 0.5 History & charts
-- [ ] Pick a chart library (none installed — keep bundle light; respect `prefers-reduced-motion`)
-- [ ] `/history` (or dashboard tab): calorie + macro trends, weekly averages, weight trend
-- [ ] Weekly summary view (avg vs target, adherence)
+- [x] Chart library: none — custom static SVG components in `history/charts.tsx` (zero bundle cost, nothing animates so reduced-motion is moot)
+- [x] `/history`: 30-day calories vs target, macro trends, 90-day weight trend (raw dots + EWMA), hover tooltips; History added to nav
+- [x] Weekly summary view (4-week table: days logged, avg kcal/protein, adherence = within ±10% of target)
 
 ### 0.6 Trust basics
-- [ ] Forgot password / reset flow (Supabase `resetPasswordForEmail`)
-- [ ] Account deletion (self-service, cascades diary/weight/foods; GDPR)
+- [x] Forgot password / reset flow (`/forgot-password` → email link → `/reset-password`; anti-enumeration message)
+- [x] Account deletion (self-service on `/account` via `delete_account()` security-definer RPC; cascades diary/weight/foods/recipes) + change password
 
 ---
 

@@ -1,4 +1,4 @@
-import { CaretLeft, CaretRight, Trash } from "@phosphor-icons/react/dist/ssr";
+import { CaretLeft, CaretRight, CopySimple } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AiInsights } from "@/components/ai-insights";
@@ -7,17 +7,14 @@ import { MicroPanel } from "@/components/micros";
 import { CountUp } from "@/components/motion/count-up";
 import { Reveal } from "@/components/motion/reveal";
 import { getProfile } from "@/lib/auth";
-import {
-  GOALS,
-  calcTargets,
-  macrosForPortion,
-  microsForPortion,
-  sumMacros,
-  sumMicros,
-} from "@/lib/nutrition";
-import { MEAL_TYPES, type DiaryEntry } from "@/lib/types";
+import { entryMacros, entryMicros } from "@/lib/diary";
+import { GOALS, calcTargets, sumMacros, sumMicros } from "@/lib/nutrition";
+import { MEAL_TYPES, type DiaryEntry, type MealType, type WeightLog } from "@/lib/types";
+import { trendDelta, weightTrend } from "@/lib/weight";
 import { AddFoodDialog } from "./add-food-dialog";
-import { deleteDiaryEntry } from "./actions";
+import { copyDiaryEntries } from "./actions";
+import { EntryRow } from "./entry-row";
+import { WeightCard } from "./weight-card";
 
 export const metadata = { title: "Today" };
 
@@ -47,17 +44,34 @@ export default async function DashboardPage({
   const today = toDateString(new Date());
   const date = params.d && /^\d{4}-\d{2}-\d{2}$/.test(params.d) ? params.d : today;
 
-  const { data: entriesData } = await supabase
-    .from("diary_entries")
-    .select("*, food:foods(*)")
-    .eq("user_id", userId)
-    .eq("entry_date", date)
-    .order("created_at");
+  const yesterday = shiftDate(date, -1);
+  const [{ data: entriesData }, { data: weightData }, { data: yesterdayData }] =
+    await Promise.all([
+      supabase
+        .from("diary_entries")
+        .select("*, food:foods(*)")
+        .eq("user_id", userId)
+        .eq("entry_date", date)
+        .order("created_at"),
+      supabase
+        .from("weight_logs")
+        .select("*")
+        .eq("user_id", userId)
+        .gte("log_date", shiftDate(today, -120))
+        .order("log_date"),
+      supabase
+        .from("diary_entries")
+        .select("meal")
+        .eq("user_id", userId)
+        .eq("entry_date", yesterday),
+    ]);
 
   const entries = (entriesData ?? []) as DiaryEntry[];
+  const trendPoints = weightTrend((weightData ?? []) as WeightLog[]);
+  const yesterdayMeals = new Set((yesterdayData ?? []).map((r) => r.meal as MealType));
 
-  const eaten = sumMacros(entries.map((e) => macrosForPortion(e.food, e.grams)));
-  const microTotals = sumMicros(entries.map((e) => microsForPortion(e.food, e.grams)));
+  const eaten = sumMacros(entries.map(entryMacros));
+  const microTotals = sumMicros(entries.map(entryMicros));
   const remaining = Math.round(targets.kcal - eaten.kcal);
   const isToday = date === today;
   const dateLabel = new Date(date + "T12:00:00").toLocaleDateString("en-GB", {
@@ -149,6 +163,14 @@ export default async function DashboardPage({
         </div>
       </Reveal>
 
+      <WeightCard
+        points={trendPoints}
+        delta={trendDelta(trendPoints)}
+        date={date}
+        isToday={isToday}
+        defaultWeight={profile.weight_kg}
+      />
+
       <AiInsights key={date} date={date} hasEntries={entries.length > 0} />
 
       <MacroBars eaten={eaten} targets={targets} />
@@ -156,10 +178,23 @@ export default async function DashboardPage({
       <MicroPanel totals={microTotals} />
 
       {/* meals */}
+      {entries.length === 0 && yesterdayMeals.size > 0 && (
+        <form action={copyDiaryEntries}>
+          <input type="hidden" name="from_date" value={yesterday} />
+          <input type="hidden" name="to_date" value={date} />
+          <button
+            type="submit"
+            className="btn-press inline-flex items-center gap-2 rounded-lg border border-ink-700 px-4 py-2.5 text-xs font-semibold text-paper-dim transition-colors hover:border-lime/50 hover:text-lime"
+          >
+            <CopySimple weight="bold" className="size-4" />
+            Copy everything from yesterday
+          </button>
+        </form>
+      )}
       <Reveal as="section" className="grid gap-5 xl:grid-cols-2" stagger={0.1} start="top 90%">
         {MEAL_TYPES.map((meal) => {
           const mealEntries = entries.filter((e) => e.meal === meal);
-          const mealTotal = sumMacros(mealEntries.map((e) => macrosForPortion(e.food, e.grams)));
+          const mealTotal = sumMacros(mealEntries.map(entryMacros));
           return (
             <article
               key={meal}
@@ -177,6 +212,21 @@ export default async function DashboardPage({
                   <span className="font-mono text-sm text-paper-dim tabular">
                     {Math.round(mealTotal.kcal)} kcal
                   </span>
+                  {mealEntries.length === 0 && yesterdayMeals.has(meal) && (
+                    <form action={copyDiaryEntries}>
+                      <input type="hidden" name="from_date" value={yesterday} />
+                      <input type="hidden" name="to_date" value={date} />
+                      <input type="hidden" name="meal" value={meal} />
+                      <button
+                        type="submit"
+                        title={`Copy yesterday's ${meal}`}
+                        aria-label={`Copy yesterday's ${meal}`}
+                        className="btn-press rounded-lg border border-ink-700 p-2 text-paper-mute transition-colors hover:border-lime/50 hover:text-lime"
+                      >
+                        <CopySimple weight="bold" className="size-3.5" />
+                      </button>
+                    </form>
+                  )}
                   <AddFoodDialog meal={meal} entryDate={date} />
                 </div>
               </header>
@@ -186,35 +236,11 @@ export default async function DashboardPage({
                 </p>
               ) : (
                 <ul className="divide-y divide-ink-800/70">
-                  {mealEntries.map((entry) => {
-                    const m = macrosForPortion(entry.food, entry.grams);
-                    return (
-                      <li key={entry.id} className="group flex items-center gap-3 px-5 py-3">
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium text-paper">
-                            {entry.food.name}
-                          </p>
-                          <p className="truncate text-[11px] text-paper-mute">
-                            {entry.grams} g · P {m.protein.toFixed(1)} · C {m.carbs.toFixed(1)} · F{" "}
-                            {m.fat.toFixed(1)} · Fb {m.fibre.toFixed(1)}
-                          </p>
-                        </div>
-                        <span className="font-mono text-sm text-paper-dim tabular">
-                          {Math.round(m.kcal)}
-                        </span>
-                        <form action={deleteDiaryEntry}>
-                          <input type="hidden" name="id" value={entry.id} />
-                          <button
-                            type="submit"
-                            aria-label={`Remove ${entry.food.name}`}
-                            className="btn-press rounded-md p-2.5 text-paper-mute transition-opacity hover:bg-danger/10 hover:text-danger focus-visible:opacity-100 pointer-coarse:text-danger/80 pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100"
-                          >
-                            <Trash className="size-4" />
-                          </button>
-                        </form>
-                      </li>
-                    );
-                  })}
+                  {mealEntries.map((entry) => (
+                    <li key={entry.id}>
+                      <EntryRow entry={entry} />
+                    </li>
+                  ))}
                 </ul>
               )}
             </article>

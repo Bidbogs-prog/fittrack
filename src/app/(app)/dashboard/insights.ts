@@ -2,6 +2,7 @@
 
 import { GeminiError, generateJson, type GeminiSchema } from "@/lib/gemini";
 import { getProfile } from "@/lib/auth";
+import { entryAmountLabel, entryMacros, entryMicros, entryName } from "@/lib/diary";
 import {
   ACTIVITY_LEVELS,
   GOALS,
@@ -9,8 +10,6 @@ import {
   ageFromBirthDate,
   calcTargets,
   formatAmount,
-  macrosForPortion,
-  microsForPortion,
   percentDv,
   round1,
   sumMacros,
@@ -69,7 +68,7 @@ Rules:
 - Educate, don't diagnose: no medical claims, disease talk, or supplement prescriptions. Extreme intakes deserve a gentle suggestion to consult a professional.`;
 
 function describeMicros(entries: DiaryEntry[]): string {
-  const totals = sumMicros(entries.map((e) => microsForPortion(e.food, e.grams)));
+  const totals = sumMicros(entries.map(entryMicros));
   return MICRO_KEYS.map((key) => {
     const def = MICRONUTRIENTS[key];
     const value = totals[key];
@@ -83,16 +82,21 @@ function describeMicros(entries: DiaryEntry[]): string {
 
 function describeDay(profile: Profile, entries: DiaryEntry[], entryDate: string): string {
   const targets = calcTargets(profile)!;
-  const eaten = sumMacros(entries.map((e) => macrosForPortion(e.food, e.grams)));
+  const eaten = sumMacros(entries.map(entryMacros));
   const isToday = entryDate === new Date().toLocaleDateString("en-CA");
 
   const meals = MEAL_TYPES.map((meal) => {
     const rows = entries.filter((e) => e.meal === meal);
     if (rows.length === 0) return `${meal.toUpperCase()}: nothing logged`;
     const lines = rows.map((e) => {
-      const m = macrosForPortion(e.food, e.grams);
-      const name = e.food.brand ? `${e.food.name} (${e.food.brand})` : e.food.name;
-      return `- ${name}, ${e.grams} g: ${Math.round(m.kcal)} kcal, protein ${round1(m.protein)} g, carbs ${round1(m.carbs)} g, fat ${round1(m.fat)} g, fibre ${round1(m.fibre)} g`;
+      const m = entryMacros(e);
+      const name = e.food?.brand ? `${e.food.name} (${e.food.brand})` : entryName(e);
+      const note = e.food
+        ? ""
+        : e.recipe_id != null || e.servings != null
+          ? " [saved recipe, macros snapshotted at logging; micronutrients unknown]"
+          : " [quick add without a food; micronutrients unknown]";
+      return `- ${name}, ${entryAmountLabel(e)}: ${Math.round(m.kcal)} kcal, protein ${round1(m.protein)} g, carbs ${round1(m.carbs)} g, fat ${round1(m.fat)} g, fibre ${round1(m.fibre)} g${note}`;
     });
     return `${meal.toUpperCase()}:\n${lines.join("\n")}`;
   }).join("\n\n");

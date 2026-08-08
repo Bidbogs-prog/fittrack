@@ -91,6 +91,49 @@ export async function oauthSignIn(formData: FormData) {
   redirect(data.url);
 }
 
+export async function forgotPassword(formData: FormData) {
+  const email = String(formData.get("email") ?? "").trim();
+  if (!email) {
+    redirect(`/forgot-password?error=${encodeURIComponent("Enter your email address.")}`);
+  }
+
+  const supabase = await createClient();
+  const headerStore = await headers();
+  const origin =
+    headerStore.get("origin") ??
+    `https://${headerStore.get("x-forwarded-host") ?? headerStore.get("host")}`;
+
+  await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${origin}/auth/confirm?next=/reset-password`,
+  });
+
+  // Same message whether or not the account exists — no account enumeration.
+  redirect(
+    `/login?message=${encodeURIComponent(
+      "If an account exists for that email, a reset link is on its way."
+    )}`
+  );
+}
+
+/** Runs with the recovery session established by /auth/confirm. */
+export async function resetPassword(formData: FormData) {
+  const password = String(formData.get("password") ?? "");
+  if (password.length < 8) {
+    redirect(
+      `/reset-password?error=${encodeURIComponent("Password must be at least 8 characters.")}`
+    );
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) {
+    redirect(`/reset-password?error=${encodeURIComponent(error.message)}`);
+  }
+
+  revalidatePath("/", "layout");
+  redirect("/dashboard");
+}
+
 export async function signout() {
   const supabase = await createClient();
   await supabase.auth.signOut();

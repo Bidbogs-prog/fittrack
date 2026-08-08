@@ -32,6 +32,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             >
               Update body stats
             </a>
+            <a
+              href="/account"
+              className="flex min-h-10 items-center text-xs font-medium text-paper-mute underline-offset-4 hover:text-lime hover:underline"
+            >
+              Account settings
+            </a>
             <form action={signout} className="mt-1">
               <button
                 type="submit"

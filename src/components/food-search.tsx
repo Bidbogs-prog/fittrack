@@ -7,9 +7,11 @@ import { usePathname, useRouter } from "next/navigation";
 export function FoodSearch({
   initialQuery,
   category,
+  mine = false,
 }: {
   initialQuery: string;
   category: string | null;
+  mine?: boolean;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -22,6 +24,7 @@ export function FoodSearch({
 
   function navigate(q: string) {
     const params = new URLSearchParams();
+    if (mine) params.set("mine", "1");
     if (category) params.set("c", category);
     if (q.trim()) params.set("q", q.trim());
     const qs = params.toString();

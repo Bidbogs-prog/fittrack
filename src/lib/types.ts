@@ -91,6 +91,8 @@ export interface Food extends MicroValues {
   source: FoodSource;
   category: FoodCategory;
   image_url: string | null;
+  /** null = global library food; set = private food visible to its owner only. */
+  owner_id: string | null;
   kcal: number;
   protein_g: number;
   carbs_g: number;
@@ -98,11 +100,50 @@ export interface Food extends MicroValues {
   fibre_g: number;
 }
 
+/**
+ * A diary entry is either a food portion (`food_id` + `grams`) or a macro
+ * snapshot (`quick_name` + `quick_kcal`): manual quick-adds and logged
+ * recipes. Recipe entries snapshot macros at log time and keep
+ * `recipe_id` + `servings` for display. Helpers live in `src/lib/diary.ts`.
+ */
 export interface DiaryEntry {
   id: string;
   user_id: string;
   entry_date: string;
   meal: MealType;
+  food_id: string | null;
+  grams: number | null;
+  food: Food | null;
+  recipe_id: string | null;
+  servings: number | null;
+  quick_name: string | null;
+  quick_kcal: number | null;
+  quick_protein_g: number | null;
+  quick_carbs_g: number | null;
+  quick_fat_g: number | null;
+  quick_fibre_g: number | null;
+}
+
+export interface WeightLog {
+  id: string;
+  user_id: string;
+  log_date: string;
+  weight_kg: number;
+}
+
+export interface Recipe {
+  id: string;
+  user_id: string;
+  name: string;
+  description: string | null;
+  /** How many servings the full ingredient list makes. */
+  servings: number;
+  items: RecipeItem[];
+}
+
+export interface RecipeItem {
+  id: string;
+  recipe_id: string;
   food_id: string;
   grams: number;
   food: Food;

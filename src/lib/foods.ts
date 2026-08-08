@@ -26,6 +26,8 @@ export async function searchFoods(
     orderBy?: "name" | "newest";
     /** "prefix" matches only names/brands starting with q (for ranking). */
     match?: "contains" | "prefix";
+    /** Only the caller's own (private) foods. RLS already scopes rows to own+global. */
+    mine?: boolean;
   }
 ): Promise<{ foods: Food[]; total: number }> {
   const pageSize = opts.pageSize ?? FOODS_PAGE_SIZE;
@@ -35,6 +37,7 @@ export async function searchFoods(
   let query = (
     opts.orderBy === "newest" ? base.order("created_at", { ascending: false }) : base.order("name")
   ).range((page - 1) * pageSize, page * pageSize - 1);
+  if (opts.mine) query = query.not("owner_id", "is", null);
   if (opts.category) query = query.eq("category", opts.category);
   const q = sanitizeSearch(opts.q ?? "");
   if (q) {

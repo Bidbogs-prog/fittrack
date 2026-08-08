@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  ChartLineUp,
   ForkKnife,
   Gauge,
   ListChecks,
@@ -12,6 +13,7 @@ import {
 
 const LINKS: { href: string; label: string; short: string; icon: Icon }[] = [
   { href: "/dashboard", label: "Today", short: "Today", icon: Gauge },
+  { href: "/history", label: "History", short: "History", icon: ChartLineUp },
   { href: "/foods", label: "Food library", short: "Foods", icon: ForkKnife },
   { href: "/plans", label: "Meal plans", short: "Plans", icon: ListChecks },
 ];

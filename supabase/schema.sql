@@ -1,6 +1,8 @@
 -- ============================================================
 -- FitTrack — full schema, RLS, storage
--- Run this file once in the Supabase SQL editor (or psql).
+-- Idempotent: run the whole file in the Supabase SQL editor (or
+-- psql) as often as needed — it creates from scratch and upgrades
+-- existing databases in place.
 -- ============================================================
 
 -- ---------- PROFILES ----------
@@ -29,14 +31,17 @@ create table if not exists public.profiles (
 
 alter table public.profiles enable row level security;
 
+drop policy if exists "profiles: read own" on public.profiles;
 create policy "profiles: read own" on public.profiles
   for select to authenticated
   using ((select auth.uid()) = id);
 
+drop policy if exists "profiles: insert own" on public.profiles;
 create policy "profiles: insert own" on public.profiles
   for insert to authenticated
   with check ((select auth.uid()) = id);
 
+drop policy if exists "profiles: update own" on public.profiles;
 create policy "profiles: update own" on public.profiles
   for update to authenticated
   using ((select auth.uid()) = id)
@@ -76,6 +81,7 @@ alter table public.admins enable row level security;
 
 -- Users may check their own membership (this also makes the
 -- exists(...) predicates below work under RLS).
+drop policy if exists "admins: read own row" on public.admins;
 create policy "admins: read own row" on public.admins
   for select to authenticated
   using ((select auth.uid()) = user_id);
@@ -135,7 +141,19 @@ alter table public.foods drop constraint if exists foods_source_check;
 alter table public.foods add constraint foods_source_check
   check (source in ('manual', 'off', 'usda'));
 
-create unique index if not exists foods_barcode_key on public.foods (barcode);
+-- Users can create private foods: `owner_id` set = visible to that user
+-- only, null = global (curated/imported). `created_by` stays provenance.
+alter table public.foods
+  add column if not exists owner_id uuid references auth.users (id) on delete cascade;
+
+create index if not exists foods_owner_idx
+  on public.foods (owner_id) where owner_id is not null;
+
+-- Barcode dedup applies to the global library only — a private food may
+-- repeat a barcode (e.g. a user's corrected copy of an imported product).
+drop index if exists public.foods_barcode_key;
+create unique index if not exists foods_barcode_key
+  on public.foods (barcode) where owner_id is null;
 
 -- Generic USDA staples carry no barcode — idempotency is by name instead.
 create unique index if not exists foods_usda_name_key
@@ -143,22 +161,44 @@ create unique index if not exists foods_usda_name_key
 
 alter table public.foods enable row level security;
 
-create policy "foods: read for signed-in users" on public.foods
+drop policy if exists "foods: read for signed-in users" on public.foods;
+drop policy if exists "foods: read global or own" on public.foods;
+create policy "foods: read global or own" on public.foods
   for select to authenticated
-  using (true);
+  using (owner_id is null or owner_id = (select auth.uid()));
 
+drop policy if exists "foods: admin insert" on public.foods;
 create policy "foods: admin insert" on public.foods
   for insert to authenticated
   with check (exists (select 1 from public.admins a where a.user_id = (select auth.uid())));
 
+drop policy if exists "foods: admin update" on public.foods;
 create policy "foods: admin update" on public.foods
   for update to authenticated
   using (exists (select 1 from public.admins a where a.user_id = (select auth.uid())))
   with check (exists (select 1 from public.admins a where a.user_id = (select auth.uid())));
 
+drop policy if exists "foods: admin delete" on public.foods;
 create policy "foods: admin delete" on public.foods
   for delete to authenticated
   using (exists (select 1 from public.admins a where a.user_id = (select auth.uid())));
+
+-- Any signed-in user may manage their own private foods.
+drop policy if exists "foods: insert own" on public.foods;
+create policy "foods: insert own" on public.foods
+  for insert to authenticated
+  with check (owner_id = (select auth.uid()));
+
+drop policy if exists "foods: update own" on public.foods;
+create policy "foods: update own" on public.foods
+  for update to authenticated
+  using (owner_id = (select auth.uid()))
+  with check (owner_id = (select auth.uid()));
+
+drop policy if exists "foods: delete own" on public.foods;
+create policy "foods: delete own" on public.foods
+  for delete to authenticated
+  using (owner_id = (select auth.uid()));
 
 -- ---------- DIARY ENTRIES ----------
 create table if not exists public.diary_entries (
@@ -176,22 +216,181 @@ create index if not exists diary_entries_user_date_idx
 
 alter table public.diary_entries enable row level security;
 
+drop policy if exists "diary: read own" on public.diary_entries;
 create policy "diary: read own" on public.diary_entries
   for select to authenticated
   using ((select auth.uid()) = user_id);
 
+drop policy if exists "diary: insert own" on public.diary_entries;
 create policy "diary: insert own" on public.diary_entries
   for insert to authenticated
   with check ((select auth.uid()) = user_id);
 
+drop policy if exists "diary: update own" on public.diary_entries;
 create policy "diary: update own" on public.diary_entries
   for update to authenticated
   using ((select auth.uid()) = user_id)
   with check ((select auth.uid()) = user_id);
 
+drop policy if exists "diary: delete own" on public.diary_entries;
 create policy "diary: delete own" on public.diary_entries
   for delete to authenticated
   using ((select auth.uid()) = user_id);
+
+-- ---------- WEIGHT LOGS ----------
+-- Source of truth for weight history; profiles.weight_kg stays as the
+-- "current weight" cache (refreshed by the log-weight action).
+create table if not exists public.weight_logs (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users (id) on delete cascade default auth.uid(),
+  log_date date not null default current_date,
+  weight_kg numeric(5, 1) not null check (weight_kg between 25 and 400),
+  created_at timestamptz not null default now(),
+  unique (user_id, log_date)
+);
+
+create index if not exists weight_logs_user_date_idx
+  on public.weight_logs (user_id, log_date);
+
+alter table public.weight_logs enable row level security;
+
+drop policy if exists "weight: read own" on public.weight_logs;
+create policy "weight: read own" on public.weight_logs
+  for select to authenticated
+  using ((select auth.uid()) = user_id);
+
+drop policy if exists "weight: insert own" on public.weight_logs;
+create policy "weight: insert own" on public.weight_logs
+  for insert to authenticated
+  with check ((select auth.uid()) = user_id);
+
+drop policy if exists "weight: update own" on public.weight_logs;
+create policy "weight: update own" on public.weight_logs
+  for update to authenticated
+  using ((select auth.uid()) = user_id)
+  with check ((select auth.uid()) = user_id);
+
+drop policy if exists "weight: delete own" on public.weight_logs;
+create policy "weight: delete own" on public.weight_logs
+  for delete to authenticated
+  using ((select auth.uid()) = user_id);
+
+-- ---------- FAVORITE FOODS ----------
+create table if not exists public.favorite_foods (
+  user_id uuid not null references auth.users (id) on delete cascade default auth.uid(),
+  food_id uuid not null references public.foods (id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (user_id, food_id)
+);
+
+alter table public.favorite_foods enable row level security;
+
+drop policy if exists "favorites: read own" on public.favorite_foods;
+create policy "favorites: read own" on public.favorite_foods
+  for select to authenticated
+  using ((select auth.uid()) = user_id);
+
+drop policy if exists "favorites: insert own" on public.favorite_foods;
+create policy "favorites: insert own" on public.favorite_foods
+  for insert to authenticated
+  with check ((select auth.uid()) = user_id);
+
+drop policy if exists "favorites: delete own" on public.favorite_foods;
+create policy "favorites: delete own" on public.favorite_foods
+  for delete to authenticated
+  using ((select auth.uid()) = user_id);
+
+-- ---------- RECIPES (multi-ingredient saved meals, per user) ----------
+create table if not exists public.recipes (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users (id) on delete cascade default auth.uid(),
+  name text not null,
+  description text,
+  -- How many servings the full ingredient list makes.
+  servings numeric(4, 1) not null default 1 check (servings > 0 and servings <= 100),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.recipes enable row level security;
+
+drop policy if exists "recipes: read own" on public.recipes;
+create policy "recipes: read own" on public.recipes
+  for select to authenticated
+  using ((select auth.uid()) = user_id);
+
+drop policy if exists "recipes: insert own" on public.recipes;
+create policy "recipes: insert own" on public.recipes
+  for insert to authenticated
+  with check ((select auth.uid()) = user_id);
+
+drop policy if exists "recipes: update own" on public.recipes;
+create policy "recipes: update own" on public.recipes
+  for update to authenticated
+  using ((select auth.uid()) = user_id)
+  with check ((select auth.uid()) = user_id);
+
+drop policy if exists "recipes: delete own" on public.recipes;
+create policy "recipes: delete own" on public.recipes
+  for delete to authenticated
+  using ((select auth.uid()) = user_id);
+
+create table if not exists public.recipe_items (
+  id uuid primary key default gen_random_uuid(),
+  recipe_id uuid not null references public.recipes (id) on delete cascade,
+  food_id uuid not null references public.foods (id) on delete cascade,
+  grams numeric(6, 1) not null check (grams > 0 and grams <= 5000),
+  created_at timestamptz not null default now()
+);
+
+create index if not exists recipe_items_recipe_idx on public.recipe_items (recipe_id);
+
+alter table public.recipe_items enable row level security;
+
+drop policy if exists "recipe items: own via recipe" on public.recipe_items;
+create policy "recipe items: own via recipe" on public.recipe_items
+  for all to authenticated
+  using (exists (
+    select 1 from public.recipes r
+    where r.id = recipe_id and r.user_id = (select auth.uid())
+  ))
+  with check (exists (
+    select 1 from public.recipes r
+    where r.id = recipe_id and r.user_id = (select auth.uid())
+  ));
+
+-- ---------- DIARY ENTRIES: quick-add + recipe snapshots ----------
+-- An entry is either a food portion (food_id + grams) or a macro snapshot
+-- (quick_name + quick_kcal): manual quick-adds and logged recipes. Recipe
+-- entries snapshot their macros at log time — editing or deleting a recipe
+-- never rewrites diary history — keeping recipe_id + servings for display.
+alter table public.diary_entries
+  alter column food_id drop not null,
+  alter column grams drop not null;
+
+alter table public.diary_entries
+  add column if not exists recipe_id uuid references public.recipes (id) on delete set null,
+  add column if not exists servings numeric(5, 2) check (servings > 0 and servings <= 100),
+  add column if not exists quick_name text,
+  add column if not exists quick_kcal numeric(6, 1) check (quick_kcal >= 0),
+  add column if not exists quick_protein_g numeric(6, 1) check (quick_protein_g >= 0),
+  add column if not exists quick_carbs_g numeric(6, 1) check (quick_carbs_g >= 0),
+  add column if not exists quick_fat_g numeric(6, 1) check (quick_fat_g >= 0),
+  add column if not exists quick_fibre_g numeric(6, 1) check (quick_fibre_g >= 0);
+
+alter table public.diary_entries drop constraint if exists diary_entry_shape;
+alter table public.diary_entries add constraint diary_entry_shape check (
+  (
+    food_id is not null and grams is not null
+    and recipe_id is null and servings is null and quick_kcal is null
+  )
+  or (
+    food_id is null and grams is null
+    and quick_name is not null and quick_kcal is not null
+    -- servings may outlive recipe_id (recipe deleted → set null).
+    and (recipe_id is null or servings is not null)
+  )
+);
 
 -- ---------- MEAL PLANS (admin-authored, readable by everyone signed in) ----------
 create table if not exists public.meal_plans (
@@ -205,19 +404,23 @@ create table if not exists public.meal_plans (
 
 alter table public.meal_plans enable row level security;
 
+drop policy if exists "plans: read for signed-in users" on public.meal_plans;
 create policy "plans: read for signed-in users" on public.meal_plans
   for select to authenticated
   using (true);
 
+drop policy if exists "plans: admin insert" on public.meal_plans;
 create policy "plans: admin insert" on public.meal_plans
   for insert to authenticated
   with check (exists (select 1 from public.admins a where a.user_id = (select auth.uid())));
 
+drop policy if exists "plans: admin update" on public.meal_plans;
 create policy "plans: admin update" on public.meal_plans
   for update to authenticated
   using (exists (select 1 from public.admins a where a.user_id = (select auth.uid())))
   with check (exists (select 1 from public.admins a where a.user_id = (select auth.uid())));
 
+drop policy if exists "plans: admin delete" on public.meal_plans;
 create policy "plans: admin delete" on public.meal_plans
   for delete to authenticated
   using (exists (select 1 from public.admins a where a.user_id = (select auth.uid())));
@@ -235,19 +438,23 @@ create index if not exists meal_plan_items_plan_idx on public.meal_plan_items (p
 
 alter table public.meal_plan_items enable row level security;
 
+drop policy if exists "plan items: read for signed-in users" on public.meal_plan_items;
 create policy "plan items: read for signed-in users" on public.meal_plan_items
   for select to authenticated
   using (true);
 
+drop policy if exists "plan items: admin insert" on public.meal_plan_items;
 create policy "plan items: admin insert" on public.meal_plan_items
   for insert to authenticated
   with check (exists (select 1 from public.admins a where a.user_id = (select auth.uid())));
 
+drop policy if exists "plan items: admin update" on public.meal_plan_items;
 create policy "plan items: admin update" on public.meal_plan_items
   for update to authenticated
   using (exists (select 1 from public.admins a where a.user_id = (select auth.uid())))
   with check (exists (select 1 from public.admins a where a.user_id = (select auth.uid())));
 
+drop policy if exists "plan items: admin delete" on public.meal_plan_items;
 create policy "plan items: admin delete" on public.meal_plan_items
   for delete to authenticated
   using (exists (select 1 from public.admins a where a.user_id = (select auth.uid())));
@@ -257,10 +464,12 @@ insert into storage.buckets (id, name, public)
 values ('food-images', 'food-images', true)
 on conflict (id) do nothing;
 
+drop policy if exists "food images: public read" on storage.objects;
 create policy "food images: public read" on storage.objects
   for select
   using (bucket_id = 'food-images');
 
+drop policy if exists "food images: admin insert" on storage.objects;
 create policy "food images: admin insert" on storage.objects
   for insert to authenticated
   with check (
@@ -268,6 +477,7 @@ create policy "food images: admin insert" on storage.objects
     and exists (select 1 from public.admins a where a.user_id = (select auth.uid()))
   );
 
+drop policy if exists "food images: admin update" on storage.objects;
 create policy "food images: admin update" on storage.objects
   for update to authenticated
   using (
@@ -279,6 +489,7 @@ create policy "food images: admin update" on storage.objects
     and exists (select 1 from public.admins a where a.user_id = (select auth.uid()))
   );
 
+drop policy if exists "food images: admin delete" on storage.objects;
 create policy "food images: admin delete" on storage.objects
   for delete to authenticated
   using (
@@ -287,7 +498,11 @@ create policy "food images: admin delete" on storage.objects
   );
 
 -- ---------- SEED: a starter food library ----------
-insert into public.foods (name, category, kcal, protein_g, carbs_g, fat_g, fibre_g) values
+-- Guarded per-name: manual rows have no unique constraint, so a bare
+-- "on conflict do nothing" would duplicate them on re-runs.
+insert into public.foods (name, category, kcal, protein_g, carbs_g, fat_g, fibre_g)
+select v.name, v.category, v.kcal, v.protein_g, v.carbs_g, v.fat_g, v.fibre_g
+from (values
   ('Chicken breast, raw',        'protein',    120, 22.5,  0.0,  2.6, 0.0),
   ('Whole egg',                  'protein',    143, 12.6,  0.7,  9.5, 0.0),
   ('Salmon fillet, raw',         'protein',    208, 20.4,  0.0, 13.4, 0.0),
@@ -310,7 +525,11 @@ insert into public.foods (name, category, kcal, protein_g, carbs_g, fat_g, fibre
   ('Peanut butter',              'fats-nuts',  588, 25.1, 20.0, 50.4, 6.0),
   ('Olive oil',                  'fats-nuts',  884,  0.0,  0.0,100.0, 0.0),
   ('Whey protein powder',        'protein',    400, 80.0, 10.0,  6.0, 0.0)
-on conflict do nothing;
+) as v(name, category, kcal, protein_g, carbs_g, fat_g, fibre_g)
+where not exists (
+  select 1 from public.foods f
+  where f.name = v.name and f.brand is null and f.owner_id is null
+);
 
 -- Extended-profile seed data (per 100 g, USDA-derived approximations).
 -- coalesce() only fills blanks, so it never overwrites values an admin has
@@ -363,6 +582,23 @@ from (values
   ('Whey protein powder',      2.00,  0.00,  6.00,   50,   200,  400,  400,  1.00,  60,  1.00,    0,  0.0,  0.00,  0.00,   0.0, 0.10, 0.50,  0.50, 0.10,  10, 1.00)
 ) as v(name, sat_g, trans_g, sugar_g, chol_mg, na_mg, k_mg, ca_mg, fe_mg, mg_mg, zn_mg, va_ug, vc_mg, vd_ug, ve_mg, vk_ug, b1_mg, b2_mg, b3_mg, b6_mg, b9_ug, b12_ug)
 where f.name = v.name and f.brand is null;
+
+-- ---------- ACCOUNT DELETION (self-service, GDPR) ----------
+-- Deleting the auth user cascades through profiles, diary entries, weight
+-- logs, favorites, recipes and private foods via the FKs above.
+create or replace function public.delete_account()
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  delete from auth.users where id = auth.uid();
+end;
+$$;
+
+revoke execute on function public.delete_account() from public, anon;
+grant execute on function public.delete_account() to authenticated;
 
 -- ============================================================
 -- MAKE YOURSELF ADMIN (run after you have signed up in the app):

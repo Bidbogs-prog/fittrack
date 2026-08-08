@@ -2,7 +2,19 @@
 
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
-import { MEAL_TYPES, type MealType } from "@/lib/types";
+import { recipePerServing } from "@/lib/diary";
+import { round1 } from "@/lib/nutrition";
+import { MEAL_TYPES, type MealType, type RecipeItem } from "@/lib/types";
+
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+/** Optional macro field: "" = unknown (null), otherwise a bounded number. */
+function parseOptionalMacro(formData: FormData, name: string): number | null | "invalid" {
+  const raw = formData.get(name);
+  if (raw == null || String(raw).trim() === "") return null;
+  const n = Number(raw);
+  return n >= 0 && n <= 2000 ? round1(n) : "invalid";
+}
 
 export async function addDiaryEntry(formData: FormData) {
   const { supabase, userId } = await requireUser();
@@ -30,6 +42,237 @@ export async function addDiaryEntry(formData: FormData) {
   if (error) return { error: error.message };
 
   revalidatePath("/dashboard");
+  return { error: null };
+}
+
+/** Quick-add: log calories (and optional macros) without picking a food. */
+export async function addQuickEntry(formData: FormData) {
+  const { supabase, userId } = await requireUser();
+
+  const meal = String(formData.get("meal") ?? "") as MealType;
+  const entryDate = String(formData.get("entry_date") ?? "");
+  const name = String(formData.get("quick_name") ?? "").trim().slice(0, 80) || "Quick add";
+  const kcal = Number(formData.get("quick_kcal"));
+
+  if (!MEAL_TYPES.includes(meal) || !DATE_RE.test(entryDate)) {
+    return { error: "Invalid entry." };
+  }
+  if (!(kcal >= 0 && kcal <= 10000)) {
+    return { error: "Calories must be between 0 and 10000." };
+  }
+
+  const macros: Record<string, number | null> = {};
+  for (const key of ["quick_protein_g", "quick_carbs_g", "quick_fat_g", "quick_fibre_g"]) {
+    const value = parseOptionalMacro(formData, key);
+    if (value === "invalid") return { error: "Macros must be between 0 and 2000 g." };
+    macros[key] = value;
+  }
+
+  const { error } = await supabase.from("diary_entries").insert({
+    user_id: userId,
+    meal,
+    entry_date: entryDate,
+    quick_name: name,
+    quick_kcal: round1(kcal),
+    ...macros,
+  });
+  if (error) return { error: error.message };
+
+  revalidatePath("/dashboard");
+  return { error: null };
+}
+
+/**
+ * Log a recipe as one unit. Macros are snapshotted at log time (recipe
+ * edits must not rewrite diary history); recipe_id + servings stay for
+ * display and re-editing the portion.
+ */
+export async function addRecipeEntry(formData: FormData) {
+  const { supabase, userId } = await requireUser();
+
+  const recipeId = String(formData.get("recipe_id") ?? "");
+  const meal = String(formData.get("meal") ?? "") as MealType;
+  const entryDate = String(formData.get("entry_date") ?? "");
+  const servings = Number(formData.get("servings"));
+
+  if (!recipeId || !MEAL_TYPES.includes(meal) || !DATE_RE.test(entryDate)) {
+    return { error: "Invalid entry." };
+  }
+  if (!(servings > 0 && servings <= 100)) {
+    return { error: "Servings must be between 0.1 and 100." };
+  }
+
+  const { data: recipe } = await supabase
+    .from("recipes")
+    .select("*, items:recipe_items(*, food:foods(*))")
+    .eq("id", recipeId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (!recipe) return { error: "Recipe not found." };
+
+  const items = (recipe.items ?? []) as RecipeItem[];
+  if (items.length === 0) return { error: "This recipe has no ingredients yet." };
+
+  const per = recipePerServing(items, Number(recipe.servings));
+  const { error } = await supabase.from("diary_entries").insert({
+    user_id: userId,
+    meal,
+    entry_date: entryDate,
+    recipe_id: recipeId,
+    servings,
+    quick_name: recipe.name,
+    quick_kcal: round1(per.kcal * servings),
+    quick_protein_g: round1(per.protein * servings),
+    quick_carbs_g: round1(per.carbs * servings),
+    quick_fat_g: round1(per.fat * servings),
+    quick_fibre_g: round1(per.fibre * servings),
+  });
+  if (error) return { error: error.message };
+
+  revalidatePath("/dashboard");
+  return { error: null };
+}
+
+/** Edit-in-place: meal + portion for food entries, label/macros for snapshots. */
+export async function updateDiaryEntry(formData: FormData) {
+  const { supabase, userId } = await requireUser();
+
+  const id = String(formData.get("id") ?? "");
+  const meal = String(formData.get("meal") ?? "") as MealType;
+  if (!id || !MEAL_TYPES.includes(meal)) return { error: "Invalid entry." };
+
+  const { data: existing } = await supabase
+    .from("diary_entries")
+    .select("id, food_id, recipe_id")
+    .eq("id", id)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (!existing) return { error: "Entry not found." };
+
+  const patch: Record<string, unknown> = { meal };
+  if (existing.food_id) {
+    const grams = Number(formData.get("grams"));
+    if (!(grams > 0 && grams <= 5000)) {
+      return { error: "Grams must be between 1 and 5000." };
+    }
+    patch.grams = grams;
+  } else {
+    const kcal = Number(formData.get("quick_kcal"));
+    if (!(kcal >= 0 && kcal <= 10000)) {
+      return { error: "Calories must be between 0 and 10000." };
+    }
+    patch.quick_name =
+      String(formData.get("quick_name") ?? "").trim().slice(0, 80) || "Quick add";
+    patch.quick_kcal = round1(kcal);
+    for (const key of ["quick_protein_g", "quick_carbs_g", "quick_fat_g", "quick_fibre_g"]) {
+      const value = parseOptionalMacro(formData, key);
+      if (value === "invalid") return { error: "Macros must be between 0 and 2000 g." };
+      patch[key] = value;
+    }
+  }
+
+  const { error } = await supabase
+    .from("diary_entries")
+    .update(patch)
+    .eq("id", id)
+    .eq("user_id", userId);
+  if (error) return { error: error.message };
+
+  revalidatePath("/dashboard");
+  return { error: null };
+}
+
+/** Copy a previous day's entries (optionally one meal) into another date. */
+export async function copyDiaryEntries(formData: FormData) {
+  const { supabase, userId } = await requireUser();
+
+  const fromDate = String(formData.get("from_date") ?? "");
+  const toDate = String(formData.get("to_date") ?? "");
+  const mealRaw = String(formData.get("meal") ?? "");
+  const meal = MEAL_TYPES.includes(mealRaw as MealType) ? (mealRaw as MealType) : null;
+
+  if (!DATE_RE.test(fromDate) || !DATE_RE.test(toDate) || fromDate === toDate) return;
+
+  let query = supabase
+    .from("diary_entries")
+    .select(
+      "meal, food_id, grams, recipe_id, servings, quick_name, quick_kcal, quick_protein_g, quick_carbs_g, quick_fat_g, quick_fibre_g"
+    )
+    .eq("user_id", userId)
+    .eq("entry_date", fromDate)
+    .order("created_at");
+  if (meal) query = query.eq("meal", meal);
+
+  const { data: rows } = await query;
+  if (!rows || rows.length === 0) return;
+
+  await supabase
+    .from("diary_entries")
+    .insert(rows.map((row) => ({ ...row, user_id: userId, entry_date: toDate })));
+
+  revalidatePath("/dashboard");
+}
+
+/** Star/unstar a food for the picker's Favorites shelf. */
+export async function toggleFavoriteFood(formData: FormData) {
+  const { supabase, userId } = await requireUser();
+  const foodId = String(formData.get("food_id") ?? "");
+  if (!foodId) return { favorited: false };
+
+  const { data: existing } = await supabase
+    .from("favorite_foods")
+    .select("food_id")
+    .eq("user_id", userId)
+    .eq("food_id", foodId)
+    .maybeSingle();
+
+  if (existing) {
+    await supabase
+      .from("favorite_foods")
+      .delete()
+      .eq("user_id", userId)
+      .eq("food_id", foodId);
+    return { favorited: false };
+  }
+  await supabase.from("favorite_foods").insert({ user_id: userId, food_id: foodId });
+  return { favorited: true };
+}
+
+export async function logWeight(formData: FormData) {
+  const { supabase, userId } = await requireUser();
+
+  const date = String(formData.get("date") ?? "");
+  const weight = Number(formData.get("weight_kg"));
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return { error: "Invalid date." };
+  if (!(weight >= 25 && weight <= 400)) {
+    return { error: "Weight must be between 25 and 400 kg." };
+  }
+
+  const { error } = await supabase.from("weight_logs").upsert(
+    { user_id: userId, log_date: date, weight_kg: Math.round(weight * 10) / 10 },
+    { onConflict: "user_id,log_date" }
+  );
+  if (error) return { error: error.message };
+
+  // profiles.weight_kg is the "current weight" cache the target math reads;
+  // keep it at the newest log (the edited date may be in the past).
+  const { data: latest } = await supabase
+    .from("weight_logs")
+    .select("weight_kg")
+    .eq("user_id", userId)
+    .order("log_date", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (latest) {
+    await supabase
+      .from("profiles")
+      .update({ weight_kg: latest.weight_kg, updated_at: new Date().toISOString() })
+      .eq("id", userId);
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath("/history");
   return { error: null };
 }
 

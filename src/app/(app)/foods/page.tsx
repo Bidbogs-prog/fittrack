@@ -1,4 +1,4 @@
-import { CaretRight } from "@phosphor-icons/react/dist/ssr";
+import { BowlFood, CaretRight, PencilSimple, Plus } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { FoodImage } from "@/components/food-image";
 import { FoodSearch } from "@/components/food-search";
@@ -11,8 +11,14 @@ import { FOOD_CATEGORIES, MICRO_KEYS } from "@/lib/types";
 
 export const metadata = { title: "Food library" };
 
-function href(params: { c?: string | null; q?: string; page?: number }): string {
+function href(params: {
+  c?: string | null;
+  q?: string;
+  page?: number;
+  mine?: boolean;
+}): string {
   const sp = new URLSearchParams();
+  if (params.mine) sp.set("mine", "1");
   if (params.c) sp.set("c", params.c);
   if (params.q) sp.set("q", params.q);
   if (params.page && params.page > 1) sp.set("page", String(params.page));
@@ -23,37 +29,75 @@ function href(params: { c?: string | null; q?: string; page?: number }): string 
 export default async function FoodsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ c?: string; q?: string; page?: string }>;
+  searchParams: Promise<{ c?: string; q?: string; page?: string; mine?: string }>;
 }) {
   const [{ supabase }, params] = await Promise.all([requireUser(), searchParams]);
 
   const category = parseCategory(params.c);
   const q = sanitizeSearch(params.q ?? "");
   const page = Math.max(1, Number.parseInt(params.page ?? "1", 10) || 1);
+  const mine = params.mine === "1";
 
-  const { foods, total } = await searchFoods(supabase, { q, category, page });
+  const { foods, total } = await searchFoods(supabase, { q, category, page, mine });
   const totalPages = Math.max(1, Math.ceil(total / FOODS_PAGE_SIZE));
 
   return (
     <div className="space-y-7">
-      <header>
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-lime">
-          Verified per 100 g
-        </p>
-        <h1 className="mt-1.5 font-display text-3xl font-bold tracking-tighter text-paper md:text-4xl">
-          Food library
-        </h1>
-        <p className="mt-2 max-w-[60ch] text-sm text-paper-dim">
-          Curated by your coach and extended with the Open Food Facts database — exact
-          nutritional facts per 100 grams, the same numbers your diary math runs on.
-        </p>
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-lime">
+            Verified per 100 g
+          </p>
+          <h1 className="mt-1.5 font-display text-3xl font-bold tracking-tighter text-paper md:text-4xl">
+            Food library
+          </h1>
+          <p className="mt-2 max-w-[60ch] text-sm text-paper-dim">
+            Curated by your coach and extended with the Open Food Facts database — exact
+            nutritional facts per 100 grams, the same numbers your diary math runs on.
+          </p>
+        </div>
+        <div className="flex shrink-0 gap-2">
+          <Link
+            href="/recipes"
+            className="btn-press inline-flex items-center gap-1.5 rounded-lg border border-ink-700 px-3.5 py-2.5 text-xs font-semibold text-paper-dim transition-colors hover:border-lime/50 hover:text-lime"
+          >
+            <BowlFood weight="bold" className="size-4" />
+            Your recipes
+          </Link>
+          <Link
+            href="/foods/new"
+            className="btn-press inline-flex items-center gap-1.5 rounded-lg bg-lime px-3.5 py-2.5 font-display text-xs font-bold uppercase tracking-wide text-lime-ink hover:bg-lime-deep"
+          >
+            <Plus weight="bold" className="size-4" />
+            New food
+          </Link>
+        </div>
       </header>
 
-      <FoodSearch initialQuery={q} category={category} />
+      <FoodSearch initialQuery={q} category={category} mine={mine} />
+
+      <nav className="flex flex-wrap gap-2" aria-label="Library or your own foods">
+        <Link
+          href={href({ c: category, q })}
+          className={`rounded-full px-3.5 py-2 text-xs font-semibold transition-colors pointer-fine:py-1.5 ${
+            !mine ? "bg-lime text-lime-ink" : "border border-ink-700 text-paper-dim hover:text-paper"
+          }`}
+        >
+          Library
+        </Link>
+        <Link
+          href={href({ c: category, q, mine: true })}
+          className={`rounded-full px-3.5 py-2 text-xs font-semibold transition-colors pointer-fine:py-1.5 ${
+            mine ? "bg-lime text-lime-ink" : "border border-ink-700 text-paper-dim hover:text-paper"
+          }`}
+        >
+          Your foods
+        </Link>
+      </nav>
 
       <nav className="flex flex-wrap gap-2" aria-label="Filter by category">
         <Link
-          href={href({ q })}
+          href={href({ q, mine })}
           className={`rounded-full px-3.5 py-2 text-xs font-semibold transition-colors pointer-fine:py-1.5 ${
             !category ? "bg-lime text-lime-ink" : "border border-ink-700 text-paper-dim hover:text-paper"
           }`}
@@ -63,7 +107,7 @@ export default async function FoodsPage({
         {FOOD_CATEGORIES.map((cat) => (
           <Link
             key={cat}
-            href={href({ c: cat, q })}
+            href={href({ c: cat, q, mine })}
             className={`rounded-full px-3.5 py-2 text-xs font-semibold capitalize transition-colors pointer-fine:py-1.5 ${
               category === cat
                 ? "bg-lime text-lime-ink"
@@ -77,7 +121,19 @@ export default async function FoodsPage({
 
       {foods.length === 0 ? (
         <p className="rounded-2xl border border-dashed border-ink-700 px-6 py-16 text-center text-sm text-paper-mute">
-          {q ? <>Nothing matches &ldquo;{q}&rdquo;{category ? " in this category" : ""}.</> : "No foods in this category yet."}
+          {q ? (
+            <>Nothing matches &ldquo;{q}&rdquo;{category ? " in this category" : ""}.</>
+          ) : mine ? (
+            <>
+              You haven&rsquo;t created any foods yet.{" "}
+              <Link href="/foods/new" className="font-medium text-paper underline underline-offset-4 hover:text-lime">
+                Create your first one
+              </Link>
+              .
+            </>
+          ) : (
+            "No foods in this category yet."
+          )}
         </p>
       ) : (
         <Reveal
@@ -86,7 +142,7 @@ export default async function FoodsPage({
           // without this, CSS-prehidden cards would stay invisible.
           // Grid staging accounts for the 240px sidebar from md up: the
           // content column at md is narrower than at sm.
-          key={`${category ?? "all"}|${q}|${page}`}
+          key={`${category ?? "all"}|${q}|${page}|${mine ? "mine" : "lib"}`}
           as="ul"
           className="grid gap-4 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3"
           stagger={0.05}
@@ -158,10 +214,25 @@ export default async function FoodsPage({
                   </ul>
                 </details>
               )}
-              {food.source !== "manual" && (
-                <p className="mt-3 text-[10px] text-paper-mute">
-                  Source: {food.source === "off" ? "Open Food Facts" : "USDA"}
+              {food.owner_id != null ? (
+                <p className="mt-3 flex items-center justify-between gap-2">
+                  <span className="rounded-full bg-lime/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-lime">
+                    Your food
+                  </span>
+                  <Link
+                    href={`/foods/${food.id}/edit`}
+                    className="btn-press inline-flex items-center gap-1 text-[11px] font-medium text-paper-mute hover:text-paper"
+                  >
+                    <PencilSimple className="size-3.5" />
+                    Edit
+                  </Link>
                 </p>
+              ) : (
+                food.source !== "manual" && (
+                  <p className="mt-3 text-[10px] text-paper-mute">
+                    Source: {food.source === "off" ? "Open Food Facts" : "USDA"}
+                  </p>
+                )
               )}
             </li>
             );
@@ -173,7 +244,7 @@ export default async function FoodsPage({
         page={page}
         totalPages={totalPages}
         total={total}
-        makeHref={(p) => href({ c: category, q, page: p })}
+        makeHref={(p) => href({ c: category, q, page: p, mine })}
       />
 
       <footer className="border-t border-ink-800 pt-5">
