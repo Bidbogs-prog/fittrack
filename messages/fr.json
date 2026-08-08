@@ -6,7 +6,8 @@
     "foods": "Aliments",
     "plans": "Plans repas",
     "plansShort": "Plans",
-    "admin": "Admin"
+    "admin": "Admin",
+    "account": "Compte"
   },
   "auth": {
     "welcomeBack": "Bon retour",
@@ -48,6 +49,8 @@
     "deleteAccount": "Supprimer le compte",
     "deleteHint": "Supprime définitivement votre compte et tout ce qu'il contient — profil, journal, historique de poids, favoris, recettes et aliments créés. Aucun retour en arrière possible.",
     "deleteConfirmLabel": "Tapez <keyword>delete</keyword> pour confirmer",
-    "deleteButton": "Supprimer mon compte"
+    "deleteButton": "Supprimer mon compte",
+    "updateBodyStats": "Modifier mes mensurations",
+    "signOut": "Se déconnecter"
   }
 }

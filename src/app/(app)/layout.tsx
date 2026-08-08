@@ -51,9 +51,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </div>
       </aside>
 
-      {/* mobile nav */}
+      {/* mobile nav — includes Account, since the sidebar's user block is
+          desktop-only and /account carries those actions on mobile */}
       <div className="sticky bottom-0 z-30 order-last border-t border-ink-800 bg-ink-950/95 px-2 pt-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] backdrop-blur md:hidden">
-        <AppNav admin={admin} />
+        <AppNav admin={admin} account />
       </div>
 
       {/* Stage the gutter: at md the 240px sidebar already claims a third of

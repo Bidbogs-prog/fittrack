@@ -6,7 +6,8 @@
     "foods": "Foods",
     "plans": "Meal plans",
     "plansShort": "Plans",
-    "admin": "Admin"
+    "admin": "Admin",
+    "account": "Account"
   },
   "auth": {
     "welcomeBack": "Welcome back",
@@ -48,6 +49,8 @@
     "deleteAccount": "Delete account",
     "deleteHint": "Permanently removes your account and everything in it — profile, diary, weight history, favorites, recipes and foods you created. There is no undo.",
     "deleteConfirmLabel": "Type <keyword>delete</keyword> to confirm",
-    "deleteButton": "Delete my account"
+    "deleteButton": "Delete my account",
+    "updateBodyStats": "Update body stats",
+    "signOut": "Sign out"
   }
 }

@@ -1,7 +1,8 @@
-import { DownloadSimple, Info, WarningCircle } from "@phosphor-icons/react/dist/ssr";
+import { DownloadSimple, Info, PersonSimpleRun, SignOut, WarningCircle } from "@phosphor-icons/react/dist/ssr";
 import { getLocale, getTranslations } from "next-intl/server";
 import { getProfile } from "@/lib/auth";
 import { LOCALES, LOCALE_LABELS } from "@/i18n/request";
+import { signout } from "../../(auth)/actions";
 import { changePassword, deleteAccount, saveFastingWindow, saveUnits, setLocale } from "./actions";
 
 export const metadata = { title: "Account" };
@@ -27,6 +28,24 @@ export default async function AccountPage({
         <h1 className="mt-1.5 font-display text-3xl font-bold tracking-tighter text-paper md:text-4xl">
           {t("title")}
         </h1>
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <a
+            href="/onboarding?edit=1"
+            className="btn-press inline-flex items-center gap-2 rounded-lg border border-ink-700 px-4 py-2.5 text-xs font-semibold text-paper-dim transition-colors hover:border-lime/50 hover:text-lime"
+          >
+            <PersonSimpleRun weight="bold" className="size-4" />
+            {t("updateBodyStats")}
+          </a>
+          <form action={signout}>
+            <button
+              type="submit"
+              className="btn-press inline-flex items-center gap-2 rounded-lg border border-ink-700 px-4 py-2.5 text-xs font-semibold text-paper-dim transition-colors hover:border-danger/50 hover:text-danger"
+            >
+              <SignOut weight="bold" className="size-4" />
+              {t("signOut")}
+            </button>
+          </form>
+        </div>
       </header>
 
       {message && (

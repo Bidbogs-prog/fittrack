@@ -6,7 +6,8 @@
     "foods": "الأطعمة",
     "plans": "خطط الوجبات",
     "plansShort": "الخطط",
-    "admin": "الإدارة"
+    "admin": "الإدارة",
+    "account": "الحساب"
   },
   "auth": {
     "welcomeBack": "مرحباً بعودتك",
@@ -48,6 +49,8 @@
     "deleteAccount": "حذف الحساب",
     "deleteHint": "يحذف حسابك وكل ما فيه نهائياً — الملف الشخصي واليوميات وسجل الوزن والمفضلة والوصفات والأطعمة التي أنشأتها. لا رجوع عن ذلك.",
     "deleteConfirmLabel": "اكتب <keyword>delete</keyword> للتأكيد",
-    "deleteButton": "حذف حسابي"
+    "deleteButton": "حذف حسابي",
+    "updateBodyStats": "تحديث بيانات الجسم",
+    "signOut": "تسجيل الخروج"
   }
 }
