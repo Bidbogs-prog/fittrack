@@ -64,8 +64,10 @@ export default async function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} ${outfit.variable} antialiased`}
     >
       {/* min-h-[100dvh] (not h-full chains): tracks the iOS dynamic toolbar
-          without leaving a spurious scrollable gap. */}
-      <body className="grain flex min-h-[100dvh] flex-col">
+          without leaving a spurious scrollable gap. pt-safe-area: the
+          installed iOS app draws under the translucent status bar
+          (black-translucent + viewport-fit=cover); env() is 0 elsewhere. */}
+      <body className="grain flex min-h-[100dvh] flex-col pt-[env(safe-area-inset-top)]">
         <NextIntlClientProvider messages={messages}>{children}</NextIntlClientProvider>
         <SwRegister />
       </body>

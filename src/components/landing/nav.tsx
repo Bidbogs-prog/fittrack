@@ -29,7 +29,8 @@ export function LandingNav() {
   );
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-4 z-50 flex justify-center px-4">
+    // fixed elements ignore the body's safe-area padding — offset directly
+    <div className="pointer-events-none fixed inset-x-0 top-[calc(1rem+env(safe-area-inset-top))] z-50 flex justify-center px-4">
       <div
         ref={ref}
         data-reveal-self
