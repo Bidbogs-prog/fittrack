@@ -2,6 +2,7 @@
 
 import { useRef, useState, useTransition } from "react";
 import { Camera, Sparkle, X } from "@phosphor-icons/react";
+import { track } from "@/lib/analytics";
 import { macrosForPortion, round1 } from "@/lib/nutrition";
 import type { MealType } from "@/lib/types";
 import { logAiMeal, parseMeal, type AiMealItem } from "./ai-log";
@@ -133,7 +134,10 @@ export function AiLogView({
         }),
       });
       if (res.error) setError(res.error);
-      else onLogged();
+      else {
+        track("ai_meal_logged", { items: items.length, hadPhoto: photo != null });
+        onLogged();
+      }
     });
   }
 

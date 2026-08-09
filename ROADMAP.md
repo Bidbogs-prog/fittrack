@@ -137,9 +137,9 @@ This is a living document. Check items off as they ship, add notes/links to PRs,
 - [ ] Coach–client sharing
 
 ### 3.4 Engineering debt (do before it bites)
-- [ ] Tests — start with `src/lib/nutrition.ts` (it's the money math), then adaptive TDEE
-- [ ] Supabase migration files (schema is applied by hand today; CLI already a devDependency)
-- [ ] Error tracking + product analytics
+- [x] Tests — vitest (`npm test`): nutrition (BMR/TDEE/targets/splits/portions/micros), adaptive TDEE (energy balance + quality gates + clamps), weight EWMA, streaks, units, diary helpers. 54 tests; extend when touching the math
+- [x] Supabase migration files: `supabase/migrations/` with `20260809000000_baseline.sql` + config.toml; workflow (`supabase link` once, `db push` per change) documented in AGENTS.md and schema.sql. schema.sql stays the readable current-state reference
+- [x] Error tracking + product analytics: Sentry (instrumentation.ts/-client.ts + global-error.tsx, needs `NEXT_PUBLIC_SENTRY_DSN`) and PostHog (`src/lib/analytics.ts`, needs `NEXT_PUBLIC_POSTHOG_KEY`); both no-op without keys. First product events: `diary_entry_logged`, `ai_meal_logged`, `weight_logged`, SPA pageviews
 
 ---
 

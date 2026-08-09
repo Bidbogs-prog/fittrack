@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { TrendDown, TrendUp } from "@phosphor-icons/react";
+import { track } from "@/lib/analytics";
 import { displayWeight, inputWeightToKg, weightUnit } from "@/lib/units";
 import type { Units } from "@/lib/types";
 import type { TrendPoint } from "@/lib/weight";
@@ -84,6 +85,7 @@ export function WeightCard({
     startTransition(async () => {
       const res = await logWeight(fd);
       setError(res?.error ?? null);
+      if (!res?.error) track("weight_logged", {});
     });
   }
 

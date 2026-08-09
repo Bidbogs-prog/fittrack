@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Outfit } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
+import { Analytics } from "@/components/analytics";
 import { SwRegister } from "@/components/sw-register";
 import "./globals.css";
 
@@ -70,6 +71,7 @@ export default async function RootLayout({
       <body className="grain flex min-h-[100dvh] flex-col pt-[env(safe-area-inset-top)]">
         <NextIntlClientProvider messages={messages}>{children}</NextIntlClientProvider>
         <SwRegister />
+        <Analytics />
       </body>
     </html>
   );

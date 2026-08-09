@@ -8,17 +8,20 @@
     "start": "next start",
     "lint": "eslint",
     "import:off": "node scripts/import-off.ts",
-    "import:usda": "node scripts/import-usda.ts"
+    "import:usda": "node scripts/import-usda.ts",
+    "test": "vitest run"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
     "@phosphor-icons/react": "^2.1.10",
+    "@sentry/nextjs": "^10.69.0",
     "@supabase/ssr": "^0.12.3",
     "@supabase/supabase-js": "^2.110.5",
     "@zxing/browser": "^0.2.1",
     "gsap": "^3.15.0",
     "next": "16.2.10",
     "next-intl": "^4.13.5",
+    "posthog-js": "^1.414.0",
     "react": "19.2.4",
     "react-dom": "19.2.4"
   },
@@ -31,6 +34,7 @@
     "eslint-config-next": "16.2.10",
     "supabase": "^2.109.1",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.10"
   }
 }

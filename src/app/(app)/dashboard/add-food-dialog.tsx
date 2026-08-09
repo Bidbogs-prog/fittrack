@@ -13,6 +13,7 @@ import {
   X,
 } from "@phosphor-icons/react";
 import { BarcodeScanner } from "@/components/barcode-scanner";
+import { track } from "@/lib/analytics";
 import { enqueue, type QueuedKind } from "@/lib/offline-queue";
 import { AiLogView } from "./ai-log-view";
 import { FoodImage } from "@/components/food-image";
@@ -159,7 +160,10 @@ export function AddFoodDialog({
       try {
         const res = await action(fd);
         if (res?.error) setError(res.error);
-        else reset();
+        else {
+          track("diary_entry_logged", { kind });
+          reset();
+        }
       } catch {
         const fields = Object.fromEntries(
           [...fd.entries()].map(([k, v]) => [k, String(v)])

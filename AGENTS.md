@@ -12,6 +12,7 @@ Next.js 16 (App Router, `src/`, `proxy.ts` not `middleware.ts`, `params`/`search
 - `npm run dev` — dev server
 - `npm run build` — production build (must stay green)
 - `npm run lint` — eslint
+- `npm test` — vitest (unit tests for the nutrition/adaptive/diary math in `src/lib/*.test.ts`; must stay green, extend when touching that math)
 
 ## Architecture
 - `src/lib/supabase/` — `client.ts` (browser), `server.ts` (RSC/actions), `proxy.ts` (session refresh). One client per request; protect pages with `supabase.auth.getClaims()`, never `getSession()` on the server.
@@ -19,8 +20,9 @@ Next.js 16 (App Router, `src/`, `proxy.ts` not `middleware.ts`, `params`/`search
 - `src/app/(auth)/` — login/signup + server actions; `src/app/auth/confirm/` — email OTP confirmation.
 - `src/app/(app)/` — authenticated shell (onboarding, dashboard, foods, plans).
 - `src/app/admin/` — admin-only (membership = row in `public.admins`). Every admin server action re-verifies membership server-side; UI gating alone is not security.
-- `supabase/schema.sql` — full schema, RLS, storage policies, seed data. Apply in the Supabase SQL editor. Keep in sync with `src/lib/types.ts`.
+- `supabase/schema.sql` — full schema, RLS, storage policies, seed data; the readable current-state reference. Schema changes ship as NEW files in `supabase/migrations/` (timestamp-prefixed; applied with `npx supabase link` once, then `npx supabase db push`) AND update schema.sql + `src/lib/types.ts` in the same change. `20260809000000_baseline.sql` snapshots the pre-migration state; existing databases can mark it applied with `npx supabase migration repair --status applied 20260809000000` (it is idempotent, so re-running it is also safe).
 - `src/lib/gemini.ts` — server-only Gemini REST helper (no SDK). AI insights on the dashboard (`src/app/(app)/dashboard/insights.ts` + `src/components/ai-insights.tsx`) use it with a dietitian system prompt. Needs `GEMINI_API_KEY` in `.env.local` (optional `GEMINI_MODEL`, default `gemini-3.6-flash`); the UI degrades to a friendly error without it. Keep the "not medical advice" disclaimer.
+- Observability (roadmap 3.4), all env-gated no-ops without keys: Sentry error tracking (`src/instrumentation.ts` server + `src/instrumentation-client.ts` + `app/global-error.tsx`; set `NEXT_PUBLIC_SENTRY_DSN`) and PostHog product analytics (`src/lib/analytics.ts` + `src/components/analytics.tsx`; set `NEXT_PUBLIC_POSTHOG_KEY`, optional `NEXT_PUBLIC_POSTHOG_HOST`). Track product moments via `track(event, props)` — never nutrition values or PII.
 - `scripts/import-off.ts` — seeds `foods` from the Open Food Facts CSV export, filtered to Morocco (`npm run import:off`, `--dry-run` to preview). Needs `SUPABASE_SECRET_KEY` in `.env.local`. Imported rows carry `source = 'off'` and a `barcode`; re-runs skip existing barcodes so admin edits survive. OFF data is ODbL — keep attribution in the UI.
 
 ## Conventions

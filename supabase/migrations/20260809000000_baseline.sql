@@ -3,13 +3,6 @@
 -- Idempotent: run the whole file in the Supabase SQL editor (or
 -- psql) as often as needed — it creates from scratch and upgrades
 -- existing databases in place.
---
--- Migrations (roadmap 3.4): from the 20260809000000_baseline
--- migration onward, schema changes ship as files in
--- supabase/migrations/ and are applied with `npx supabase db push`
--- (after a one-time `npx supabase link`). This file stays the
--- readable current-state reference — keep it, src/lib/types.ts and
--- the migration history in sync for every change.
 -- ============================================================
 
 -- ---------- PROFILES ----------
