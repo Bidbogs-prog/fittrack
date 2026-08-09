@@ -260,6 +260,24 @@ body {
   }
 }
 
+/* iOS Safari gives date/time inputs an intrinsic width that overflows
+   grid/flex parents and ignores w-full; stripping the native appearance
+   lets the width apply. Android/desktop are unaffected. */
+input[type="time"].field,
+input[type="date"].field {
+  -webkit-appearance: none;
+  appearance: none;
+  min-width: 0;
+}
+
+/* iOS centers the picked value and collapses empty inputs; align it like
+   text fields and keep the row height. */
+input[type="time"].field::-webkit-date-and-time-value,
+input[type="date"].field::-webkit-date-and-time-value {
+  text-align: start;
+  min-height: 1.25em;
+}
+
 .field-label {
   @apply block text-xs font-semibold uppercase tracking-[0.12em] text-paper-mute;
 }

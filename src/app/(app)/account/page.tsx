@@ -163,8 +163,10 @@ export default async function AccountPage({
         <h2 className="font-display text-base font-semibold text-paper">{t("fasting")}</h2>
         <p className="mt-2 text-sm text-paper-dim">{t("fastingHint")}</p>
         <form action={saveFastingWindow} className="mt-4 space-y-4">
+          {/* min-w-0: grid items must be allowed to shrink below the iOS
+              time input's intrinsic width */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
+            <div className="min-w-0 space-y-2">
               <label htmlFor="fasting-start" className="field-label">{t("firstMeal")}</label>
               <input
                 id="fasting-start"
@@ -174,7 +176,7 @@ export default async function AccountPage({
                 className="field tabular"
               />
             </div>
-            <div className="space-y-2">
+            <div className="min-w-0 space-y-2">
               <label htmlFor="fasting-end" className="field-label">{t("lastMeal")}</label>
               <input
                 id="fasting-end"
