@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getActiveTargets } from "@/lib/adaptive";
 import { getProfile } from "@/lib/auth";
 import { buildCoachContext } from "@/lib/coach/context";
+import { briefsPromptBlock, selectBriefs } from "@/lib/coach/evidence";
 import { GeminiError, generateText, type GeminiTurn } from "@/lib/gemini";
 import { KCAL_FLOOR, ageFromBirthDate } from "@/lib/nutrition";
 import { SAFETY, type SafetyFlag } from "@/lib/coach/safety";
@@ -111,10 +112,15 @@ export async function sendCoachMessage(
     ? `${SYSTEM_PROMPT}\n\n${RESTRICTED_BLOCK}`
     : SYSTEM_PROMPT;
 
+  // Deterministic topic router (roadmap 1.6 B): curated, cited briefs for
+  // the topics this message touches — the model is told to prefer them
+  // over its own memory.
+  const briefs = selectBriefs(message);
+
   const turns: GeminiTurn[] = [
     {
       role: "user",
-      text: `${context}${summary ? `\n\nEARLIER IN THIS CONVERSATION (summary)\n${summary}` : ""}\n\n(The conversation starts now. Reply only as the coach.)`,
+      text: `${context}${summary ? `\n\nEARLIER IN THIS CONVERSATION (summary)\n${summary}` : ""}${briefsPromptBlock(briefs)}\n\n(The conversation starts now. Reply only as the coach.)`,
     },
     { role: "model", text: "Understood — I have their data and I'm ready." },
     ...history.map<GeminiTurn>((m) => ({
@@ -151,7 +157,11 @@ export async function sendCoachMessage(
       conversation_id: conversationId,
       role: "assistant",
       content: reply.slice(0, 8000),
-      payload: { flags: safety.flags, restricted: safety.restricted },
+      payload: {
+        flags: safety.flags,
+        restricted: safety.restricted,
+        briefs: briefs.map((b) => b.id),
+      },
     },
   ]);
   if (insertError) {

@@ -105,9 +105,9 @@ This is a living document. Check items off as they ship, add notes/links to PRs,
 - [x] Rolling conversation memory: `coach_conversations.summary` refreshed every few turns past 20 messages; prompt = summary + last 12 turns verbatim
 
 **B. Evidence knowledge base**
-- [ ] Curated briefs in-repo (`src/content/coach-evidence/*.md`): energy balance/CICO, protein & macro ranges, sensible rate of loss, refeeds & diet breaks, plateaus, hydration, micronutrient basics — each with citations (position stands / systematic reviews) and a last-reviewed date
-- [ ] Retrieval: deterministic topic router first (intent keywords → inline 1–2 briefs into the prompt); pgvector RAG only if the corpus outgrows that
-- [ ] Briefs are PR-reviewed content, never model-generated at runtime; review cadence noted in each file
+- [x] Curated briefs in-repo (`src/lib/coach/evidence/*.ts` — TS constants instead of .md so no bundler/fs-tracing config): energy balance/CICO, protein & macro ranges, rates of change, refeeds & diet breaks, plateaus, hydration, micronutrient basics — each with inline citations (position stands / systematic reviews / trials) and a lastReviewed date
+- [x] Retrieval: deterministic keyword router (`selectBriefs`, word-boundary for ASCII, substring for FR/AR terms, top 2 briefs into the prompt, used brief ids recorded on the message payload); pgvector RAG only if the corpus outgrows this
+- [x] Briefs are PR-reviewed content, never model-generated at runtime; 6-month review cadence noted in `types.ts`, content contract enforced by vitest (id/keywords/date/Sources present)
 
 **C. Safety rails (blockers, not polish)**
 - [x] System prompt: not a doctor/dietitian; no diagnosis, treatment, medication or lab interpretation; direct to professionals for anything clinical; frames answers as general education applied to the user's logged data. Chat surface carries a persistent "not medical advice" notice (stronger than the current card disclaimer)
