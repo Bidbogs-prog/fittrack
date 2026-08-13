@@ -39,6 +39,7 @@ This is a living document. Check items off as they ship, add notes/links to PRs,
 - [x] `updateDiaryEntry` server action + edit-in-place UI (`entry-row.tsx`: tap any diary line to edit portion/meal/macros)
 - [x] Copy meal / copy yesterday (`copyDiaryEntries`; per-meal + whole-day buttons on the dashboard)
 - [x] Quick-add calories (snapshot entries: `quick_*` columns, macros optional, micros stay unknown)
+- [x] Saved meals: snapshot one meal's entries as a named group (`saved_meals` + `saved_meal_items`, bookmark button on each meal header), re-applied in one tap from the food picker's "Saved meals" shelf
 
 ### 0.3 User-created foods & recipes
 - [x] Relax `foods` RLS: `owner_id` column (null = global, set = private to owner); barcode uniqueness now global-only. Per-100 g convention kept.

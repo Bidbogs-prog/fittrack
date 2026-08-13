@@ -27,6 +27,7 @@ import { copyDiaryEntries } from "./actions";
 import { EntryRow } from "./entry-row";
 import { Habits } from "./habits";
 import { OfflineSync } from "./offline-sync";
+import { SaveMealButton } from "./save-meal-button";
 import { WeightCard } from "./weight-card";
 
 export const metadata = { title: "Today" };
@@ -140,6 +141,7 @@ export default async function DashboardPage({
     month: "long",
   });
   const firstName = profile.full_name?.split(" ")[0] ?? "athlete";
+  const weekday = new Date(date + "T12:00:00").toLocaleDateString("en-GB", { weekday: "long" });
 
   return (
     <div className="space-y-8">
@@ -317,6 +319,13 @@ export default async function DashboardPage({
                   <span className="font-mono text-sm text-paper-dim tabular">
                     {Math.round(mealTotal.kcal)} kcal
                   </span>
+                  {mealEntries.length > 0 && (
+                    <SaveMealButton
+                      meal={meal}
+                      date={date}
+                      defaultName={`${weekday} ${meal}`}
+                    />
+                  )}
                   {mealEntries.length === 0 && yesterdayMeals.has(meal) && (
                     <form action={copyDiaryEntries}>
                       <input type="hidden" name="from_date" value={yesterday} />

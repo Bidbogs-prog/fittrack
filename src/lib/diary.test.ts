@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { entryAmountLabel, entryMacros, entryMicros, entryName, recipePerServing } from "./diary";
+import { entryAmountLabel, entryMacros, entryMicros, entryName, recipePerServing, savedMealTotals } from "./diary";
 import { MICRO_KEYS, type DiaryEntry, type Food, type MicroValues, type RecipeItem } from "./types";
 
 const nullMicros = Object.fromEntries(MICRO_KEYS.map((k) => [k, null])) as MicroValues;
@@ -107,5 +107,21 @@ describe("recipePerServing", () => {
       { id: "i1", recipe_id: "r1", food_id: "f1", grams: 100, food: food() },
     ];
     expect(recipePerServing(items, 0).kcal).toBe(130);
+  });
+});
+
+describe("savedMealTotals", () => {
+  it("sums food portions and snapshot items together", () => {
+    const items = [
+      entry({ food_id: "f1", food: food(), grams: 200 }), // 260 kcal
+      entry({ quick_name: "Olive oil est.", quick_kcal: 90, quick_fat_g: 10 }),
+    ];
+    const total = savedMealTotals(items);
+    expect(total.kcal).toBe(350);
+    expect(total.fat).toBeCloseTo(0.3 * 2 + 10);
+  });
+
+  it("is zero for an empty item list", () => {
+    expect(savedMealTotals([]).kcal).toBe(0);
   });
 });

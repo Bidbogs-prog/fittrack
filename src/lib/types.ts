@@ -203,6 +203,35 @@ export interface RecipeItem {
   food: Food;
 }
 
+/**
+ * A saved meal is a named snapshot of one meal's diary rows, re-applied to
+ * any day/meal in one tap. Items mirror the DiaryEntry payload: a food
+ * portion (food_id + grams) or a macro snapshot (quick_name + quick_kcal).
+ */
+export interface SavedMeal {
+  id: string;
+  user_id: string;
+  name: string;
+  created_at: string;
+  items: SavedMealItem[];
+}
+
+export interface SavedMealItem {
+  id: string;
+  saved_meal_id: string;
+  food_id: string | null;
+  grams: number | null;
+  food: Food | null;
+  recipe_id: string | null;
+  servings: number | null;
+  quick_name: string | null;
+  quick_kcal: number | null;
+  quick_protein_g: number | null;
+  quick_carbs_g: number | null;
+  quick_fat_g: number | null;
+  quick_fibre_g: number | null;
+}
+
 export interface MealPlan {
   id: string;
   name: string;

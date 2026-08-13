@@ -21,8 +21,19 @@ export function isFoodEntry(entry: DiaryEntry): entry is DiaryEntry & {
   return entry.food != null && entry.grams != null;
 }
 
-export function entryMacros(entry: DiaryEntry): Macros {
-  if (isFoodEntry(entry)) return macrosForPortion(entry.food, entry.grams);
+/**
+ * The macro-bearing payload shared by diary entries and saved-meal items:
+ * a food portion or a quick_* snapshot.
+ */
+export type MacroPayload = Pick<
+  DiaryEntry,
+  "food" | "grams" | "quick_kcal" | "quick_protein_g" | "quick_carbs_g" | "quick_fat_g" | "quick_fibre_g"
+>;
+
+export function entryMacros(entry: MacroPayload): Macros {
+  if (entry.food != null && entry.grams != null) {
+    return macrosForPortion(entry.food, entry.grams);
+  }
   return {
     kcal: entry.quick_kcal ?? 0,
     protein: entry.quick_protein_g ?? 0,
@@ -38,7 +49,7 @@ export function entryMicros(entry: DiaryEntry): MicroValues {
   return Object.fromEntries(MICRO_KEYS.map((k) => [k, null])) as MicroValues;
 }
 
-export function entryName(entry: DiaryEntry): string {
+export function entryName(entry: Pick<DiaryEntry, "food" | "quick_name">): string {
   return entry.food?.name ?? entry.quick_name ?? "Quick add";
 }
 
@@ -81,4 +92,18 @@ export interface RecipeSuggestion {
   servings: number;
   itemCount: number;
   perServing: Macros;
+}
+
+/** Total macros for a saved meal's items (same two shapes as diary rows). */
+export function savedMealTotals(items: MacroPayload[]): Macros {
+  return sumMacros(items.map(entryMacros));
+}
+
+/** Compact saved-meal shape served to the food picker (/api/foods/suggestions). */
+export interface SavedMealSuggestion {
+  id: string;
+  name: string;
+  itemCount: number;
+  itemNames: string[];
+  total: Macros;
 }

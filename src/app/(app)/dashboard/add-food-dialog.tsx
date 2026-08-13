@@ -5,11 +5,13 @@ import {
   Barcode,
   BowlFood,
   CaretRight,
+  ForkKnife,
   Lightning,
   MagnifyingGlass,
   Plus,
   Sparkle,
   Star,
+  Trash,
   X,
 } from "@phosphor-icons/react";
 import { BarcodeScanner } from "@/components/barcode-scanner";
@@ -17,7 +19,7 @@ import { track } from "@/lib/analytics";
 import { enqueue, type QueuedKind } from "@/lib/offline-queue";
 import { AiLogView } from "./ai-log-view";
 import { FoodImage } from "@/components/food-image";
-import type { RecipeSuggestion } from "@/lib/diary";
+import type { RecipeSuggestion, SavedMealSuggestion } from "@/lib/diary";
 import {
   MICRONUTRIENTS,
   formatAmount,
@@ -26,7 +28,14 @@ import {
   percentDv,
 } from "@/lib/nutrition";
 import { MICRO_KEYS, type Food, type MealType } from "@/lib/types";
-import { addDiaryEntry, addQuickEntry, addRecipeEntry, toggleFavoriteFood } from "./actions";
+import {
+  addDiaryEntry,
+  addQuickEntry,
+  addRecipeEntry,
+  applySavedMeal,
+  deleteSavedMeal,
+  toggleFavoriteFood,
+} from "./actions";
 
 interface Suggestions {
   favorites: Food[];
@@ -34,12 +43,14 @@ interface Suggestions {
   frequents: Food[];
   favoriteIds: string[];
   recipes: RecipeSuggestion[];
+  savedMeals: SavedMealSuggestion[];
 }
 
 type View =
   | { kind: "browse" }
   | { kind: "food"; food: Food }
   | { kind: "recipe"; recipe: RecipeSuggestion }
+  | { kind: "savedMeal"; savedMeal: SavedMealSuggestion }
   | { kind: "quick" }
   | { kind: "ai" }
   | { kind: "scan" }
@@ -198,6 +209,32 @@ export function AddFoodDialog({
     run(addQuickEntry, fd, "quick");
   }
 
+  function submitSavedMeal(savedMeal: SavedMealSuggestion) {
+    const fd = new FormData();
+    fd.set("saved_meal_id", savedMeal.id);
+    fd.set("meal", meal);
+    fd.set("entry_date", entryDate);
+    run(applySavedMeal, fd, "savedMeal");
+  }
+
+  function removeSavedMeal(savedMeal: SavedMealSuggestion) {
+    startTransition(async () => {
+      const fd = new FormData();
+      fd.set("saved_meal_id", savedMeal.id);
+      const res = await deleteSavedMeal(fd).catch(() => ({ error: "Delete failed — try again." }));
+      if (res?.error) {
+        setError(res.error);
+        return;
+      }
+      setSuggestions((prev) =>
+        prev
+          ? { ...prev, savedMeals: prev.savedMeals.filter((m) => m.id !== savedMeal.id) }
+          : prev
+      );
+      backToBrowse();
+    });
+  }
+
   async function handleBarcode(code: string) {
     try {
       const res = await fetch(`/api/foods/barcode?code=${encodeURIComponent(code)}`);
@@ -236,7 +273,8 @@ export function AddFoodDialog({
     (suggestions.favorites.length > 0 ||
       suggestions.recents.length > 0 ||
       suggestions.frequents.length > 0 ||
-      suggestions.recipes.length > 0);
+      suggestions.recipes.length > 0 ||
+      suggestions.savedMeals.length > 0);
 
   return (
     <>
@@ -367,6 +405,43 @@ export function AddFoodDialog({
                   </ul>
                 ) : (
                   <div className="mt-4 max-h-80 space-y-5 overflow-y-auto">
+                    {suggestions && suggestions.savedMeals.length > 0 && (
+                      <section>
+                        <h4 className="px-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-paper-mute">
+                          Saved meals
+                        </h4>
+                        <ul className="mt-1.5 space-y-1">
+                          {suggestions.savedMeals.map((savedMeal) => (
+                            <li key={savedMeal.id}>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setView({ kind: "savedMeal", savedMeal });
+                                  setError(null);
+                                }}
+                                className="btn-press flex w-full items-center gap-3 rounded-lg border border-transparent px-3 py-2.5 text-left transition-colors hover:border-ink-700 hover:bg-ink-850 active:bg-ink-850"
+                              >
+                                <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-ink-800 text-paper-dim">
+                                  <ForkKnife className="size-5" />
+                                </span>
+                                <span className="min-w-0 flex-1">
+                                  <span className="block truncate text-sm font-medium text-paper">
+                                    {savedMeal.name}
+                                  </span>
+                                  <span className="block truncate text-[11px] text-paper-mute">
+                                    {savedMeal.itemCount} item{savedMeal.itemCount === 1 ? "" : "s"} ·{" "}
+                                    {savedMeal.itemNames.join(", ")}
+                                  </span>
+                                </span>
+                                <span className="shrink-0 font-mono text-xs text-paper-dim tabular">
+                                  {Math.round(savedMeal.total.kcal)} kcal
+                                </span>
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      </section>
+                    )}
                     {suggestions && suggestions.recipes.length > 0 && (
                       <section>
                         <h4 className="px-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-paper-mute">
@@ -512,6 +587,18 @@ export function AddFoodDialog({
               </div>
             )}
 
+            {view.kind === "savedMeal" && (
+              <SavedMealView
+                savedMeal={view.savedMeal}
+                meal={meal}
+                pending={pending}
+                error={error}
+                onBack={backToBrowse}
+                onSubmit={() => submitSavedMeal(view.savedMeal)}
+                onDelete={() => removeSavedMeal(view.savedMeal)}
+              />
+            )}
+
             {view.kind === "ai" && (
               <AiLogView
                 meal={meal}
@@ -647,6 +734,63 @@ function Shelf({
         ))}
       </ul>
     </section>
+  );
+}
+
+function SavedMealView({
+  savedMeal,
+  meal,
+  pending,
+  error,
+  onBack,
+  onSubmit,
+  onDelete,
+}: {
+  savedMeal: SavedMealSuggestion;
+  meal: MealType;
+  pending: boolean;
+  error: string | null;
+  onBack: () => void;
+  onSubmit: () => void;
+  onDelete: () => void;
+}) {
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  return (
+    <div className="mt-4">
+      <BackLink onClick={onBack} />
+      <div className="mt-3 rounded-xl border border-ink-700 bg-ink-850 px-4 py-3.5">
+        <p className="text-sm font-medium text-paper">{savedMeal.name}</p>
+        <ul className="mt-1.5 space-y-0.5">
+          {savedMeal.itemNames.map((name, i) => (
+            <li key={i} className="truncate text-[11px] text-paper-mute">
+              {name}
+            </li>
+          ))}
+        </ul>
+      </div>
+      <MacroPreview macros={savedMeal.total} />
+      {error && <p className="mt-3 text-sm text-danger">{error}</p>}
+      <button
+        type="button"
+        onClick={onSubmit}
+        disabled={pending}
+        className="btn-press mt-4 w-full rounded-xl bg-lime px-5 py-3 font-display text-sm font-bold uppercase tracking-wide text-lime-ink hover:bg-lime-deep disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        {pending ? "Logging…" : `Add ${savedMeal.itemCount} item${savedMeal.itemCount === 1 ? "" : "s"} to ${meal}`}
+      </button>
+      <button
+        type="button"
+        onClick={() => (confirmDelete ? onDelete() : setConfirmDelete(true))}
+        disabled={pending}
+        className={`btn-press mt-3 inline-flex items-center gap-1.5 text-xs font-medium underline-offset-4 hover:underline disabled:opacity-40 ${
+          confirmDelete ? "text-danger" : "text-paper-mute hover:text-paper"
+        }`}
+      >
+        <Trash weight="bold" className="size-3.5" />
+        {confirmDelete ? "Tap again to delete this saved meal" : "Delete saved meal"}
+      </button>
+    </div>
   );
 }
 

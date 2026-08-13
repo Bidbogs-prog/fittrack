@@ -213,6 +213,103 @@ export async function copyDiaryEntries(formData: FormData) {
   revalidatePath("/dashboard");
 }
 
+/**
+ * Snapshot one meal's diary rows as a named saved meal for one-tap
+ * re-logging on other days. Later edits to the diary never touch it.
+ */
+export async function saveMealAsGroup(formData: FormData) {
+  const { supabase, userId } = await requireUser();
+
+  const fromDate = String(formData.get("from_date") ?? "");
+  const meal = String(formData.get("meal") ?? "") as MealType;
+  const name = String(formData.get("name") ?? "").trim().slice(0, 60);
+
+  if (!DATE_RE.test(fromDate) || !MEAL_TYPES.includes(meal)) {
+    return { error: "Invalid request." };
+  }
+  if (!name) return { error: "Give the meal a name." };
+
+  const { data: rows } = await supabase
+    .from("diary_entries")
+    .select(
+      "food_id, grams, recipe_id, servings, quick_name, quick_kcal, quick_protein_g, quick_carbs_g, quick_fat_g, quick_fibre_g"
+    )
+    .eq("user_id", userId)
+    .eq("entry_date", fromDate)
+    .eq("meal", meal)
+    .order("created_at");
+  if (!rows || rows.length === 0) {
+    return { error: "Nothing logged in this meal yet." };
+  }
+
+  const { data: savedMeal, error } = await supabase
+    .from("saved_meals")
+    .insert({ user_id: userId, name })
+    .select("id")
+    .single();
+  if (error || !savedMeal) return { error: error?.message ?? "Could not save the meal." };
+
+  const { error: itemsError } = await supabase
+    .from("saved_meal_items")
+    .insert(rows.map((row) => ({ ...row, saved_meal_id: savedMeal.id })));
+  if (itemsError) {
+    // Don't leave an empty shell behind.
+    await supabase.from("saved_meals").delete().eq("id", savedMeal.id);
+    return { error: itemsError.message };
+  }
+
+  return { error: null };
+}
+
+/** Log all of a saved meal's items into one meal on one date. */
+export async function applySavedMeal(formData: FormData) {
+  const { supabase, userId } = await requireUser();
+
+  const id = String(formData.get("saved_meal_id") ?? "");
+  const meal = String(formData.get("meal") ?? "") as MealType;
+  const entryDate = String(formData.get("entry_date") ?? "");
+
+  if (!id || !MEAL_TYPES.includes(meal) || !DATE_RE.test(entryDate)) {
+    return { error: "Invalid request." };
+  }
+
+  const { data: savedMeal } = await supabase
+    .from("saved_meals")
+    .select(
+      "id, items:saved_meal_items(food_id, grams, recipe_id, servings, quick_name, quick_kcal, quick_protein_g, quick_carbs_g, quick_fat_g, quick_fibre_g)"
+    )
+    .eq("id", id)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (!savedMeal) return { error: "Saved meal not found." };
+
+  const items = savedMeal.items ?? [];
+  if (items.length === 0) return { error: "This saved meal has no items left." };
+
+  const { error } = await supabase
+    .from("diary_entries")
+    .insert(items.map((item) => ({ ...item, user_id: userId, meal, entry_date: entryDate })));
+  if (error) return { error: error.message };
+
+  revalidatePath("/dashboard");
+  return { error: null };
+}
+
+export async function deleteSavedMeal(formData: FormData) {
+  const { supabase, userId } = await requireUser();
+  const id = String(formData.get("saved_meal_id") ?? "");
+  if (!id) return { error: "Invalid request." };
+
+  // RLS also enforces ownership; the filter keeps intent explicit.
+  const { error } = await supabase
+    .from("saved_meals")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", userId);
+  if (error) return { error: error.message };
+  return { error: null };
+}
+
 /** Star/unstar a food for the picker's Favorites shelf. */
 export async function toggleFavoriteFood(formData: FormData) {
   const { supabase, userId } = await requireUser();

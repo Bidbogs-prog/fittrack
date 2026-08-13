@@ -4,13 +4,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CloudArrowUp } from "@phosphor-icons/react";
 import { readQueue, removeFromQueue, type QueuedEntry } from "@/lib/offline-queue";
-import { addDiaryEntry, addQuickEntry, addRecipeEntry } from "./actions";
+import { addDiaryEntry, addQuickEntry, addRecipeEntry, applySavedMeal } from "./actions";
 
 async function replay(entry: QueuedEntry): Promise<{ error: string | null } | undefined> {
   const fd = new FormData();
   for (const [key, value] of Object.entries(entry.fields)) fd.set(key, value);
   if (entry.kind === "food") return addDiaryEntry(fd);
   if (entry.kind === "recipe") return addRecipeEntry(fd);
+  if (entry.kind === "savedMeal") return applySavedMeal(fd);
   return addQuickEntry(fd);
 }
 

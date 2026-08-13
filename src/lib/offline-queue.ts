@@ -6,7 +6,7 @@
  * is small and short-lived by nature.
  */
 
-export type QueuedKind = "food" | "quick" | "recipe";
+export type QueuedKind = "food" | "quick" | "recipe" | "savedMeal";
 
 export interface QueuedEntry {
   id: string;
