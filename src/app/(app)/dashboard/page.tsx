@@ -300,7 +300,15 @@ export default async function DashboardPage({
           </button>
         </form>
       )}
-      <Reveal as="section" className="grid gap-5 xl:grid-cols-2" stagger={0.1} start="top 90%">
+      {/* grid-cols-1 (not bare `grid`): the implicit auto track minimum is the
+          card's min-content, and a truncating food name makes that the full
+          nowrap line — minmax(0,1fr) keeps the track at container width. */}
+      <Reveal
+        as="section"
+        className="grid grid-cols-1 gap-5 xl:grid-cols-2"
+        stagger={0.1}
+        start="top 90%"
+      >
         {MEAL_TYPES.map((meal) => {
           const mealEntries = entries.filter((e) => e.meal === meal);
           const mealTotal = sumMacros(mealEntries.map(entryMacros));

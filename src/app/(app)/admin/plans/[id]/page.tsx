@@ -130,7 +130,7 @@ export default async function PlanBuilderPage({
       </section>
 
       {/* items by meal */}
-      <section className="grid gap-5 lg:grid-cols-2">
+      <section className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         {MEAL_TYPES.map((meal) => {
           const items = plan.items.filter((it) => it.meal === meal);
           const total = sumMacros(items.map((it) => macrosForPortion(it.food, it.grams)));

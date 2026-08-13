@@ -65,7 +65,7 @@ export default async function PlansPage({
           No {GOALS[goal].label.toLowerCase()} plans yet — your coach is cooking.
         </p>
       ) : (
-        <Reveal as="ul" className="grid gap-4 lg:grid-cols-2" stagger={0.08} start="top 92%">
+        <Reveal as="ul" className="grid grid-cols-1 gap-4 lg:grid-cols-2" stagger={0.08} start="top 92%">
           {plans.map((plan) => {
             const total = sumMacros(plan.items.map((it) => macrosForPortion(it.food, it.grams)));
             return (

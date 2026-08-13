@@ -76,7 +76,7 @@ export default async function PlanDetailPage({
         </div>
       </Reveal>
 
-      <Reveal as="section" className="grid gap-5 lg:grid-cols-2" stagger={0.1} start="top 90%">
+      <Reveal as="section" className="grid grid-cols-1 gap-5 lg:grid-cols-2" stagger={0.1} start="top 90%">
         {MEAL_TYPES.map((meal) => {
           const items = plan.items.filter((it) => it.meal === meal);
           if (items.length === 0) return null;
