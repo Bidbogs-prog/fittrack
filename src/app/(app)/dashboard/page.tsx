@@ -23,6 +23,7 @@ import {
 import { trendDelta, weightTrend } from "@/lib/weight";
 import { ActivityCard } from "./activity-card";
 import { AddFoodDialog } from "./add-food-dialog";
+import { CalendarPicker } from "./calendar-picker";
 import { copyDiaryEntries } from "./actions";
 import { EntryRow } from "./entry-row";
 import { Habits } from "./habits";
@@ -178,6 +179,7 @@ export default async function DashboardPage({
           >
             <CaretRight weight="bold" className="size-4" />
           </Link>
+          <CalendarPicker selected={date} today={today} />
         </nav>
       </Reveal>
 
