@@ -49,3 +49,6 @@ supabase/.temp/
 
 # local Claude Code permissions (per-machine)
 .claude/settings.local.json
+
+# coach red-team eval reports (npm run eval:coach)
+eval-results/

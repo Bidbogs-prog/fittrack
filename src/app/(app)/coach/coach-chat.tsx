@@ -188,8 +188,8 @@ export function CoachChat({
       </form>
 
       <p className="border-t border-ink-800 px-5 py-2 text-center text-[11px] text-paper-mute">
-        The coach is an AI, not a doctor — nothing here is medical advice. For health concerns,
-        talk to a professional.
+        The coach is an AI, not a doctor — nothing here is medical advice, and it can make
+        mistakes: check numbers against your diary. For health concerns, talk to a professional.
       </p>
     </section>
   );
