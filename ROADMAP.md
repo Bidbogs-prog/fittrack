@@ -99,10 +99,10 @@ This is a living document. Check items off as they ship, add notes/links to PRs,
 > A chat coach that actually knows the user's data — goals, targets, adherence, weight trend, training frequency, habits — grounded in cited evidence, with hard safety rails. The flagship premium feature (pairs with 3.1). Ship order: A → C are blockers for any beta; D before opening it beyond testers; E when Stripe lands.
 
 **A. Chat foundation**
-- [ ] `coach_conversations` + `coach_messages` tables (RLS own rows; jsonb payload column for citations/flags), new migration + schema.sql + types.ts in the same change (project convention)
-- [ ] `/coach` route in `(app)` + nav entry; streaming chat UI; server action starts with the auth check like every other mutation
-- [ ] Context builder `src/lib/coach/context.ts`: compact snapshot reusing existing helpers — `getActiveTargets` (formula vs adaptive state), day/week summaries via the diary helpers, `calcStreaks`, `weightTrend`/`trendDelta`, exercise frequency from `exercise_logs`, fasting window, units, macro split. Summarize to a token budget (~1–2k), never raw-dump the diary
-- [ ] Rolling conversation memory: per-conversation summary column refreshed server-side so long chats don't grow the prompt unbounded
+- [x] `coach_conversations` + `coach_messages` tables (RLS own rows; jsonb payload column for citations/flags), migration `20260813200000_coach_chat.sql` + schema.sql + types.ts
+- [x] `/coach` route in `(app)` + nav entry; chat UI with optimistic sends + pending state (streaming proper deferred to the gateway work in D); `sendCoachMessage` starts with the auth check like every other mutation
+- [x] Context builder `src/lib/coach/context.ts`: compact snapshot reusing existing helpers — `getActiveTargets`, trailing-14-day adherence, `calcStreaks`, `weightTrend`/`trendDelta`, exercise frequency, fasting window, units. Summarized, never a raw diary dump
+- [x] Rolling conversation memory: `coach_conversations.summary` refreshed every few turns past 20 messages; prompt = summary + last 12 turns verbatim
 
 **B. Evidence knowledge base**
 - [ ] Curated briefs in-repo (`src/content/coach-evidence/*.md`): energy balance/CICO, protein & macro ranges, sensible rate of loss, refeeds & diet breaks, plateaus, hydration, micronutrient basics — each with citations (position stands / systematic reviews) and a last-reviewed date
@@ -110,12 +110,12 @@ This is a living document. Check items off as they ship, add notes/links to PRs,
 - [ ] Briefs are PR-reviewed content, never model-generated at runtime; review cadence noted in each file
 
 **C. Safety rails (blockers, not polish)**
-- [ ] System prompt: not a doctor/dietitian; no diagnosis, treatment, medication or lab interpretation; direct to professionals for anything clinical; frames answers as general education applied to the user's logged data. Chat surface carries a persistent "not medical advice" notice (stronger than the current card disclaimer)
-- [ ] Deterministic risk flags computed from data before the model ever answers (`src/lib/coach/safety.ts` + vitest): BMI under threshold, target at/below the BMR floor (floors already in `nutrition.ts`), sustained very-low logged intake, rapid trend loss
-- [ ] Under-18s (age already collected for BMR): coach is unavailable entirely — friendly explanation, no chat. Decided over restricted mode: adolescent ED risk + liability outweigh the value, and a hard gate is testable
-- [ ] Restricted mode when flagged: no deficit/restriction advice, supportive tone, signpost to professional help with region-aware (Morocco/France) resources; in-prompt refusal categories for ED-coded asks (extreme fasting, purging/compensation, hiding food, sub-floor calorie requests)
+- [x] System prompt: not a doctor/dietitian; no diagnosis, treatment, medication or lab interpretation; direct to professionals for anything clinical; frames answers as general education applied to the user's logged data. Chat surface carries a persistent "not medical advice" notice (stronger than the current card disclaimer)
+- [x] Deterministic risk flags computed from data before the model ever answers (`src/lib/coach/safety.ts` + vitest): BMI < 18.5, target at the 1200 kcal floor, sustained very-low logged intake (≥5 days averaging <1000 kcal), trend loss >1.5% bodyweight/week
+- [x] Under-18s: coach is unavailable entirely — friendly explanation on `/coach`, re-checked server-side in the action. Decided over restricted mode: adolescent ED risk + liability outweigh the value, and a hard gate is testable
+- [x] Restricted mode when flagged: no deficit/restriction advice, supportive tone, signpost to professional help; in-prompt refusal categories for ED-coded asks (extreme fasting, purging/compensation, hiding food, sub-floor calorie requests). Still to add: named region-aware (Morocco/France) helpline resources
 - [ ] Red-team eval set: adversarial prompts (ED-coded, medical, jailbreak) with expected behaviors; deterministic checks under `npm test`, prompt behavior via a scripted eval run required before any prompt change ships
-- [ ] Guardrail-trigger analytics: PostHog event with trigger type only — no message content, no nutrition values, no PII (existing convention)
+- [x] Guardrail-trigger analytics: PostHog `coach_guardrail_triggered` with the flag name only — no message content, no nutrition values, no PII (existing convention)
 
 **D. LLM Gateway + cost control**
 - [ ] `src/lib/llm.ts`: server-only OpenAI-compatible client pointed at LLM Gateway (`LLMGATEWAY_API_KEY`, `LLMGATEWAY_MODEL`); degrades to a friendly error without keys, same as `gemini.ts`

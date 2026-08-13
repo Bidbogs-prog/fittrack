@@ -127,10 +127,13 @@ export function calcTargetsWithTdee(profile: Profile, tdee: number): EnergyProfi
   return targetsFromTdee(profile, bmr, tdee);
 }
 
+/** Calorie targets never go below this, whatever the goal delta says. */
+export const KCAL_FLOOR = 1200;
+
 function targetsFromTdee(profile: Profile, bmr: number, tdee: number): EnergyProfile {
   const goal: Goal = profile.goal ?? "maintain";
   const weight_kg = profile.weight_kg!;
-  const kcal = Math.max(1200, tdee + GOALS[goal].kcalDelta);
+  const kcal = Math.max(KCAL_FLOOR, tdee + GOALS[goal].kcalDelta);
 
   const split = macroSplitFromProfile(profile);
   let protein: number, carbs: number, fat: number;

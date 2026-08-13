@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
   ChartLineUp,
+  ChatCircleText,
   ForkKnife,
   Gauge,
   ListChecks,
@@ -16,6 +17,7 @@ import {
 const LINKS: { href: string; labelKey: string; shortKey: string; icon: Icon }[] = [
   { href: "/dashboard", labelKey: "today", shortKey: "today", icon: Gauge },
   { href: "/history", labelKey: "history", shortKey: "history", icon: ChartLineUp },
+  { href: "/coach", labelKey: "coach", shortKey: "coach", icon: ChatCircleText },
   { href: "/foods", labelKey: "foodLibrary", shortKey: "foods", icon: ForkKnife },
   { href: "/plans", labelKey: "plans", shortKey: "plansShort", icon: ListChecks },
 ];

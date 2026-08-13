@@ -178,6 +178,31 @@ export interface AiInsightRow {
   updated_at: string;
 }
 
+/**
+ * Conversational AI coach (roadmap 1.6). A conversation's `summary` is a
+ * rolling recap of turns older than the verbatim window; a message's
+ * `payload` records guardrail state for that turn (e.g. restricted mode).
+ */
+export type CoachRole = "user" | "assistant";
+
+export interface CoachConversation {
+  id: string;
+  user_id: string;
+  title: string | null;
+  summary: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CoachMessage {
+  id: string;
+  conversation_id: string;
+  role: CoachRole;
+  content: string;
+  payload: unknown;
+  created_at: string;
+}
+
 export interface WeightLog {
   id: string;
   user_id: string;

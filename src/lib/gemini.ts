@@ -30,6 +30,67 @@ interface GeminiResponse {
 
 export class GeminiError extends Error {}
 
+/** One turn of a chat exchange, in Gemini's role vocabulary. */
+export interface GeminiTurn {
+  role: "user" | "model";
+  text: string;
+}
+
+/**
+ * Multi-turn plain-text generation (the coach chat). Same key handling
+ * and error semantics as generateJson; no response schema — the reply is
+ * the raw text.
+ */
+export async function generateText(options: {
+  systemPrompt: string;
+  turns: GeminiTurn[];
+  temperature?: number;
+  maxOutputTokens?: number;
+}): Promise<string> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new GeminiError(
+      "Gemini API key is not configured. Add GEMINI_API_KEY to .env.local and restart the server."
+    );
+  }
+
+  const model = process.env.GEMINI_MODEL || DEFAULT_MODEL;
+
+  let res: Response;
+  try {
+    res = await fetch(`${GEMINI_ENDPOINT}/${model}:generateContent`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: options.systemPrompt }] },
+        contents: options.turns.map((t) => ({ role: t.role, parts: [{ text: t.text }] })),
+        generationConfig: {
+          temperature: options.temperature ?? 0.6,
+          maxOutputTokens: options.maxOutputTokens ?? 1024,
+        },
+      }),
+      signal: AbortSignal.timeout(30_000),
+    });
+  } catch {
+    throw new GeminiError("Could not reach Gemini. Check your connection and try again.");
+  }
+
+  if (res.status === 429) {
+    throw new GeminiError("Gemini free-tier rate limit hit. Wait a minute and try again.");
+  }
+
+  const body = (await res.json().catch(() => ({}))) as GeminiResponse;
+  if (!res.ok) {
+    throw new GeminiError(body.error?.message ?? `Gemini request failed (${res.status}).`);
+  }
+
+  const text = body.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("");
+  if (!text) {
+    throw new GeminiError("Gemini returned an empty response. Try again.");
+  }
+  return text;
+}
+
 /**
  * Ask Gemini for a JSON object matching `schema` and parse it.
  * Pass `image` (base64, no data: prefix) for multimodal prompts — the
