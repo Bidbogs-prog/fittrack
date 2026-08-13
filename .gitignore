@@ -46,3 +46,6 @@ supabase/.temp/
 # food-data import caches (scripts/import-off.ts, scripts/import-usda.ts)
 .off-cache/
 .usda-cache/
+
+# local Claude Code permissions (per-machine)
+.claude/settings.local.json
