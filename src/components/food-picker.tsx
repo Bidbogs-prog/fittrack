@@ -96,7 +96,7 @@ export function FoodPicker({ name = "food_id" }: { name?: string }) {
                       <span className="block truncate text-sm font-medium text-paper">
                         {food.name}
                       </span>
-                      <span className="block text-[11px] text-paper-mute">
+                      <span className="block truncate text-[11px] text-paper-mute">
                         {food.brand ? `${food.brand} · ` : ""}
                         {food.category} · per 100 g
                       </span>

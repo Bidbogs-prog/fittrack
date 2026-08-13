@@ -98,7 +98,7 @@ export default async function AdminFoodsPage({
                         <FoodImage src={food.image_url} alt="" className="size-9 rounded-md" />
                         <div className="min-w-0">
                           <p className="truncate font-medium text-paper">{food.name}</p>
-                          <p className="text-[11px] capitalize text-paper-mute">
+                          <p className="truncate text-[11px] capitalize text-paper-mute">
                             {food.brand ? `${food.brand} · ` : ""}
                             {food.category.replace("-", " & ")}
                             {food.source !== "manual" && (

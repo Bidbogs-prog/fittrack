@@ -678,7 +678,7 @@ function FoodRow({
         <FoodImage src={food.image_url} alt="" className="size-9 rounded-md" />
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm font-medium text-paper">{food.name}</span>
-          <span className="block text-[11px] text-paper-mute">
+          <span className="block truncate text-[11px] text-paper-mute">
             {food.brand ? `${food.brand} · ` : ""}
             {food.category} · per 100 g
           </span>

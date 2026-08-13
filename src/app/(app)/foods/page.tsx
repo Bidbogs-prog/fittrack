@@ -160,7 +160,7 @@ export default async function FoodsPage({
                 <FoodImage src={food.image_url} alt={food.name} className="size-16 rounded-xl" />
                 <div className="min-w-0">
                   <h2 className="truncate text-sm font-semibold text-paper">{food.name}</h2>
-                  <p className="text-[11px] capitalize text-paper-mute">
+                  <p className="truncate text-[11px] capitalize text-paper-mute">
                     {food.brand ? `${food.brand} · ` : ""}
                     {food.category.replace("-", " & ")}
                   </p>

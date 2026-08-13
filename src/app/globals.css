@@ -54,6 +54,12 @@
    don't shift the whole layout sideways. */
 html {
   scrollbar-gutter: stable;
+  /* The page itself must never pan horizontally (past the fixed-width
+     mobile nav): any wide content scrolls inside its own overflow-x-auto
+     container instead. clip (with hidden as the older-Safari fallback)
+     kills the document-level scroll without creating a scroll container. */
+  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 body {
