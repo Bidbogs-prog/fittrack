@@ -166,8 +166,12 @@ export function CalorieChart({ days, target }: { days: DayStat[]; target: number
   const { ref, idx, onPointerMove, onPointerLeave } = usePointerIndex(days.length);
   const max = niceMax(Math.max(target * 1.25, ...days.map((d) => d.kcal ?? 0)));
   const yFor = (v: number) => PAD.t + PLOT_H - (v / max) * PLOT_H;
-  const slot = PLOT_W / Math.max(1, days.length);
-  const barW = Math.max(4, Math.min(slot - 2, 40)); // 2px surface gap between fills
+  // Bars sit on the point scale (spacing = PLOT_W / (n-1), not / n), so
+  // size them from that spacing with a real gap — at 30 days the old
+  // slot-based width left <3px, which fused consecutive bars once the
+  // SVG scaled down to phone width.
+  const spacing = days.length > 1 ? PLOT_W / (days.length - 1) : PLOT_W;
+  const barW = Math.max(3, Math.min(spacing - 4, spacing * 0.62, 40));
 
   const hovered = idx != null ? days[idx] : null;
 

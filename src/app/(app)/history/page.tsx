@@ -94,21 +94,8 @@ export default async function HistoryPage() {
   const trendPoints = weightTrend((weightData ?? []) as WeightLog[]);
   const weightDelta = trendDelta(trendPoints, 30);
 
-  // Last completed Monday-to-Sunday week, for the AI weekly report.
-  const lastWeekStart = shiftDate(weekStart(), -7);
-  const lastWeekEnd = shiftDate(lastWeekStart, 6);
-  const lastWeekLogged = days.filter(
-    (d) => d.date >= lastWeekStart && d.date <= lastWeekEnd && d.kcal != null
-  ).length;
-  const { data: savedReport } = await supabase
-    .from("ai_insights")
-    .select("payload")
-    .eq("user_id", userId)
-    .eq("scope", "week")
-    .eq("period_start", lastWeekStart)
-    .maybeSingle();
-
-  // Weekly rollup: four Monday-to-Sunday weeks, newest one partial up to today.
+  // Four Monday-to-Sunday weeks, newest one partial up to today — shared
+  // by the weekly summary table and the report card's week switcher.
   const thisMonday = weekStart();
   const weeks = [3, 2, 1, 0].map((offset) => {
     const start = shiftDate(thisMonday, -offset * 7);
@@ -125,6 +112,7 @@ export default async function HistoryPage() {
       (d) => Math.abs((d.kcal ?? 0) - targets.kcal) <= targets.kcal * 0.1
     ).length;
     return {
+      start,
       label: rangeLabel(start, visibleEnd),
       daysLogged: block.length,
       daysTotal,
@@ -133,6 +121,16 @@ export default async function HistoryPage() {
       adherence: block.length ? Math.round((within / block.length) * 100) : null,
     };
   });
+
+  const { data: savedReports } = await supabase
+    .from("ai_insights")
+    .select("period_start, payload")
+    .eq("user_id", userId)
+    .eq("scope", "week")
+    .in("period_start", weeks.map((w) => w.start));
+  const reportByWeek = new Map(
+    (savedReports ?? []).map((r) => [r.period_start as string, r.payload as WeekReport])
+  );
 
   const tiles = [
     {
@@ -194,10 +192,13 @@ export default async function HistoryPage() {
       </section>
 
       <WeekReportCard
-        weekStart={lastWeekStart}
-        label={rangeLabel(lastWeekStart, lastWeekEnd)}
-        loggedDays={lastWeekLogged}
-        initial={(savedReport?.payload as WeekReport | undefined) ?? null}
+        weeks={weeks.map((w) => ({
+          weekStart: w.start,
+          label: w.label,
+          loggedDays: w.daysLogged,
+          daysTotal: w.daysTotal,
+          initial: reportByWeek.get(w.start) ?? null,
+        }))}
       />
 
       {/* calories */}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { ArrowClockwise, Notebook } from "@phosphor-icons/react";
+import { ArrowClockwise, CaretLeft, CaretRight, Notebook } from "@phosphor-icons/react";
 import { Reveal } from "@/components/motion/reveal";
 import { generateWeekReport, type WeekReport } from "./report";
 
@@ -11,39 +11,50 @@ const KIND_CHIP: Record<WeekReport["highlights"][number]["kind"], string> = {
   tip: "bg-carbs/10 text-carbs ring-carbs/25",
 };
 
-/**
- * Weekly AI report card for the last completed week. Reports persist in
- * ai_insights and hydrate via `initial`; generation is on demand.
- */
-export function WeekReportCard({
-  weekStart,
-  label,
-  loggedDays,
-  initial = null,
-}: {
+export interface WeekOption {
   weekStart: string;
   label: string;
   loggedDays: number;
-  initial?: WeekReport | null;
-}) {
-  const [report, setReport] = useState<WeekReport | null>(initial);
+  /** Days of the week that have happened so far; < 7 = week in progress. */
+  daysTotal: number;
+  initial: WeekReport | null;
+}
+
+/**
+ * Weekly AI report card with a week switcher (the current week, possibly
+ * partial, plus the three before it). Reports persist in ai_insights and
+ * hydrate via `initial`; generation is on demand per week.
+ */
+export function WeekReportCard({ weeks }: { weeks: WeekOption[] }) {
+  const [index, setIndex] = useState(weeks.length - 1);
+  const [reports, setReports] = useState<Record<string, WeekReport | null>>(() =>
+    Object.fromEntries(weeks.map((w) => [w.weekStart, w.initial]))
+  );
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  const week = weeks[index];
+  const report = reports[week.weekStart] ?? null;
+  const partial = week.daysTotal < 7;
+  const enoughData = week.loggedDays >= 3;
 
   const run = () => {
     setError(null);
     startTransition(async () => {
-      const res = await generateWeekReport(weekStart);
+      const res = await generateWeekReport(week.weekStart);
       if (res.error) setError(res.error);
-      else setReport(res.data);
+      else setReports((prev) => ({ ...prev, [week.weekStart]: res.data }));
     });
   };
 
-  const enoughData = loggedDays >= 3;
+  const move = (delta: number) => {
+    setIndex((i) => Math.min(weeks.length - 1, Math.max(0, i + delta)));
+    setError(null);
+  };
 
   return (
     <Reveal as="section" className="rounded-2xl border border-ink-800 bg-ink-900/60">
-      <header className="flex items-center justify-between gap-3 border-b border-ink-800 px-5 py-4">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-ink-800 px-5 py-4">
         <div className="flex items-center gap-3">
           <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-lime/10 ring-1 ring-inset ring-lime/25">
             <Notebook weight="fill" className="size-4.5 text-lime" />
@@ -51,21 +62,42 @@ export function WeekReportCard({
           <div>
             <h2 className="font-display text-base font-semibold text-paper">Weekly report</h2>
             <p className="text-[11px] text-paper-mute">
-              {label} · {loggedDays}/7 days logged
+              {week.label} · {week.loggedDays}/{week.daysTotal} days logged
+              {partial && " · in progress"}
             </p>
           </div>
         </div>
-        {report && (
+        <div className="flex items-center gap-1">
           <button
             type="button"
-            onClick={run}
-            disabled={isPending}
-            aria-label="Regenerate report"
-            className="btn-press rounded-md p-2.5 text-paper-mute hover:bg-ink-800 hover:text-paper disabled:opacity-40"
+            onClick={() => move(-1)}
+            disabled={isPending || index === 0}
+            aria-label="Previous week"
+            className="btn-press rounded-md p-2.5 text-paper-mute hover:bg-ink-800 hover:text-paper disabled:opacity-30"
           >
-            <ArrowClockwise className={`size-4 ${isPending ? "animate-spin" : ""}`} />
+            <CaretLeft weight="bold" className="size-4" />
           </button>
-        )}
+          <button
+            type="button"
+            onClick={() => move(1)}
+            disabled={isPending || index === weeks.length - 1}
+            aria-label="Next week"
+            className="btn-press rounded-md p-2.5 text-paper-mute hover:bg-ink-800 hover:text-paper disabled:opacity-30"
+          >
+            <CaretRight weight="bold" className="size-4" />
+          </button>
+          {report && (
+            <button
+              type="button"
+              onClick={run}
+              disabled={isPending}
+              aria-label="Regenerate report"
+              className="btn-press ml-1 rounded-md p-2.5 text-paper-mute hover:bg-ink-800 hover:text-paper disabled:opacity-40"
+            >
+              <ArrowClockwise className={`size-4 ${isPending ? "animate-spin" : ""}`} />
+            </button>
+          )}
+        </div>
       </header>
 
       <div className="px-5 py-4">
@@ -99,7 +131,7 @@ export function WeekReportCard({
             </ul>
             <p className="rounded-lg bg-ink-850 px-3.5 py-2.5 text-sm text-paper">
               <span className="mr-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-lime">
-                Next week
+                {partial ? "Rest of week" : "Next week"}
               </span>
               {report.focus}
             </p>
@@ -115,8 +147,10 @@ export function WeekReportCard({
             >
               {error ??
                 (enoughData
-                  ? "A dietitian-style review of last week: patterns, averages vs targets, and one focus for the week ahead."
-                  : "Log at least 3 days of a week to unlock its report.")}
+                  ? partial
+                    ? "A dietitian-style read of the week so far: patterns, averages vs targets, and a focus for the days ahead."
+                    : "A dietitian-style review of this week: patterns, averages vs targets, and one focus for the week ahead."
+                  : "Log at least 3 days of this week to unlock its report.")}
             </p>
             {enoughData && (
               <button

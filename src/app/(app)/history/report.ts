@@ -54,7 +54,7 @@ const REPORT_SCHEMA: GeminiSchema = {
   required: ["summary", "highlights", "focus"],
 };
 
-const SYSTEM_PROMPT = `You are the in-app nutrition coach for FitTrack, writing with the rigour of a registered dietitian. You are given one user's profile, daily targets, and a full Monday-to-Sunday week of logged nutrition and weight data, with the previous week for comparison.
+const SYSTEM_PROMPT = `You are the in-app nutrition coach for FitTrack, writing with the rigour of a registered dietitian. You are given one user's profile, daily targets, and a Monday-to-Sunday week of logged nutrition and weight data — sometimes still in progress — with the previous week for comparison.
 
 Produce a weekly review: a 1-2 sentence summary, 3 to 6 highlights, and one focus for next week. Each highlight is one of:
 - "win": a weekly pattern genuinely on track — consistency, averages near target, favourable weight trend. Never invent praise.
@@ -65,6 +65,7 @@ Rules:
 - Think in weekly patterns and trends, not single meals. Compare against the previous week where data allows.
 - Ground every statement in the data given and cite the numbers (e.g. "protein averaged 92 g of your 130 g target"). Never invent foods, days, or numbers.
 - Unlogged days are missing data, never zeros. If half the week is unlogged, say the picture is partial.
+- For a week marked IN PROGRESS, only the elapsed days exist: never call the remaining days unlogged, and aim the focus at the rest of this week.
 - Weight changes under ~0.3 kg in a week are noise — don't celebrate or alarm over them.
 - Speak directly to the user in second person. Metric units. No greetings, no emojis, no filler.
 - Educate, don't diagnose: no medical claims or supplement prescriptions.`;
@@ -85,8 +86,12 @@ function isMonday(date: string): boolean {
   return new Date(date + "T12:00:00").getDay() === 1;
 }
 
-function describeDays(entriesByDate: Map<string, DiaryEntry[]>, start: string): string {
-  return DAY_NAMES.map((name, i) => {
+function describeDays(
+  entriesByDate: Map<string, DiaryEntry[]>,
+  start: string,
+  dayCount = 7
+): string {
+  return DAY_NAMES.slice(0, dayCount).map((name, i) => {
     const date = shiftDate(start, i);
     const dayEntries = entriesByDate.get(date);
     if (!dayEntries || dayEntries.length === 0) return `- ${name} ${date}: not logged`;
@@ -121,9 +126,14 @@ export async function generateWeekReport(
 
   const today = toDateString(new Date());
   const weekEnd = shiftDate(weekStart, 6);
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(weekStart) || !isMonday(weekStart) || weekEnd >= today) {
-    return { data: null, error: "Reports cover completed weeks (Monday to Sunday)." };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(weekStart) || !isMonday(weekStart) || weekStart > today) {
+    return { data: null, error: "Reports cover weeks that have started (Monday to Sunday)." };
   }
+  // The current week is reviewed as a partial: only elapsed days count.
+  const lastDay = weekEnd < today ? weekEnd : today;
+  const elapsed =
+    (Date.parse(lastDay + "T12:00:00") - Date.parse(weekStart + "T12:00:00")) / 86_400_000 + 1;
+  const partial = weekEnd >= today;
 
   const active = await getActiveTargets(supabase, userId, profile);
   if (!active) {
@@ -174,8 +184,12 @@ export async function generateWeekReport(
 DAILY TARGETS${adaptive ? ` (adaptive TDEE ${targets.tdee} kcal, measured from intake vs weight trend)` : ""}
 - Calories ${targets.kcal} kcal · protein ${targets.protein} g · carbs ${targets.carbs} g · fat ${targets.fat} g · fibre ${targets.fibre} g
 
-WEEK BEING REVIEWED: ${weekStart} to ${weekEnd}
-${describeDays(entriesByDate, weekStart)}
+WEEK BEING REVIEWED: ${weekStart} to ${weekEnd}${
+    partial
+      ? ` — IN PROGRESS: only the first ${elapsed} day${elapsed === 1 ? "" : "s"} (through ${lastDay}) have happened; the remaining days are in the future, not unlogged`
+      : ""
+  }
+${describeDays(entriesByDate, weekStart, elapsed)}
 
 WEEK AVERAGES (over ${week.days} logged days)
 - ${week.kcal} kcal · protein ${week.protein} g · carbs ${week.carbs} g · fat ${week.fat} g · fibre ${week.fibre} g
