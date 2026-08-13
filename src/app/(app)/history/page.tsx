@@ -108,11 +108,15 @@ export default async function HistoryPage() {
     .eq("period_start", lastWeekStart)
     .maybeSingle();
 
-  // Weekly rollup: four 7-day blocks ending today.
+  // Weekly rollup: four Monday-to-Sunday weeks, newest one partial up to today.
+  const thisMonday = weekStart();
   const weeks = [3, 2, 1, 0].map((offset) => {
-    const end = shiftDate(today, -offset * 7);
-    const start = shiftDate(end, -6);
-    const block = days.filter((d) => d.date >= start && d.date <= end && d.kcal != null);
+    const start = shiftDate(thisMonday, -offset * 7);
+    const end = shiftDate(start, 6);
+    const visibleEnd = end < today ? end : today;
+    const daysTotal =
+      (Date.parse(visibleEnd + "T12:00:00") - Date.parse(start + "T12:00:00")) / 86_400_000 + 1;
+    const block = days.filter((d) => d.date >= start && d.date <= visibleEnd && d.kcal != null);
     const avg = (pick: (d: DayStat) => number | null) =>
       block.length
         ? Math.round(block.reduce((a, d) => a + (pick(d) ?? 0), 0) / block.length)
@@ -121,8 +125,9 @@ export default async function HistoryPage() {
       (d) => Math.abs((d.kcal ?? 0) - targets.kcal) <= targets.kcal * 0.1
     ).length;
     return {
-      label: rangeLabel(start, end),
+      label: rangeLabel(start, visibleEnd),
       daysLogged: block.length,
+      daysTotal,
       avgKcal: avg((d) => d.kcal),
       avgProtein: avg((d) => d.protein),
       adherence: block.length ? Math.round((within / block.length) * 100) : null,
@@ -270,7 +275,7 @@ export default async function HistoryPage() {
                 <tr key={week.label}>
                   <td className="py-2.5 pr-4 text-paper">{week.label}</td>
                   <td className="py-2.5 pr-4 font-mono text-paper-dim tabular">
-                    {week.daysLogged}/7
+                    {week.daysLogged}/{week.daysTotal}
                   </td>
                   <td className="py-2.5 pr-4 font-mono text-paper-dim tabular">
                     {week.avgKcal ?? "—"}
