@@ -169,7 +169,8 @@ export async function sendCoachMessage(
           },
         ],
         temperature: 0.3,
-        maxOutputTokens: 300,
+        // Generous: thinking tokens come out of the same budget.
+        maxOutputTokens: 2048,
       });
       await supabase
         .from("coach_conversations")

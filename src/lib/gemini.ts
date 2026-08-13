@@ -66,7 +66,9 @@ export async function generateText(options: {
         contents: options.turns.map((t) => ({ role: t.role, parts: [{ text: t.text }] })),
         generationConfig: {
           temperature: options.temperature ?? 0.6,
-          maxOutputTokens: options.maxOutputTokens ?? 1024,
+          // Thinking models spend reasoning tokens from this same budget;
+          // 1024 truncated real replies mid-sentence.
+          maxOutputTokens: options.maxOutputTokens ?? 4096,
         },
       }),
       signal: AbortSignal.timeout(30_000),
