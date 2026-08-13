@@ -111,21 +111,22 @@ This is a living document. Check items off as they ship, add notes/links to PRs,
 
 **C. Safety rails (blockers, not polish)**
 - [ ] System prompt: not a doctor/dietitian; no diagnosis, treatment, medication or lab interpretation; direct to professionals for anything clinical; frames answers as general education applied to the user's logged data. Chat surface carries a persistent "not medical advice" notice (stronger than the current card disclaimer)
-- [ ] Deterministic risk flags computed from data before the model ever answers (`src/lib/coach/safety.ts` + vitest): BMI under threshold, target at/below the BMR floor (floors already in `nutrition.ts`), sustained very-low logged intake, rapid trend loss, age < 18
+- [ ] Deterministic risk flags computed from data before the model ever answers (`src/lib/coach/safety.ts` + vitest): BMI under threshold, target at/below the BMR floor (floors already in `nutrition.ts`), sustained very-low logged intake, rapid trend loss
+- [ ] Under-18s (age already collected for BMR): coach is unavailable entirely — friendly explanation, no chat. Decided over restricted mode: adolescent ED risk + liability outweigh the value, and a hard gate is testable
 - [ ] Restricted mode when flagged: no deficit/restriction advice, supportive tone, signpost to professional help with region-aware (Morocco/France) resources; in-prompt refusal categories for ED-coded asks (extreme fasting, purging/compensation, hiding food, sub-floor calorie requests)
 - [ ] Red-team eval set: adversarial prompts (ED-coded, medical, jailbreak) with expected behaviors; deterministic checks under `npm test`, prompt behavior via a scripted eval run required before any prompt change ships
 - [ ] Guardrail-trigger analytics: PostHog event with trigger type only — no message content, no nutrition values, no PII (existing convention)
 
 **D. LLM Gateway + cost control**
 - [ ] `src/lib/llm.ts`: server-only OpenAI-compatible client pointed at LLM Gateway (`LLMGATEWAY_API_KEY`, `LLMGATEWAY_MODEL`); degrades to a friendly error without keys, same as `gemini.ts`
-- [ ] Model policy: cheapest model that passes the eval set; tight max-tokens; prompt caching where the gateway supports it; model swappable by env without code changes
+- [ ] Model policy: cheapest model that passes the eval set; tight max-tokens; prompt caching where the gateway supports it; model swappable by env without code changes. Start evals with the Gemini Flash family (already proven for the day-review coach) vs one Haiku-class alternate; the eval set decides, not vibes
 - [ ] `ai_usage` metering table (user, feature, tokens in/out, estimated cost, day) + per-user daily message caps + global kill-switch env var
 - [ ] Later: migrate insights/photo-log/plan generation onto `llm.ts` so `gemini.ts` stops being a second code path
 
 **E. Premium wiring (with 3.1)**
 - [ ] Server-side entitlement check on every coach action (UI gating is not security — same rule as admin)
 - [ ] Client-pays loop: Stripe payment → tops up LLM Gateway credits; price set from real `ai_usage` cost data per active user + margin buffer
-- [ ] Free taste: N coach messages/month on the free tier as the upsell path
+- [ ] Free taste: 10 coach messages/month on the free tier (assistant replies counted, monthly reset) — enough for 2–3 real exchanges at negligible token cost, and the reset creates a recurring upsell moment
 
 *Why now: 1.1–1.4 built the data moat. This turns the one-shot day-review coach into the retention product — and it's the feature the market has shown users pay for (see Positioning).*
 
