@@ -93,7 +93,9 @@ export default async function AdminFoodsPage({
               <tbody className="divide-y divide-ink-800/70">
                 {foods.map((food) => (
                   <tr key={food.id} className="bg-ink-900/40 transition-colors hover:bg-ink-850">
-                    <td className="px-4 py-2.5">
+                    {/* w-full max-w-0: auto table layout ignores truncate otherwise —
+                        the cell would grow to the full untruncated brand string. */}
+                    <td className="w-full max-w-0 px-4 py-2.5">
                       <div className="flex items-center gap-3">
                         <FoodImage src={food.image_url} alt="" className="size-9 rounded-md" />
                         <div className="min-w-0">
