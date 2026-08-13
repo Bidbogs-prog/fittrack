@@ -94,6 +94,41 @@ This is a living document. Check items off as they ship, add notes/links to PRs,
 - [x] Optional intermittent fasting window (`profiles.eating_window_start/end`, set on `/account`, live open/fasting chip on the dashboard; overnight windows wrap midnight)
 - [x] No emojis; Phosphor icons only
 
+### 1.6 Conversational AI coach (next differentiator — premium track) *(added 2026-08-13)*
+
+> A chat coach that actually knows the user's data — goals, targets, adherence, weight trend, training frequency, habits — grounded in cited evidence, with hard safety rails. The flagship premium feature (pairs with 3.1). Ship order: A → C are blockers for any beta; D before opening it beyond testers; E when Stripe lands.
+
+**A. Chat foundation**
+- [ ] `coach_conversations` + `coach_messages` tables (RLS own rows; jsonb payload column for citations/flags), new migration + schema.sql + types.ts in the same change (project convention)
+- [ ] `/coach` route in `(app)` + nav entry; streaming chat UI; server action starts with the auth check like every other mutation
+- [ ] Context builder `src/lib/coach/context.ts`: compact snapshot reusing existing helpers — `getActiveTargets` (formula vs adaptive state), day/week summaries via the diary helpers, `calcStreaks`, `weightTrend`/`trendDelta`, exercise frequency from `exercise_logs`, fasting window, units, macro split. Summarize to a token budget (~1–2k), never raw-dump the diary
+- [ ] Rolling conversation memory: per-conversation summary column refreshed server-side so long chats don't grow the prompt unbounded
+
+**B. Evidence knowledge base**
+- [ ] Curated briefs in-repo (`src/content/coach-evidence/*.md`): energy balance/CICO, protein & macro ranges, sensible rate of loss, refeeds & diet breaks, plateaus, hydration, micronutrient basics — each with citations (position stands / systematic reviews) and a last-reviewed date
+- [ ] Retrieval: deterministic topic router first (intent keywords → inline 1–2 briefs into the prompt); pgvector RAG only if the corpus outgrows that
+- [ ] Briefs are PR-reviewed content, never model-generated at runtime; review cadence noted in each file
+
+**C. Safety rails (blockers, not polish)**
+- [ ] System prompt: not a doctor/dietitian; no diagnosis, treatment, medication or lab interpretation; direct to professionals for anything clinical; frames answers as general education applied to the user's logged data. Chat surface carries a persistent "not medical advice" notice (stronger than the current card disclaimer)
+- [ ] Deterministic risk flags computed from data before the model ever answers (`src/lib/coach/safety.ts` + vitest): BMI under threshold, target at/below the BMR floor (floors already in `nutrition.ts`), sustained very-low logged intake, rapid trend loss, age < 18
+- [ ] Restricted mode when flagged: no deficit/restriction advice, supportive tone, signpost to professional help with region-aware (Morocco/France) resources; in-prompt refusal categories for ED-coded asks (extreme fasting, purging/compensation, hiding food, sub-floor calorie requests)
+- [ ] Red-team eval set: adversarial prompts (ED-coded, medical, jailbreak) with expected behaviors; deterministic checks under `npm test`, prompt behavior via a scripted eval run required before any prompt change ships
+- [ ] Guardrail-trigger analytics: PostHog event with trigger type only — no message content, no nutrition values, no PII (existing convention)
+
+**D. LLM Gateway + cost control**
+- [ ] `src/lib/llm.ts`: server-only OpenAI-compatible client pointed at LLM Gateway (`LLMGATEWAY_API_KEY`, `LLMGATEWAY_MODEL`); degrades to a friendly error without keys, same as `gemini.ts`
+- [ ] Model policy: cheapest model that passes the eval set; tight max-tokens; prompt caching where the gateway supports it; model swappable by env without code changes
+- [ ] `ai_usage` metering table (user, feature, tokens in/out, estimated cost, day) + per-user daily message caps + global kill-switch env var
+- [ ] Later: migrate insights/photo-log/plan generation onto `llm.ts` so `gemini.ts` stops being a second code path
+
+**E. Premium wiring (with 3.1)**
+- [ ] Server-side entitlement check on every coach action (UI gating is not security — same rule as admin)
+- [ ] Client-pays loop: Stripe payment → tops up LLM Gateway credits; price set from real `ai_usage` cost data per active user + margin buffer
+- [ ] Free taste: N coach messages/month on the free tier as the upsell path
+
+*Why now: 1.1–1.4 built the data moat. This turns the one-shot day-review coach into the retention product — and it's the feature the market has shown users pay for (see Positioning).*
+
 ---
 
 ## P2 — Platform & reach
@@ -127,8 +162,8 @@ This is a living document. Check items off as they ship, add notes/links to PRs,
 
 ### 3.1 Monetization
 - [ ] Free tier: logging, barcode, history (generous — beat MFP's paywalled barcode scan)
-- [ ] Premium: AI photo logging, adaptive TDEE, weekly AI reports (~where MFP $79.99/yr and MacroFactor $71.99/yr draw the line; Gemini marginal cost maps to paid tier)
-- [ ] Stripe + plan gating
+- [ ] Premium: conversational AI coach (1.6 — the headline), AI photo logging, adaptive TDEE, weekly AI reports (~where MFP $79.99/yr and MacroFactor $71.99/yr draw the line; LLM marginal cost maps to paid tier)
+- [ ] Stripe + plan gating; payments fund LLM Gateway credits (see 1.6 D/E for metering and margin math)
 
 ### 3.2 Native apps
 - [ ] Capacitor (or React Native) wrapper → App Store / Play Store presence, HealthKit/Google Fit access
