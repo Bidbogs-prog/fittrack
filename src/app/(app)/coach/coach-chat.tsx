@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useLayoutEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ChatCircleText, PaperPlaneRight } from "@phosphor-icons/react";
 import { track } from "@/lib/analytics";
@@ -41,21 +41,54 @@ export function CoachChat({
   const [pending, startTransition] = useTransition();
   // The action may create the conversation on first send.
   const convoRef = useRef<string | null>(conversationId);
-  const endRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const spacerRef = useRef<HTMLDivElement>(null);
+  // The just-sent user message: pinned to the top of the window so the reply
+  // unfolds beneath it and older turns stay above the fold.
+  const anchorRef = useRef<string | null>(null);
+  const localSeq = useRef(0);
 
-  useEffect(() => {
-    endRef.current?.scrollIntoView({ block: "end" });
-  }, [messages.length, pending]);
+  // Open on the latest turn; history is reachable by scrolling up.
+  useLayoutEffect(() => {
+    const el = scrollRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, []);
+
+  useLayoutEffect(() => {
+    const container = scrollRef.current;
+    const spacer = spacerRef.current;
+    if (!container || !spacer) return;
+    const anchor = anchorRef.current
+      ? container.querySelector<HTMLElement>(`[data-msg="${anchorRef.current}"]`)
+      : null;
+    if (!anchor) {
+      spacer.style.height = "0px";
+      return;
+    }
+    // Size the spacer so the span from the anchor to the last bubble fills at
+    // least one window — that's what lets the anchor sit at the very top.
+    const rows = container.querySelectorAll<HTMLElement>("[data-msg]");
+    const last = rows[rows.length - 1];
+    const span = last.offsetTop + last.offsetHeight - anchor.offsetTop;
+    const styles = getComputedStyle(container);
+    const padTop = parseFloat(styles.paddingTop) || 0;
+    const padBottom = parseFloat(styles.paddingBottom) || 0;
+    spacer.style.height = `${Math.max(0, container.clientHeight - span - padTop - padBottom)}px`;
+    // Scroll only on the send itself; the reply landing later must not yank
+    // the view if the user has scrolled away in the meantime.
+    if (messages[messages.length - 1]?.id === anchorRef.current) {
+      container.scrollTop = anchor.offsetTop - padTop;
+    }
+  }, [messages]);
 
   function send(text: string) {
     const message = text.trim();
     if (!message || pending) return;
     setError(null);
     setInput("");
-    setMessages((prev) => [
-      ...prev,
-      { id: `local-${Date.now()}`, role: "user", content: message },
-    ]);
+    const id = `local-${++localSeq.current}`;
+    anchorRef.current = id;
+    setMessages((prev) => [...prev, { id, role: "user", content: message }]);
     startTransition(async () => {
       const fd = new FormData();
       fd.set("message", message);
@@ -64,6 +97,7 @@ export function CoachChat({
       if (res.data == null) {
         setError(res.error);
         // Put the failed message back in the box so nothing is lost.
+        anchorRef.current = null;
         setMessages((prev) => prev.slice(0, -1));
         setInput(message);
         return;
@@ -72,7 +106,7 @@ export function CoachChat({
       convoRef.current = res.data.conversationId;
       setMessages((prev) => [
         ...prev,
-        { id: `local-${Date.now()}-r`, role: "assistant", content: res.data.reply },
+        { id: `local-${++localSeq.current}`, role: "assistant", content: res.data.reply },
       ]);
       track("coach_message_sent", { restricted: res.data.restricted });
       for (const flag of res.data.flags) {
@@ -86,7 +120,7 @@ export function CoachChat({
 
   return (
     <section className="flex min-h-0 flex-1 flex-col rounded-2xl border border-ink-800 bg-ink-900/60">
-      <div className="flex-1 space-y-4 overflow-y-auto px-4 py-5 sm:px-6">
+      <div ref={scrollRef} className="relative flex-1 space-y-4 overflow-y-auto px-4 py-5 sm:px-6">
         {messages.length === 0 && !pending ? (
           <div className="flex h-full flex-col items-center justify-center gap-5 py-10 text-center">
             <span className="grid size-12 place-items-center rounded-2xl bg-lime/10 ring-1 ring-inset ring-lime/25">
@@ -118,6 +152,7 @@ export function CoachChat({
           messages.map((m) => (
             <div
               key={m.id}
+              data-msg={m.id}
               className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
             >
               <div
@@ -146,7 +181,7 @@ export function CoachChat({
             </div>
           </div>
         )}
-        <div ref={endRef} />
+        <div ref={spacerRef} aria-hidden className="shrink-0" />
       </div>
 
       {error && (

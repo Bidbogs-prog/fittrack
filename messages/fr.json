@@ -7,7 +7,6 @@
     "foods": "Aliments",
     "plans": "Plans repas",
     "plansShort": "Plans",
-    "admin": "Admin",
     "account": "Compte"
   },
   "auth": {
@@ -27,6 +26,7 @@
   },
   "account": {
     "title": "Compte",
+    "adminConsole": "Console admin",
     "language": "Langue",
     "languageHint": "La langue de l'application. Les noms d'aliments restent tels qu'ils ont été saisis.",
     "save": "Enregistrer",

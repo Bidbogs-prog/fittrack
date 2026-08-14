@@ -9,7 +9,6 @@ import {
   ForkKnife,
   Gauge,
   ListChecks,
-  ShieldStar,
   UserCircle,
   type Icon,
 } from "@phosphor-icons/react";
@@ -22,24 +21,22 @@ const LINKS: { href: string; labelKey: string; shortKey: string; icon: Icon }[] 
   { href: "/plans", labelKey: "plans", shortKey: "plansShort", icon: ListChecks },
 ];
 
-const ADMIN_LINK = { href: "/admin", labelKey: "admin", shortKey: "admin", icon: ShieldStar };
 const ACCOUNT_LINK = { href: "/account", labelKey: "account", shortKey: "account", icon: UserCircle };
 
 export function AppNav({
-  admin,
   account = false,
 }: {
-  admin: boolean;
   /**
    * Append the Account link — used by the mobile bottom bar, where the
    * desktop sidebar's user block (body stats, settings, sign out) doesn't
-   * exist. /account carries those actions on mobile.
+   * exist. /account carries those actions on mobile. Admin access lives on
+   * /account too (admins-only button), not in the nav.
    */
   account?: boolean;
 }) {
   const t = useTranslations("nav");
   const pathname = usePathname();
-  const links = [...LINKS, ...(admin ? [ADMIN_LINK] : []), ...(account ? [ACCOUNT_LINK] : [])];
+  const links = [...LINKS, ...(account ? [ACCOUNT_LINK] : [])];
 
   return (
     <nav className="flex gap-1 max-md:w-full max-md:justify-around md:flex-col">

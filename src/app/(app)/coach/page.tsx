@@ -66,7 +66,9 @@ export default async function CoachPage({
   const firstName = profile.full_name?.split(" ")[0] ?? "athlete";
 
   return (
-    <div className="flex min-h-[calc(100dvh-16rem)] flex-col gap-5 md:min-h-[calc(100dvh-11rem)]">
+    // Fixed height, not min-height: the thread scrolls inside its own window
+    // instead of growing the page (see coach-chat.tsx for the scroll logic).
+    <div className="flex h-[calc(100dvh-16rem)] min-h-[24rem] flex-col gap-5 md:h-[calc(100dvh-11rem)]">
       <Reveal as="header" onScroll={false} className="flex flex-wrap items-end justify-between gap-4">
         <div data-reveal>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-lime">

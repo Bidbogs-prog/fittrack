@@ -3,15 +3,14 @@ import { redirect } from "next/navigation";
 import { Logo } from "@/components/logo";
 import { RouteFx } from "@/components/motion/route-fx";
 import { AppNav } from "@/components/nav";
-import { getProfile, isAdmin } from "@/lib/auth";
+import { getProfile } from "@/lib/auth";
 import { signout } from "../(auth)/actions";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const { supabase, userId, profile } = await getProfile();
+  const { profile } = await getProfile();
 
   if (!profile.onboarded) redirect("/onboarding");
 
-  const admin = await isAdmin(supabase, userId);
   const firstName = profile.full_name?.split(" ")[0] ?? "athlete";
 
   return (
@@ -22,7 +21,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <aside className="flex flex-col gap-8 border-ink-800 px-5 py-6 max-md:border-b md:sticky md:top-0 md:h-[100dvh] md:w-60 md:shrink-0 md:border-r">
         <Logo href="/dashboard" />
         <div className="max-md:hidden md:flex md:flex-1 md:flex-col md:justify-between">
-          <AppNav admin={admin} />
+          <AppNav />
           <div className="border-t border-ink-800 pt-4">
             <p className="truncate text-sm font-medium text-paper">{firstName}</p>
             <p className="truncate text-xs text-paper-mute">{profile.email}</p>
@@ -54,7 +53,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       {/* mobile nav — includes Account, since the sidebar's user block is
           desktop-only and /account carries those actions on mobile */}
       <div className="sticky bottom-0 z-30 order-last border-t border-ink-800 bg-ink-950/95 px-2 pt-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] backdrop-blur md:hidden">
-        <AppNav admin={admin} account />
+        <AppNav account />
       </div>
 
       {/* Stage the gutter: at md the 240px sidebar already claims a third of

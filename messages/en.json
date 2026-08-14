@@ -7,7 +7,6 @@
     "foods": "Foods",
     "plans": "Meal plans",
     "plansShort": "Plans",
-    "admin": "Admin",
     "account": "Account"
   },
   "auth": {
@@ -27,6 +26,7 @@
   },
   "account": {
     "title": "Account",
+    "adminConsole": "Admin console",
     "language": "Language",
     "languageHint": "The app's language. Food names stay as they were entered.",
     "save": "Save",

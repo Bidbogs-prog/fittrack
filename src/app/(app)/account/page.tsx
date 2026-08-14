@@ -1,6 +1,6 @@
-import { DownloadSimple, Info, PersonSimpleRun, SignOut, WarningCircle } from "@phosphor-icons/react/dist/ssr";
+import { DownloadSimple, Info, PersonSimpleRun, ShieldStar, SignOut, WarningCircle } from "@phosphor-icons/react/dist/ssr";
 import { getLocale, getTranslations } from "next-intl/server";
-import { getProfile } from "@/lib/auth";
+import { getProfile, isAdmin } from "@/lib/auth";
 import { LOCALES, LOCALE_LABELS } from "@/i18n/request";
 import { signout } from "../../(auth)/actions";
 import { changePassword, deleteAccount, saveFastingWindow, saveUnits, setLocale } from "./actions";
@@ -12,12 +12,15 @@ export default async function AccountPage({
 }: {
   searchParams: Promise<{ error?: string; message?: string }>;
 }) {
-  const [{ profile }, { error, message }, t, locale] = await Promise.all([
+  const [{ supabase, userId, profile }, { error, message }, t, locale] = await Promise.all([
     getProfile(),
     searchParams,
     getTranslations("account"),
     getLocale(),
   ]);
+
+  // Entry point only — every /admin page and action re-verifies membership.
+  const admin = await isAdmin(supabase, userId);
 
   return (
     <div className="space-y-8">
@@ -36,6 +39,15 @@ export default async function AccountPage({
             <PersonSimpleRun weight="bold" className="size-4" />
             {t("updateBodyStats")}
           </a>
+          {admin && (
+            <a
+              href="/admin"
+              className="btn-press inline-flex items-center gap-2 rounded-lg border border-ink-700 px-4 py-2.5 text-xs font-semibold text-paper-dim transition-colors hover:border-lime/50 hover:text-lime"
+            >
+              <ShieldStar weight="bold" className="size-4" />
+              {t("adminConsole")}
+            </a>
+          )}
           <form action={signout}>
             <button
               type="submit"
