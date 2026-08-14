@@ -1,4 +1,4 @@
-import { ArrowLeft, Trash, WarningCircle } from "@phosphor-icons/react/dist/ssr";
+import { ArrowLeft, Info, Trash, WarningCircle } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FoodPicker } from "@/components/food-picker";
@@ -6,31 +6,50 @@ import { MacroInline } from "@/components/macros";
 import { requireAdmin } from "@/lib/auth";
 import { GOALS, macrosForPortion, sumMacros } from "@/lib/nutrition";
 import { MEAL_TYPES, type MealPlan } from "@/lib/types";
-import { addPlanItem, deletePlan, deletePlanItem } from "../../actions";
+import { addPlanItem, addSavedMealToPlan, deletePlan, deletePlanItem } from "../../actions";
 
 export const metadata = { title: "Admin · Plan builder" };
+
+interface SavedMealOption {
+  id: string;
+  name: string;
+  items: { food_id: string | null; grams: number | null }[];
+}
 
 export default async function PlanBuilderPage({
   params,
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; message?: string }>;
 }) {
-  const [{ supabase }, { id }, { error }] = await Promise.all([
+  const [{ supabase, userId }, { id }, { error, message }] = await Promise.all([
     requireAdmin(),
     params,
     searchParams,
   ]);
 
-  const { data: planData } = await supabase
-    .from("meal_plans")
-    .select("*, items:meal_plan_items(*, food:foods(*))")
-    .eq("id", id)
-    .maybeSingle();
+  const [{ data: planData }, { data: savedMealData }] = await Promise.all([
+    supabase
+      .from("meal_plans")
+      .select("*, items:meal_plan_items(*, food:foods(*))")
+      .eq("id", id)
+      .maybeSingle(),
+    // The admin's own dashboard-saved meals, for bulk-adding into the plan.
+    supabase
+      .from("saved_meals")
+      .select("id, name, items:saved_meal_items(food_id, grams)")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false }),
+  ]);
 
   if (!planData) notFound();
   const plan = planData as MealPlan;
+
+  // Only meals with at least one real food portion can feed a plan.
+  const savedMeals = ((savedMealData ?? []) as SavedMealOption[])
+    .map((m) => ({ ...m, foodCount: m.items.filter((it) => it.food_id != null).length }))
+    .filter((m) => m.foodCount > 0);
 
   const dayTotal = sumMacros(plan.items.map((it) => macrosForPortion(it.food, it.grams)));
 
@@ -77,6 +96,12 @@ export default async function PlanBuilderPage({
         </dl>
       </header>
 
+      {message && (
+        <p className="flex items-start gap-2 rounded-lg border border-lime/25 bg-lime/[0.06] px-3.5 py-3 text-sm text-lime">
+          <Info className="mt-0.5 size-4 shrink-0" weight="bold" />
+          {message}
+        </p>
+      )}
       {error && (
         <p className="flex items-start gap-2 rounded-lg border border-danger/30 bg-danger/[0.08] px-3.5 py-3 text-sm text-danger">
           <WarningCircle className="mt-0.5 size-4 shrink-0" weight="bold" />
@@ -128,6 +153,60 @@ export default async function PlanBuilderPage({
           </button>
         </form>
       </section>
+
+      {/* bulk add from a saved meal */}
+      {savedMeals.length > 0 && (
+        <section className="rounded-2xl border border-ink-800 bg-ink-900/60 p-6">
+          <h3 className="font-display text-base font-semibold text-paper">
+            Bulk add a saved meal
+          </h3>
+          <p className="mb-4 mt-1 text-xs text-paper-mute">
+            Drops every food portion from one of your dashboard-saved meals into a meal slot
+            in one go.
+          </p>
+          <form
+            action={addSavedMealToPlan}
+            className="grid gap-4 lg:grid-cols-[1fr_160px_auto] lg:items-end"
+          >
+            <input type="hidden" name="plan_id" value={plan.id} />
+            <div className="min-w-0 space-y-2">
+              <label htmlFor="saved_meal" className="field-label">Saved meal</label>
+              <select
+                id="saved_meal"
+                name="saved_meal_id"
+                required
+                defaultValue=""
+                className="field"
+              >
+                <option value="" disabled>
+                  Pick a saved meal…
+                </option>
+                {savedMeals.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name} · {m.foodCount} food{m.foodCount === 1 ? "" : "s"}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="bulk-meal" className="field-label">Meal</label>
+              <select id="bulk-meal" name="meal" required className="field capitalize">
+                {MEAL_TYPES.map((m) => (
+                  <option key={m} value={m} className="capitalize">
+                    {m}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <button
+              type="submit"
+              className="btn-press rounded-xl bg-lime px-5 py-2.5 font-display text-sm font-bold uppercase tracking-wide text-lime-ink hover:bg-lime-deep"
+            >
+              Add all
+            </button>
+          </form>
+        </section>
+      )}
 
       {/* items by meal */}
       <section className="grid grid-cols-1 gap-5 lg:grid-cols-2">

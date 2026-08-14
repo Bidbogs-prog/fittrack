@@ -282,6 +282,54 @@ export async function addPlanItem(formData: FormData) {
   revalidatePath("/plans");
 }
 
+/** Bulk add: copy every food portion from one of the admin's own saved
+ * meals (bookmarked on the dashboard) into a plan's meal slot. Quick-add
+ * and recipe snapshots are skipped — plan items need real library foods. */
+export async function addSavedMealToPlan(formData: FormData) {
+  const { supabase, userId } = await requireAdmin();
+
+  const planId = String(formData.get("plan_id") ?? "");
+  const back = `/admin/plans/${planId}`;
+  const savedMealId = String(formData.get("saved_meal_id") ?? "");
+  const meal = String(formData.get("meal") ?? "") as MealType;
+
+  if (!planId) fail("/admin/plans", "Missing plan.");
+  if (!savedMealId) fail(back, "Pick a saved meal.");
+  if (!MEAL_TYPES.includes(meal)) fail(back, "Pick a valid meal.");
+
+  const { data: savedMeal } = await supabase
+    .from("saved_meals")
+    .select("id, items:saved_meal_items(food_id, grams)")
+    .eq("id", savedMealId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (!savedMeal) fail(back, "Saved meal not found.");
+
+  const items = (savedMeal.items ?? []) as { food_id: string | null; grams: number | null }[];
+  const portions = items.filter(
+    (it): it is { food_id: string; grams: number } => it.food_id != null && it.grams != null
+  );
+  if (portions.length === 0) {
+    fail(back, "That saved meal only has quick-add or recipe snapshots — plans need real library foods.");
+  }
+
+  const { error } = await supabase.from("meal_plan_items").insert(
+    portions.map((it) => ({ plan_id: planId, food_id: it.food_id, meal, grams: it.grams }))
+  );
+  if (error) fail(back, error.message);
+
+  revalidatePath(back);
+  revalidatePath("/plans");
+
+  const skipped = items.length - portions.length;
+  const summary =
+    `Added ${portions.length} item${portions.length === 1 ? "" : "s"} to ${meal}.` +
+    (skipped > 0
+      ? ` Skipped ${skipped} quick/recipe snapshot${skipped === 1 ? "" : "s"} (plans need real foods).`
+      : "");
+  redirect(`${back}?message=${encodeURIComponent(summary)}`);
+}
+
 export async function deletePlanItem(formData: FormData) {
   const { supabase } = await requireAdmin();
   const id = String(formData.get("id") ?? "");
