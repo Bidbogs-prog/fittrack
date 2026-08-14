@@ -12,8 +12,11 @@ const TABS = [
 export function AdminTabs() {
   const pathname = usePathname();
   return (
+    // The divider is an inset shadow, not border-b + -mb-px on the tabs: a
+    // negative margin makes content 1px taller than this overflow-x-auto
+    // box, which shows up as a vertical scrollbar.
     <nav
-      className="flex gap-6 overflow-x-auto whitespace-nowrap border-b border-ink-800"
+      className="flex gap-6 overflow-x-auto whitespace-nowrap shadow-[inset_0_-1px_0_var(--color-ink-800)]"
       aria-label="Admin sections"
     >
       {TABS.map(({ href, label }) => {
@@ -23,7 +26,7 @@ export function AdminTabs() {
             key={href}
             href={href}
             aria-current={active ? "page" : undefined}
-            className={`-mb-px border-b-2 py-3 text-sm font-semibold transition-colors ${
+            className={`border-b-2 py-3 text-sm font-semibold transition-colors ${
               active
                 ? "border-lime text-lime"
                 : "border-transparent text-paper-mute hover:text-paper"
