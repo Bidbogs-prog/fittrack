@@ -12,6 +12,7 @@ interface PlanRow {
   name: string;
   goal: Goal;
   description: string | null;
+  assigned_to: string | null;
   items: { count: number }[];
 }
 
@@ -24,7 +25,7 @@ export default async function AdminPlansPage({
 
   const { data } = await supabase
     .from("meal_plans")
-    .select("id, name, goal, description, items:meal_plan_items(count)")
+    .select("id, name, goal, description, assigned_to, items:meal_plan_items(count)")
     .order("created_at", { ascending: false });
   const plans = (data ?? []) as PlanRow[];
 
@@ -102,6 +103,9 @@ export default async function AdminPlansPage({
                     </p>
                     <p className="mt-0.5 text-xs text-paper-mute">
                       {GOALS[plan.goal].label} · {plan.items[0]?.count ?? 0} items
+                      {plan.assigned_to != null && (
+                        <span className="text-lime"> · assigned</span>
+                      )}
                     </p>
                   </div>
                   <ArrowRight

@@ -264,6 +264,8 @@ export interface MealPlan {
   description: string | null;
   /** null = global admin-authored plan; set = private AI-generated plan. */
   owner_id: string | null;
+  /** Set = admin handed this plan to one user; it is visible only to them. */
+  assigned_to: string | null;
   items: MealPlanItem[];
 }
 
@@ -274,4 +276,22 @@ export interface MealPlanItem {
   food_id: string;
   grams: number;
   food: Food;
+}
+
+export type PlanRequestStatus = "pending" | "fulfilled" | "dismissed";
+
+/** A user's ask for a coach-built meal plan, fulfilled from /admin/requests. */
+export interface PlanRequest {
+  id: string;
+  user_id: string;
+  /** Requester identity snapshotted at request time (admins can't read profiles). */
+  email: string;
+  full_name: string | null;
+  goal: Goal | null;
+  note: string | null;
+  status: PlanRequestStatus;
+  /** The plan assigned in response (null until fulfilled, or if since deleted). */
+  plan_id: string | null;
+  created_at: string;
+  resolved_at: string | null;
 }

@@ -1,30 +1,97 @@
-import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
+import { ArrowRight, ChalkboardTeacher, PaperPlaneTilt } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { Reveal } from "@/components/motion/reveal";
 import { getProfile } from "@/lib/auth";
 import { GOALS, macrosForPortion, sumMacros } from "@/lib/nutrition";
 import type { Goal, MealPlan } from "@/lib/types";
+import { cancelPlanRequest, requestPlan } from "./actions";
 import { GeneratePlan } from "./generate-plan";
 
 export const metadata = { title: "Meal plans" };
 
 const GOAL_KEYS = Object.keys(GOALS) as Goal[];
 
+function PlanCard({ plan, badge }: { plan: MealPlan; badge?: string }) {
+  const total = sumMacros(plan.items.map((it) => macrosForPortion(it.food, it.grams)));
+  return (
+    <Link
+      href={`/plans/${plan.id}`}
+      className="btn-press card-lift group block rounded-2xl border border-ink-800 bg-ink-900/60 p-5 hover:border-ink-600"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <h2 className="font-display text-base font-semibold tracking-tight text-paper">
+          {plan.name}
+          {badge && (
+            <span className="ml-2 align-middle rounded-full bg-lime/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-lime ring-1 ring-inset ring-lime/25">
+              {badge}
+            </span>
+          )}
+        </h2>
+        <ArrowRight
+          weight="bold"
+          className="mt-1 size-4 shrink-0 text-paper-mute transition-transform group-hover:translate-x-0.5 group-hover:text-lime"
+        />
+      </div>
+      {plan.description && (
+        <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-paper-mute">
+          {plan.description}
+        </p>
+      )}
+      <dl className="mt-4 grid grid-cols-5 gap-px overflow-hidden rounded-lg bg-ink-800">
+        {(
+          [
+            ["kcal", Math.round(total.kcal)],
+            ["P", Math.round(total.protein)],
+            ["C", Math.round(total.carbs)],
+            ["F", Math.round(total.fat)],
+            ["Fb", Math.round(total.fibre)],
+          ] as const
+        ).map(([label, value]) => (
+          <div key={label} className="bg-ink-900 px-1 py-2 text-center sm:px-2">
+            <dt className="text-[10px] uppercase tracking-wide text-paper-mute">{label}</dt>
+            <dd className="mt-0.5 font-mono text-[13px] font-medium text-paper tabular sm:text-sm">
+              {value.toLocaleString()}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </Link>
+  );
+}
+
 export default async function PlansPage({
   searchParams,
 }: {
   searchParams: Promise<{ g?: string }>;
 }) {
-  const [{ supabase, profile }, { g }] = await Promise.all([getProfile(), searchParams]);
+  const [{ supabase, userId, profile }, { g }] = await Promise.all([getProfile(), searchParams]);
 
   const goal: Goal = GOAL_KEYS.find((k) => k === g) ?? profile.goal ?? "maintain";
 
-  const { data } = await supabase
-    .from("meal_plans")
-    .select("*, items:meal_plan_items(*, food:foods(*))")
-    .eq("goal", goal)
-    .order("created_at", { ascending: false });
+  const [{ data }, { data: assignedData }, { data: requestData }] = await Promise.all([
+    // The general shelf: global catalogue + own AI plans, never assigned ones.
+    supabase
+      .from("meal_plans")
+      .select("*, items:meal_plan_items(*, food:foods(*))")
+      .eq("goal", goal)
+      .is("assigned_to", null)
+      .order("created_at", { ascending: false }),
+    // Plans the coach assigned to this user — shown regardless of goal filter.
+    supabase
+      .from("meal_plans")
+      .select("*, items:meal_plan_items(*, food:foods(*))")
+      .eq("assigned_to", userId)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("plan_requests")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("status", "pending")
+      .limit(1),
+  ]);
   const plans = (data ?? []) as MealPlan[];
+  const assigned = (assignedData ?? []) as MealPlan[];
+  const pendingRequest = requestData?.[0] ?? null;
 
   return (
     <div className="space-y-7">
@@ -42,6 +109,80 @@ export default async function PlansPage({
       </header>
 
       <GeneratePlan />
+
+      {/* Ask the coach for a custom plan (fulfilled from the admin panel). */}
+      <section className="rounded-2xl border border-ink-800 bg-ink-900/60 p-5">
+        {pendingRequest ? (
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-lime/10 ring-1 ring-inset ring-lime/25">
+                <PaperPlaneTilt weight="fill" className="size-4.5 text-lime" />
+              </span>
+              <div>
+                <h2 className="font-display text-sm font-semibold text-paper">
+                  Plan request sent
+                </h2>
+                <p className="mt-0.5 text-xs text-paper-mute">
+                  Your coach has it — the plan will appear here once it&apos;s ready.
+                </p>
+              </div>
+            </div>
+            <form action={cancelPlanRequest}>
+              <input type="hidden" name="id" value={pendingRequest.id} />
+              <button
+                type="submit"
+                className="btn-press rounded-lg border border-ink-700 px-3.5 py-2 text-xs font-semibold text-paper-dim transition-colors hover:border-danger/50 hover:text-danger"
+              >
+                Cancel request
+              </button>
+            </form>
+          </div>
+        ) : (
+          <form action={requestPlan} className="space-y-3">
+            <div className="flex items-start gap-3">
+              <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-lime/10 ring-1 ring-inset ring-lime/25">
+                <ChalkboardTeacher weight="fill" className="size-4.5 text-lime" />
+              </span>
+              <div>
+                <h2 className="font-display text-sm font-semibold text-paper">
+                  Want a plan built for you?
+                </h2>
+                <p className="mt-0.5 text-xs text-paper-mute">
+                  Ask your coach for a custom day of eating — it lands here when it&apos;s done.
+                </p>
+              </div>
+            </div>
+            <textarea
+              name="note"
+              rows={2}
+              maxLength={500}
+              placeholder="Anything your coach should know — foods you love or avoid, schedule, budget…"
+              className="field resize-none"
+            />
+            <button
+              type="submit"
+              className="btn-press rounded-xl bg-lime px-5 py-2.5 font-display text-xs font-bold uppercase tracking-wide text-lime-ink hover:bg-lime-deep"
+            >
+              Request a plan
+            </button>
+          </form>
+        )}
+      </section>
+
+      {assigned.length > 0 && (
+        <section className="space-y-4">
+          <h2 className="font-display text-lg font-semibold tracking-tight text-paper">
+            From your coach
+          </h2>
+          <ul className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            {assigned.map((plan) => (
+              <li key={plan.id}>
+                <PlanCard plan={plan} badge="Coach" />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <nav className="flex flex-wrap gap-2" aria-label="Filter by goal">
         {GOAL_KEYS.map((key) => (
@@ -66,55 +207,11 @@ export default async function PlansPage({
         </p>
       ) : (
         <Reveal as="ul" className="grid grid-cols-1 gap-4 lg:grid-cols-2" stagger={0.08} start="top 92%">
-          {plans.map((plan) => {
-            const total = sumMacros(plan.items.map((it) => macrosForPortion(it.food, it.grams)));
-            return (
-              <li key={plan.id} data-reveal>
-                <Link
-                  href={`/plans/${plan.id}`}
-                  className="btn-press card-lift group block rounded-2xl border border-ink-800 bg-ink-900/60 p-5 hover:border-ink-600"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <h2 className="font-display text-base font-semibold tracking-tight text-paper">
-                      {plan.name}
-                      {plan.owner_id != null && (
-                        <span className="ml-2 align-middle rounded-full bg-lime/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-lime ring-1 ring-inset ring-lime/25">
-                          Yours
-                        </span>
-                      )}
-                    </h2>
-                    <ArrowRight
-                      weight="bold"
-                      className="mt-1 size-4 shrink-0 text-paper-mute transition-transform group-hover:translate-x-0.5 group-hover:text-lime"
-                    />
-                  </div>
-                  {plan.description && (
-                    <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-paper-mute">
-                      {plan.description}
-                    </p>
-                  )}
-                  <dl className="mt-4 grid grid-cols-5 gap-px overflow-hidden rounded-lg bg-ink-800">
-                    {(
-                      [
-                        ["kcal", Math.round(total.kcal)],
-                        ["P", Math.round(total.protein)],
-                        ["C", Math.round(total.carbs)],
-                        ["F", Math.round(total.fat)],
-                        ["Fb", Math.round(total.fibre)],
-                      ] as const
-                    ).map(([label, value]) => (
-                      <div key={label} className="bg-ink-900 px-1 py-2 text-center sm:px-2">
-                        <dt className="text-[10px] uppercase tracking-wide text-paper-mute">{label}</dt>
-                        <dd className="mt-0.5 font-mono text-[13px] font-medium text-paper tabular sm:text-sm">
-                          {value.toLocaleString()}
-                        </dd>
-                      </div>
-                    ))}
-                  </dl>
-                </Link>
-              </li>
-            );
-          })}
+          {plans.map((plan) => (
+            <li key={plan.id} data-reveal>
+              <PlanCard plan={plan} badge={plan.owner_id != null ? "Yours" : undefined} />
+            </li>
+          ))}
         </Reveal>
       )}
     </div>

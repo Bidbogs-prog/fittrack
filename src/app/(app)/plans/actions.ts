@@ -51,6 +51,42 @@ export async function applyPlanToDiary(formData: FormData) {
   redirect(`/dashboard?d=${date}`);
 }
 
+/** Ask the coach for a custom plan (lands in /admin/requests). One open
+ * request per user; identity is snapshotted since admins can't read profiles. */
+export async function requestPlan(formData: FormData) {
+  const { supabase, userId, profile } = await getProfile();
+  const note = String(formData.get("note") ?? "").trim().slice(0, 500) || null;
+
+  const { data: existing } = await supabase
+    .from("plan_requests")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("status", "pending")
+    .limit(1);
+
+  if (!existing || existing.length === 0) {
+    await supabase.from("plan_requests").insert({
+      user_id: userId,
+      email: profile.email ?? "",
+      full_name: profile.full_name,
+      goal: profile.goal,
+      note,
+    });
+  }
+
+  revalidatePath("/plans");
+}
+
+/** Withdraw a pending plan request (RLS only allows deleting own pending). */
+export async function cancelPlanRequest(formData: FormData) {
+  const { supabase, userId } = await requireUser();
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
+
+  await supabase.from("plan_requests").delete().eq("id", id).eq("user_id", userId);
+  revalidatePath("/plans");
+}
+
 /** Delete one of the user's own AI-generated plans. */
 export async function deletePlan(formData: FormData) {
   const { supabase, userId } = await requireUser();

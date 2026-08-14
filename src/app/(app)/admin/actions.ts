@@ -166,6 +166,98 @@ export async function deletePlan(formData: FormData) {
   redirect("/admin/plans");
 }
 
+// ---------- PLAN REQUESTS ----------
+
+/** Hand an admin-built plan to the requester; it becomes private to them. */
+export async function assignPlanToRequest(formData: FormData) {
+  const { supabase } = await requireAdmin();
+  const back = "/admin/requests";
+
+  const requestId = String(formData.get("request_id") ?? "");
+  const planId = String(formData.get("plan_id") ?? "");
+  if (!requestId) fail(back, "Missing request.");
+  if (!planId) fail(back, "Pick a plan to assign.");
+
+  const { data: request } = await supabase
+    .from("plan_requests")
+    .select("id, user_id, status")
+    .eq("id", requestId)
+    .maybeSingle();
+  if (!request || request.status !== "pending") fail(back, "That request is no longer open.");
+
+  const { data: plan } = await supabase
+    .from("meal_plans")
+    .select("id, owner_id, assigned_to")
+    .eq("id", planId)
+    .maybeSingle();
+  if (!plan || plan.owner_id != null) fail(back, "Only admin-built plans can be assigned.");
+  if (plan.assigned_to != null) fail(back, "That plan is already assigned to someone.");
+
+  const { error } = await supabase
+    .from("meal_plans")
+    .update({ assigned_to: request.user_id })
+    .eq("id", planId);
+  if (error) fail(back, error.message);
+
+  const { error: requestError } = await supabase
+    .from("plan_requests")
+    .update({ status: "fulfilled", plan_id: planId, resolved_at: new Date().toISOString() })
+    .eq("id", requestId);
+  if (requestError) fail(back, requestError.message);
+
+  revalidatePath(back);
+  revalidatePath("/plans");
+  redirect(back);
+}
+
+export async function dismissPlanRequest(formData: FormData) {
+  const { supabase } = await requireAdmin();
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
+
+  const { error } = await supabase
+    .from("plan_requests")
+    .update({ status: "dismissed", resolved_at: new Date().toISOString() })
+    .eq("id", id)
+    .eq("status", "pending");
+  if (error) fail("/admin/requests", error.message);
+
+  revalidatePath("/admin/requests");
+}
+
+/** Take an assigned plan back: it returns to the global catalogue and the
+ * request reopens. */
+export async function unassignPlanRequest(formData: FormData) {
+  const { supabase } = await requireAdmin();
+  const back = "/admin/requests";
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
+
+  const { data: request } = await supabase
+    .from("plan_requests")
+    .select("id, plan_id, status")
+    .eq("id", id)
+    .maybeSingle();
+  if (!request || request.status !== "fulfilled") fail(back, "That request is not fulfilled.");
+
+  if (request.plan_id) {
+    const { error } = await supabase
+      .from("meal_plans")
+      .update({ assigned_to: null })
+      .eq("id", request.plan_id);
+    if (error) fail(back, error.message);
+  }
+
+  const { error } = await supabase
+    .from("plan_requests")
+    .update({ status: "pending", plan_id: null, resolved_at: null })
+    .eq("id", id);
+  if (error) fail(back, error.message);
+
+  revalidatePath(back);
+  revalidatePath("/plans");
+}
+
 export async function addPlanItem(formData: FormData) {
   const { supabase } = await requireAdmin();
 
