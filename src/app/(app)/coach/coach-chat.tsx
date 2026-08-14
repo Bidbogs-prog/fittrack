@@ -119,7 +119,8 @@ export function CoachChat({
   }
 
   return (
-    <section className="flex min-h-0 flex-1 flex-col rounded-2xl border border-ink-800 bg-ink-900/60">
+    // Edge-to-edge on mobile (full-page chat); a framed card from md up.
+    <section className="flex min-h-0 flex-1 flex-col border-ink-800 bg-ink-900/60 max-md:border-t md:rounded-2xl md:border">
       <div ref={scrollRef} className="relative flex-1 space-y-4 overflow-y-auto px-4 py-5 sm:px-6">
         {messages.length === 0 && !pending ? (
           <div className="flex h-full flex-col items-center justify-center gap-5 py-10 text-center">

@@ -68,6 +68,41 @@ body {
   font-family: var(--font-sans);
 }
 
+/* Scrollbars in theme ink — thin thumb, no visible track. Firefox and
+   Chromium take the standard properties; the -webkit rules below are for
+   Safari, which supports neither (Chromium ignores them once
+   scrollbar-color is set). */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--ink-600) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--ink-600);
+  border-radius: 8px;
+  /* Inset the thumb from the edge without a visible track. */
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--paper-mute);
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
 ::selection {
   background: var(--lime);
   color: var(--lime-ink);

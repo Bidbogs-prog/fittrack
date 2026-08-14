@@ -68,9 +68,12 @@ export default async function CoachPage({
   return (
     // Fixed height, not min-height: the thread scrolls inside its own window
     // instead of growing the page (see coach-chat.tsx for the scroll logic).
-    <div className="flex h-[calc(100dvh-16rem)] min-h-[24rem] flex-col gap-5 md:h-[calc(100dvh-11rem)]">
+    // Mobile is a full-page chat: negative margins cancel <main>'s padding and
+    // the calc subtracts the logo bar (89px) + bottom nav (64px + safe-area pad).
+    <div className="flex min-h-[20rem] flex-col max-md:-mx-5 max-md:-my-8 h-[calc(100dvh-9.625rem-max(0.375rem,env(safe-area-inset-bottom)))] md:h-[calc(100dvh-11rem)] md:min-h-[24rem] md:gap-5">
       <Reveal as="header" onScroll={false} className="flex flex-wrap items-end justify-between gap-4">
-        <div data-reveal>
+        {/* On mobile the chat owns the whole page; the title is desktop-only. */}
+        <div data-reveal className="max-md:hidden">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-lime">
             AI coach
           </p>
@@ -79,7 +82,7 @@ export default async function CoachPage({
           </h1>
         </div>
         {conversations.length > 0 && (
-          <nav data-reveal className="flex max-w-full items-center gap-1.5 overflow-x-auto pb-1">
+          <nav data-reveal className="flex max-w-full items-center gap-1.5 overflow-x-auto pb-1 max-md:px-4 max-md:pt-3 max-md:pb-2">
             <Link
               href="/coach?c=new"
               className={`btn-press inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors ${
