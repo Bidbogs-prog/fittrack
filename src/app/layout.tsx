@@ -4,6 +4,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import { Analytics } from "@/components/analytics";
 import { SwRegister } from "@/components/sw-register";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -31,16 +32,46 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: "FitTrack — eat exact, train hard",
-    template: "%s · FitTrack",
+    default: `${SITE_NAME} — ${SITE_TAGLINE.toLowerCase()}`,
+    template: `%s · ${SITE_NAME}`,
   },
-  description:
-    "Fitness tracker with precise per-gram nutrition, TDEE-based targets and coach-built meal plans.",
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
+  keywords: [
+    "calorie tracker",
+    "macro tracker",
+    "nutrition tracker",
+    "Moroccan food calories",
+    "TDEE calculator",
+    "meal planner",
+    "so3ra",
+    "سعرة",
+    "حاسبة السعرات الحرارية",
+    "compteur de calories",
+  ],
+  openGraph: {
+    type: "website",
+    url: "/",
+    siteName: SITE_NAME,
+    title: `${SITE_NAME} — ${SITE_TAGLINE.toLowerCase()}`,
+    description: SITE_DESCRIPTION,
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${SITE_NAME} — ${SITE_TAGLINE.toLowerCase()}`,
+    description: SITE_DESCRIPTION,
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
   // PWA (roadmap 2.1): the manifest link comes from src/app/manifest.ts.
   appleWebApp: {
     capable: true,
-    title: "FitTrack",
+    title: SITE_NAME,
     statusBarStyle: "black-translucent",
   },
   icons: {

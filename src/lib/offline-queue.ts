@@ -16,6 +16,7 @@ export interface QueuedEntry {
   queuedAt: string;
 }
 
+// Pre-rebrand key kept verbatim: renaming it would strand queued offline logs.
 const KEY = "fittrack-offline-queue";
 const MAX_QUEUE = 100;
 

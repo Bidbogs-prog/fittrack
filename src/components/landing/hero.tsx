@@ -113,23 +113,25 @@ export function Hero() {
       <div className="md:max-w-2xl lg:max-w-none">
         <p className="h-badge mb-6 inline-flex items-center gap-2 rounded-full border border-ink-700 bg-ink-900/70 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-paper-dim" data-reveal>
           <Lightning weight="fill" className="size-3 text-lime" />
-          Nutrition, engineered
+          <span dir="rtl" lang="ar" className="normal-case tracking-normal">سعرة</span>
+          — Arabic for &ldquo;calorie&rdquo;
         </p>
         <h1 className="font-display text-[2.6rem] font-bold leading-[0.96] tracking-tighter text-paper sm:text-[3.4rem] md:text-6xl lg:text-[4.25rem] xl:text-[5.4rem]">
           <span className="block overflow-hidden pb-1">
             <span className="h-line block translate-y-[118%] motion-reduce:translate-y-0">
-              Train hard.
+              Every calorie,
             </span>
           </span>
           <span className="block overflow-hidden pb-2">
             <span className="h-line block translate-y-[118%] motion-reduce:translate-y-0">
-              Eat <span className="text-lime">exact</span>.
+              <span className="text-lime">counted</span>.
             </span>
           </span>
         </h1>
         <p className="h-copy mt-6 max-w-[50ch] text-base leading-relaxed text-paper-dim md:text-lg" data-reveal>
-          FitTrack turns your body stats and training frequency into daily calorie
-          and macro targets — then tracks every meal to the gram against them.
+          So3ra turns your body stats and training frequency into daily calorie
+          and macro targets — then tracks every meal to the gram, with an AI
+          coach and a food library that knows Moroccan kitchens.
         </p>
         <div className="h-cta mt-9 flex flex-wrap items-center gap-5" data-reveal>
           <Magnetic strength={0.3}>
@@ -137,7 +139,7 @@ export function Hero() {
               href="/signup"
               className="group btn-press flex items-center gap-3 rounded-full bg-lime py-2.5 pl-6 pr-2.5 font-display text-sm font-bold uppercase tracking-wide text-lime-ink shadow-[0_12px_40px_-12px_var(--lime)] transition-colors hover:bg-lime-deep"
             >
-              Start tracking free
+              Start counting free
               <span className="grid size-9 place-items-center rounded-full bg-lime-ink/10 transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:-translate-y-px group-hover:translate-x-0.5 group-hover:scale-105">
                 <ArrowRight weight="bold" className="size-4" />
               </span>
@@ -154,9 +156,9 @@ export function Hero() {
         <dl className="h-stats mt-14 grid max-w-md grid-cols-3 divide-x divide-ink-700 border-y border-ink-700" data-reveal>
           {(
             [
-              [100, " g", "unit precision"],
-              [5, "", "macro dimensions"],
-              [3, "", "goal programs"],
+              [1, " g", "logging precision"],
+              [3, "", "languages, RTL included"],
+              [90, " s", "to set your targets"],
             ] as const
           ).map(([n, suffix, label]) => (
             <div key={label} className="px-3 py-4 first:pl-0 sm:px-4">

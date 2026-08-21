@@ -1,12 +1,13 @@
 import type { MetadataRoute } from "next";
+import { SITE_NAME } from "@/lib/site";
 
 /** PWA manifest (roadmap 2.1) — served at /manifest.webmanifest. */
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "FitTrack",
-    short_name: "FitTrack",
+    name: SITE_NAME,
+    short_name: SITE_NAME,
     description:
-      "Fitness tracker with precise per-gram nutrition, adaptive targets and an AI coach.",
+      "So3ra (سعرة) — calorie and macro tracker with per-gram precision, adaptive targets and an AI coach.",
     start_url: "/dashboard",
     display: "standalone",
     background_color: "#090b08",

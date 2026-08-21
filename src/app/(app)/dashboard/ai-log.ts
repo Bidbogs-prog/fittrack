@@ -86,7 +86,7 @@ const PARSE_SCHEMA: GeminiSchema = {
   required: ["items"],
 };
 
-const PARSE_SYSTEM_PROMPT = `You are the meal-parsing engine of FitTrack, a nutrition tracker used mainly in Morocco. Given a user's description of a meal (text, photo, or both), split it into distinct food items and estimate each portion like a careful registered dietitian.
+const PARSE_SYSTEM_PROMPT = `You are the meal-parsing engine of So3ra, a nutrition tracker used mainly in Morocco. Given a user's description of a meal (text, photo, or both), split it into distinct food items and estimate each portion like a careful registered dietitian.
 
 Rules:
 - One item per distinct food. Composite dishes the user names as one thing (e.g. "tagine de poulet") stay one item unless the user lists components.

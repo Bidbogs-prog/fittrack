@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
     return new Response(body, {
       headers: {
         "Content-Type": format === "json" ? "application/json" : "text/csv; charset=utf-8",
-        "Content-Disposition": `attachment; filename="fittrack-weight-${today}.${format}"`,
+        "Content-Disposition": `attachment; filename="so3ra-weight-${today}.${format}"`,
       },
     });
   }
@@ -130,7 +130,7 @@ export async function GET(request: NextRequest) {
     return new Response(body, {
       headers: {
         "Content-Type": format === "json" ? "application/json" : "text/csv; charset=utf-8",
-        "Content-Disposition": `attachment; filename="fittrack-diary-${today}.${format}"`,
+        "Content-Disposition": `attachment; filename="so3ra-diary-${today}.${format}"`,
       },
     });
   }

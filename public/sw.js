@@ -1,5 +1,5 @@
 /**
- * FitTrack service worker (roadmap 2.1).
+ * So3ra service worker (roadmap 2.1).
  *
  * Strategy:
  * - Navigations: network-first, falling back to the cached copy of the
@@ -12,9 +12,9 @@
  *
  * Bump VERSION to invalidate all caches on deploy of a new strategy.
  */
-const VERSION = "v1";
-const STATIC_CACHE = `fittrack-static-${VERSION}`;
-const PAGE_CACHE = `fittrack-pages-${VERSION}`;
+const VERSION = "v3";
+const STATIC_CACHE = `so3ra-static-${VERSION}`;
+const PAGE_CACHE = `so3ra-pages-${VERSION}`;
 const OFFLINE_URL = "/offline.html";
 
 self.addEventListener("install", (event) => {

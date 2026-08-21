@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /* ============================================================
-   FitTrack design system — dark ink, one lime accent.
+   So3ra design system — dark ink, one lime accent.
    ============================================================ */
 :root {
   --ink-950: #090b08;
@@ -54,6 +54,8 @@
    don't shift the whole layout sideways. */
 html {
   scrollbar-gutter: stable;
+  /* Landing anchor nav (#features, #faq) glides instead of jumping. */
+  scroll-behavior: smooth;
   /* The page itself must never pan horizontally (past the fixed-width
      mobile nav): any wide content scrolls inside its own overflow-x-auto
      container instead. clip (with hidden as the older-Safari fallback)
@@ -220,6 +222,9 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
   .marquee-track,
   .floaty,
   .orbit-ring,

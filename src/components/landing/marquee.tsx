@@ -1,14 +1,14 @@
 const FACTS: [string, number][] = [
-  ["Chicken breast", 165],
-  ["Basmati rice", 350],
-  ["Rolled oats", 379],
-  ["Whole eggs", 143],
+  ["Khobz (bread)", 265],
+  ["Chicken tagine", 121],
+  ["Couscous, cooked", 112],
+  ["Harira", 58],
+  ["Medjool dates", 277],
+  ["Grilled sardines", 208],
+  ["Msemen", 330],
   ["Greek yogurt", 97],
-  ["Atlantic salmon", 208],
-  ["Sweet potato", 86],
-  ["Almonds", 579],
-  ["Broccoli", 34],
-  ["Lean beef 5%", 137],
+  ["Chicken breast", 165],
+  ["Olive oil", 884],
 ];
 
 function Strip({ hidden }: { hidden?: boolean }) {
@@ -30,7 +30,7 @@ function Strip({ hidden }: { hidden?: boolean }) {
   );
 }
 
-/** Kinetic data band — verified per-100 g facts scrolling forever. */
+/** Kinetic data band — per-100 g facts from kitchens the library knows. */
 export function Marquee() {
   return (
     <section className="marquee relative overflow-hidden border-y border-ink-800 bg-ink-900/40 py-4">

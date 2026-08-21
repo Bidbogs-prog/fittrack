@@ -4,7 +4,7 @@
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
 <!-- END:nextjs-agent-rules -->
 
-# FitTrack — Agent Guide
+# So3ra (formerly FitTrack) — Agent Guide
 
 Next.js 16 (App Router, `src/`, `proxy.ts` not `middleware.ts`, `params`/`searchParams`/`cookies()` are async) + Tailwind v4 + Supabase (auth, Postgres, storage). TypeScript strict.
 

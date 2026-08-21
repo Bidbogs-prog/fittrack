@@ -128,7 +128,7 @@ const PLAN_SCHEMA: GeminiSchema = {
   required: ["name", "description", "items"],
 };
 
-const PLAN_SYSTEM_PROMPT = `You are the meal-planning engine of FitTrack, composing one full day of eating for a user in Morocco, with the practicality of a registered dietitian.
+const PLAN_SYSTEM_PROMPT = `You are the meal-planning engine of So3ra, composing one full day of eating for a user in Morocco, with the practicality of a registered dietitian.
 
 You are given the user's daily targets, their stated preferences, and a food list from the app's database. Compose breakfast, lunch, dinner and optionally snacks.
 

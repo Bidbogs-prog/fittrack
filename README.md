@@ -1,6 +1,6 @@
-# FitTrack
+# So3ra
 
-A modern fitness tracker built with **Next.js 16 (App Router) + Tailwind v4 + Supabase**.
+**So3ra** (سعرة — "calorie" in Arabic; the 3 is the Arabizi ع) is a mobile-first calorie & macro tracker built with **Next.js 16 (App Router) + Tailwind v4 + Supabase**. Formerly FitTrack.
 
 - **Auth** — email/password via Supabase Auth (`@supabase/ssr`, cookie sessions, `getClaims()` protection).
 - **Onboarding** — first login collects sex, date of birth, height, weight, training frequency and goal; BMR (Mifflin-St Jeor) and TDEE (activity multiplier) are computed live and daily calorie/macro targets are locked in.

@@ -1,0 +1,24 @@
+/**
+ * Brand + canonical-URL constants shared by metadata, robots, sitemap,
+ * the OG image and JSON-LD. One place to change when the domain moves.
+ */
+export const SITE_NAME = "So3ra";
+
+/** سعرة — "calorie" in Arabic; the 3 is the Arabizi ع. */
+export const SITE_NAME_AR = "سعرة";
+
+export const SITE_TAGLINE = "Every calorie, counted";
+
+export const SITE_DESCRIPTION =
+  "So3ra (سعرة — “calorie” in Arabic) turns your body stats into daily calorie and macro targets, then tracks every meal to the gram. AI meal logging, a food library that knows Moroccan kitchens, and coaching in English, French and Arabic.";
+
+export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://so3ra.app";
+
+/**
+ * The "3" mark — the Arabizi ع of So3ra, set in the same Outfit Bold glyph as
+ * the wordmark. Outline extracted from the Outfit variable font at wght 700,
+ * centered in a 100×100 viewBox at 64% height (fits the maskable-icon safe
+ * zone). Also duplicated statically in public/icons/icon.svg — keep in sync.
+ */
+export const LOGO_MARK_PATH =
+  "M48.3 82Q41.79 82 36.34 79.72Q30.9 77.45 27.15 73.16L36.21 64.19Q37.91 66.69 41.16 68.23Q44.42 69.77 48.08 69.77Q51.34 69.77 53.77 68.61Q56.2 67.45 57.59 65.31Q58.97 63.17 58.97 60.26Q58.97 57.27 57.56 55.18Q56.16 53.08 53.55 51.94Q50.94 50.8 47.28 50.8Q45.58 50.8 43.73 51.03Q41.88 51.25 40.67 51.7L46.83 43.93Q49.33 43.22 51.61 42.73Q53.88 42.23 55.8 42.23Q60.62 42.23 64.48 44.51Q68.34 46.79 70.6 50.94Q72.85 55.09 72.85 60.76Q72.85 67.05 69.79 71.85Q66.74 76.64 61.22 79.32Q55.71 82 48.3 82ZM40.67 51.7V43.89L56.03 25.9L71.69 25.81L55.76 43.97ZM31.08 29.92V18H71.69V25.81L60.71 29.92Z";

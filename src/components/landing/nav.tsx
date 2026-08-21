@@ -37,6 +37,23 @@ export function LandingNav() {
         className="pointer-events-auto flex w-full max-w-3xl items-center justify-between gap-2 rounded-full border border-white/10 bg-ink-950/70 py-2 pl-4 pr-2 shadow-[0_16px_40px_-16px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-xl sm:gap-3"
       >
         <Logo />
+        <nav aria-label="Sections" className="hidden items-center gap-1 md:flex">
+          {(
+            [
+              ["Features", "#features"],
+              ["How it works", "#how-it-works"],
+              ["FAQ", "#faq"],
+            ] as const
+          ).map(([label, href]) => (
+            <a
+              key={href}
+              href={href}
+              className="btn-press rounded-full px-3 py-2 text-sm font-medium text-paper-dim transition-colors hover:text-paper"
+            >
+              {label}
+            </a>
+          ))}
+        </nav>
         <nav className="flex items-center gap-1">
           <Link
             href="/login"

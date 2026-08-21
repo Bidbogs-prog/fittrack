@@ -17,11 +17,11 @@ export function FinalCta() {
           className="mx-auto max-w-[16ch] font-display text-4xl font-bold leading-[0.98] tracking-tighter text-paper sm:text-5xl md:text-7xl"
           data-reveal
         >
-          Stop guessing. <span className="text-lime">Start weighing.</span>
+          Stop guessing. <span className="text-lime">Start counting.</span>
         </h2>
         <p className="mx-auto mt-6 max-w-[46ch] text-base leading-relaxed text-paper-dim" data-reveal>
           Your targets take about ninety seconds to set up. The first logged
-          meal takes ten.
+          meal takes ten. Every سعرة after that is counted for you.
         </p>
         <div className="mt-10 flex justify-center" data-reveal>
           <Magnetic strength={0.3}>
