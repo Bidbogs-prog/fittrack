@@ -52,7 +52,7 @@ export function PlanActions({
         type="button"
         onClick={apply}
         disabled={pending}
-        className="btn-press inline-flex items-center gap-2 rounded-xl bg-lime px-5 py-2.5 font-display text-sm font-bold uppercase tracking-wide text-lime-ink hover:bg-lime-deep disabled:cursor-not-allowed disabled:opacity-40"
+        className="btn-press inline-flex items-center gap-2 rounded-xl bg-flame px-5 py-2.5 font-display text-sm font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep disabled:cursor-not-allowed disabled:opacity-40"
       >
         <CalendarPlus weight="bold" className="size-4" />
         {pending ? "Logging…" : "Log this day to my diary"}

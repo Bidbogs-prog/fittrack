@@ -25,10 +25,10 @@ export function GeneratePlan() {
   }
 
   return (
-    <section className="rounded-2xl border border-lime/25 bg-lime/[0.04] p-5">
+    <section className="rounded-2xl border border-flame/25 bg-flame/[0.04] p-5">
       <div className="flex items-center gap-3">
-        <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-lime/10 ring-1 ring-inset ring-lime/25">
-          <Sparkle weight="fill" className="size-4.5 text-lime" />
+        <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-flame/10 ring-1 ring-inset ring-flame/25">
+          <Sparkle weight="fill" className="size-4.5 text-flame" />
         </span>
         <div>
           <h2 className="font-display text-base font-semibold text-paper">Plan my day with AI</h2>
@@ -50,7 +50,7 @@ export function GeneratePlan() {
         type="button"
         onClick={run}
         disabled={pending}
-        className="btn-press mt-3 inline-flex items-center gap-2 rounded-xl bg-lime px-5 py-2.5 font-display text-sm font-bold uppercase tracking-wide text-lime-ink hover:bg-lime-deep disabled:cursor-not-allowed disabled:opacity-40"
+        className="btn-press mt-3 inline-flex items-center gap-2 rounded-xl bg-flame px-5 py-2.5 font-display text-sm font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep disabled:cursor-not-allowed disabled:opacity-40"
       >
         {pending ? "Composing your day…" : "Generate plan"}
       </button>

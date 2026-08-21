@@ -25,7 +25,7 @@ export default async function AccountPage({
   return (
     <div className="space-y-8">
       <header>
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-lime">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-flame">
           {profile.email}
         </p>
         <h1 className="mt-1.5 font-display text-3xl font-bold tracking-tighter text-paper md:text-4xl">
@@ -34,7 +34,7 @@ export default async function AccountPage({
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <a
             href="/onboarding?edit=1"
-            className="btn-press inline-flex items-center gap-2 rounded-lg border border-ink-700 px-4 py-2.5 text-xs font-semibold text-paper-dim transition-colors hover:border-lime/50 hover:text-lime"
+            className="btn-press inline-flex items-center gap-2 rounded-lg border border-ink-700 px-4 py-2.5 text-xs font-semibold text-paper-dim transition-colors hover:border-flame/50 hover:text-flame"
           >
             <PersonSimpleRun weight="bold" className="size-4" />
             {t("updateBodyStats")}
@@ -42,7 +42,7 @@ export default async function AccountPage({
           {admin && (
             <a
               href="/admin"
-              className="btn-press inline-flex items-center gap-2 rounded-lg border border-ink-700 px-4 py-2.5 text-xs font-semibold text-paper-dim transition-colors hover:border-lime/50 hover:text-lime"
+              className="btn-press inline-flex items-center gap-2 rounded-lg border border-ink-700 px-4 py-2.5 text-xs font-semibold text-paper-dim transition-colors hover:border-flame/50 hover:text-flame"
             >
               <ShieldStar weight="bold" className="size-4" />
               {t("adminConsole")}
@@ -61,7 +61,7 @@ export default async function AccountPage({
       </header>
 
       {message && (
-        <p className="flex max-w-xl items-start gap-2 rounded-lg border border-lime/25 bg-lime/[0.06] px-3.5 py-3 text-sm text-lime">
+        <p className="flex max-w-xl items-start gap-2 rounded-lg border border-flame/25 bg-flame/[0.06] px-3.5 py-3 text-sm text-flame">
           <Info className="mt-0.5 size-4 shrink-0" weight="bold" />
           <span className="min-w-0 break-words">{message}</span>
         </p>
@@ -83,7 +83,7 @@ export default async function AccountPage({
                 key={code}
                 className={`btn-press cursor-pointer rounded-full border px-4 py-2 text-xs font-semibold transition-colors ${
                   locale === code
-                    ? "border-lime/60 bg-lime/10 text-lime"
+                    ? "border-flame/60 bg-flame/10 text-flame"
                     : "border-ink-700 text-paper-dim hover:text-paper"
                 }`}
               >
@@ -100,7 +100,7 @@ export default async function AccountPage({
           </div>
           <button
             type="submit"
-            className="btn-press rounded-xl bg-lime px-5 py-2 font-display text-xs font-bold uppercase tracking-wide text-lime-ink hover:bg-lime-deep"
+            className="btn-press rounded-xl bg-flame px-5 py-2 font-display text-xs font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep"
           >
             {t("save")}
           </button>
@@ -125,7 +125,7 @@ export default async function AccountPage({
           </div>
           <button
             type="submit"
-            className="btn-press rounded-xl bg-lime px-5 py-2.5 font-display text-xs font-bold uppercase tracking-wide text-lime-ink hover:bg-lime-deep"
+            className="btn-press rounded-xl bg-flame px-5 py-2.5 font-display text-xs font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep"
           >
             {t("updatePassword")}
           </button>
@@ -147,7 +147,7 @@ export default async function AccountPage({
                 key={value}
                 className={`btn-press cursor-pointer rounded-full border px-4 py-2 text-xs font-semibold transition-colors ${
                   profile.units === value
-                    ? "border-lime/60 bg-lime/10 text-lime"
+                    ? "border-flame/60 bg-flame/10 text-flame"
                     : "border-ink-700 text-paper-dim hover:text-paper"
                 }`}
               >
@@ -164,7 +164,7 @@ export default async function AccountPage({
           </div>
           <button
             type="submit"
-            className="btn-press rounded-xl bg-lime px-5 py-2 font-display text-xs font-bold uppercase tracking-wide text-lime-ink hover:bg-lime-deep"
+            className="btn-press rounded-xl bg-flame px-5 py-2 font-display text-xs font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep"
           >
             {t("save")}
           </button>
@@ -201,7 +201,7 @@ export default async function AccountPage({
           </div>
           <button
             type="submit"
-            className="btn-press rounded-xl bg-lime px-5 py-2.5 font-display text-xs font-bold uppercase tracking-wide text-lime-ink hover:bg-lime-deep"
+            className="btn-press rounded-xl bg-flame px-5 py-2.5 font-display text-xs font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep"
           >
             {t("saveWindow")}
           </button>
@@ -226,7 +226,7 @@ export default async function AccountPage({
                     key={format}
                     href={`/api/export?what=${what}&format=${format}`}
                     download
-                    className="btn-press inline-flex items-center gap-1.5 rounded-lg border border-ink-700 px-3 py-1.5 text-xs font-semibold uppercase text-paper-dim transition-colors hover:border-lime/50 hover:text-lime"
+                    className="btn-press inline-flex items-center gap-1.5 rounded-lg border border-ink-700 px-3 py-1.5 text-xs font-semibold uppercase text-paper-dim transition-colors hover:border-flame/50 hover:text-flame"
                   >
                     <DownloadSimple weight="bold" className="size-3.5" />
                     {format}

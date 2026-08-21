@@ -22,14 +22,14 @@ function PlanCard({ plan, badge }: { plan: MealPlan; badge?: string }) {
         <h2 className="font-display text-base font-semibold tracking-tight text-paper">
           {plan.name}
           {badge && (
-            <span className="ml-2 align-middle rounded-full bg-lime/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-lime ring-1 ring-inset ring-lime/25">
+            <span className="ml-2 align-middle rounded-full bg-flame/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-flame ring-1 ring-inset ring-flame/25">
               {badge}
             </span>
           )}
         </h2>
         <ArrowRight
           weight="bold"
-          className="mt-1 size-4 shrink-0 text-paper-mute transition-transform group-hover:translate-x-0.5 group-hover:text-lime"
+          className="mt-1 size-4 shrink-0 text-paper-mute transition-transform group-hover:translate-x-0.5 group-hover:text-flame"
         />
       </div>
       {plan.description && (
@@ -96,7 +96,7 @@ export default async function PlansPage({
   return (
     <div className="space-y-7">
       <header>
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-lime">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-flame">
           Coach-built days
         </p>
         <h1 className="mt-1.5 font-display text-3xl font-bold tracking-tighter text-paper md:text-4xl">
@@ -115,8 +115,8 @@ export default async function PlansPage({
         {pendingRequest ? (
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-start gap-3">
-              <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-lime/10 ring-1 ring-inset ring-lime/25">
-                <PaperPlaneTilt weight="fill" className="size-4.5 text-lime" />
+              <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-flame/10 ring-1 ring-inset ring-flame/25">
+                <PaperPlaneTilt weight="fill" className="size-4.5 text-flame" />
               </span>
               <div>
                 <h2 className="font-display text-sm font-semibold text-paper">
@@ -140,8 +140,8 @@ export default async function PlansPage({
         ) : (
           <form action={requestPlan} className="space-y-3">
             <div className="flex items-start gap-3">
-              <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-lime/10 ring-1 ring-inset ring-lime/25">
-                <ChalkboardTeacher weight="fill" className="size-4.5 text-lime" />
+              <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-flame/10 ring-1 ring-inset ring-flame/25">
+                <ChalkboardTeacher weight="fill" className="size-4.5 text-flame" />
               </span>
               <div>
                 <h2 className="font-display text-sm font-semibold text-paper">
@@ -161,7 +161,7 @@ export default async function PlansPage({
             />
             <button
               type="submit"
-              className="btn-press rounded-xl bg-lime px-5 py-2.5 font-display text-xs font-bold uppercase tracking-wide text-lime-ink hover:bg-lime-deep"
+              className="btn-press rounded-xl bg-flame px-5 py-2.5 font-display text-xs font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep"
             >
               Request a plan
             </button>
@@ -191,7 +191,7 @@ export default async function PlansPage({
             href={`/plans?g=${key}`}
             className={`rounded-full px-3.5 py-2 text-xs font-semibold transition-colors pointer-fine:py-1.5 ${
               goal === key
-                ? "bg-lime text-lime-ink"
+                ? "bg-flame text-flame-ink"
                 : "border border-ink-700 text-paper-dim hover:text-paper"
             }`}
           >

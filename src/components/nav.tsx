@@ -49,7 +49,7 @@ export function AppNav({
             aria-current={active ? "page" : undefined}
             className={`btn-press flex items-center gap-3 whitespace-nowrap rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] max-md:flex-col max-md:gap-1 max-md:px-2 max-md:py-2 max-md:text-[11px] ${
               active
-                ? "bg-lime/10 text-lime"
+                ? "bg-flame/10 text-flame"
                 : "text-paper-mute hover:bg-ink-800 hover:text-paper"
             }`}
           >

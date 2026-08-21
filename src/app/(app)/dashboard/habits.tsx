@@ -34,7 +34,7 @@ export function Habits({
     >
       <div className="rounded-2xl border border-ink-800 bg-ink-900/60 p-4">
         <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-paper-mute">
-          <Fire weight="fill" className={`size-3.5 ${streaks.current > 0 ? "text-lime" : ""}`} />
+          <Fire weight="fill" className={`size-3.5 ${streaks.current > 0 ? "text-flame" : ""}`} />
           Streak
         </p>
         <p className="mt-1 font-mono text-2xl font-semibold tracking-tight text-paper tabular">

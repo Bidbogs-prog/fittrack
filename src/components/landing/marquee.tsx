@@ -23,7 +23,7 @@ function Strip({ hidden }: { hidden?: boolean }) {
             {name} <span className="text-paper-dim">{kcal} kcal</span>
             <span className="text-paper-mute/60"> / 100 g</span>
           </span>
-          <span className="size-1 rounded-full bg-lime/70" />
+          <span className="size-1 rounded-full bg-flame/70" />
         </span>
       ))}
     </div>

@@ -53,7 +53,7 @@ export function WaterTile({
       <div className="flex items-start justify-between gap-2">
         <div>
           <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-paper-mute">
-            <Drop weight="fill" className={`size-3.5 ${pct >= 100 ? "text-lime" : ""}`} />
+            <Drop weight="fill" className={`size-3.5 ${pct >= 100 ? "text-flame" : ""}`} />
             Water
           </p>
           <p className="mt-1 font-mono text-2xl font-semibold tracking-tight text-paper tabular">
@@ -75,7 +75,7 @@ export function WaterTile({
             type="button"
             onClick={() => add(250)}
             aria-label="Add a 250 ml glass"
-            className="btn-press rounded-lg border border-ink-700 p-2 text-paper-dim transition-colors hover:border-lime/50 hover:text-lime pointer-coarse:p-3"
+            className="btn-press rounded-lg border border-ink-700 p-2 text-paper-dim transition-colors hover:border-flame/50 hover:text-flame pointer-coarse:p-3"
           >
             <Plus weight="bold" className="size-3.5" />
           </button>
@@ -90,7 +90,7 @@ export function WaterTile({
         className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-ink-800"
       >
         <div
-          className="h-full rounded-full bg-lime transition-[width] duration-300"
+          className="h-full rounded-full bg-flame transition-[width] duration-300"
           style={{ width: `${pct}%` }}
         />
       </div>

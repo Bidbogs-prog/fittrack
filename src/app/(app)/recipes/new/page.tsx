@@ -76,7 +76,7 @@ export default async function NewRecipePage({
         </div>
         <button
           type="submit"
-          className="btn-press w-full rounded-xl bg-lime px-5 py-3 font-display text-sm font-bold uppercase tracking-wide text-lime-ink hover:bg-lime-deep sm:w-auto sm:px-8"
+          className="btn-press w-full rounded-xl bg-flame px-5 py-3 font-display text-sm font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep sm:w-auto sm:px-8"
         >
           Create &amp; add ingredients
         </button>

@@ -27,13 +27,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             <p className="truncate text-xs text-paper-mute">{profile.email}</p>
             <a
               href="/onboarding?edit=1"
-              className="mt-1 flex min-h-10 items-center text-xs font-medium text-paper-mute underline-offset-4 hover:text-lime hover:underline"
+              className="mt-1 flex min-h-10 items-center text-xs font-medium text-paper-mute underline-offset-4 hover:text-flame hover:underline"
             >
               Update body stats
             </a>
             <a
               href="/account"
-              className="flex min-h-10 items-center text-xs font-medium text-paper-mute underline-offset-4 hover:text-lime hover:underline"
+              className="flex min-h-10 items-center text-xs font-medium text-paper-mute underline-offset-4 hover:text-flame hover:underline"
             >
               Account settings
             </a>

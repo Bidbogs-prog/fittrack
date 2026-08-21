@@ -149,7 +149,7 @@ export default async function DashboardPage({
       {/* header */}
       <Reveal as="header" className="flex flex-wrap items-end justify-between gap-4" onScroll={false}>
         <div data-reveal>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-lime">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-flame">
             {GOALS[targets.goal].label} · {isToday ? "today" : dateLabel}
           </p>
           <h1 className="mt-1.5 font-display text-3xl font-bold tracking-tighter text-paper md:text-4xl">
@@ -167,7 +167,7 @@ export default async function DashboardPage({
           <Link
             href="/dashboard"
             className={`rounded-md px-3 py-1.5 text-xs font-semibold pointer-coarse:py-2.5 ${
-              isToday ? "bg-lime text-lime-ink" : "text-paper-dim hover:text-paper"
+              isToday ? "bg-flame text-flame-ink" : "text-paper-dim hover:text-paper"
             }`}
           >
             Today
@@ -197,7 +197,7 @@ export default async function DashboardPage({
           <p className="font-display text-xl font-semibold tracking-tight text-paper">
             {remaining >= 0 ? (
               <>
-                <CountUp value={remaining} className="font-mono text-lime tabular" /> kcal
+                <CountUp value={remaining} className="font-mono text-flame tabular" /> kcal
                 left {isToday ? "today" : "that day"}
               </>
             ) : (
@@ -293,7 +293,7 @@ export default async function DashboardPage({
           <input type="hidden" name="to_date" value={date} />
           <button
             type="submit"
-            className="btn-press inline-flex items-center gap-2 rounded-lg border border-ink-700 px-4 py-2.5 text-xs font-semibold text-paper-dim transition-colors hover:border-lime/50 hover:text-lime"
+            className="btn-press inline-flex items-center gap-2 rounded-lg border border-ink-700 px-4 py-2.5 text-xs font-semibold text-paper-dim transition-colors hover:border-flame/50 hover:text-flame"
           >
             <CopySimple weight="bold" className="size-4" />
             Copy everything from yesterday
@@ -345,7 +345,7 @@ export default async function DashboardPage({
                         type="submit"
                         title={`Copy yesterday's ${meal}`}
                         aria-label={`Copy yesterday's ${meal}`}
-                        className="btn-press rounded-lg border border-ink-700 p-2 text-paper-mute transition-colors hover:border-lime/50 hover:text-lime"
+                        className="btn-press rounded-lg border border-ink-700 p-2 text-paper-mute transition-colors hover:border-flame/50 hover:text-flame"
                       >
                         <CopySimple weight="bold" className="size-3.5" />
                       </button>

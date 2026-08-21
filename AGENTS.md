@@ -31,7 +31,7 @@ Next.js 16 (App Router, `src/`, `proxy.ts` not `middleware.ts`, `params`/`search
 - Food facts are stored per 100 g; diary entries store `grams` only — macros are always derived via `src/lib/nutrition.ts`, never stored.
 - Micronutrient columns (`MICRO_KEYS` in `src/lib/types.ts`) are nullable: null = unknown, never zero. Labels/units/daily values live in `MICRONUTRIENTS` in `src/lib/nutrition.ts`.
 - Icons: `@phosphor-icons/react` only. No emojis in UI.
-- Design tokens live in `src/app/globals.css` (Tailwind v4 `@theme`). Fonts: Outfit (display), Geist (body), Geist Mono (numerals). One accent (lime) on dark ink.
+- Design tokens live in `src/app/globals.css` (Tailwind v4 `@theme`). Fonts: Outfit (display), Geist (body), Geist Mono (numerals). Fire accent ramp (`flame-glow` gold → `flame` orange → `flame-deep` red-orange) on warm ember-dark ink — calories are energy, the palette reads as heat.
 
 ## Skills
 Design skills from MengTo/Skills are installed in `.claude/skills/`: `frontend-design`, `design-taste-frontend`, `high-end-visual-design`, `tailwindcss`, `beautiful-shadows`, `animation-systems`, `landing-page`. Load the relevant one before UI work. For data-fetching/perf follow the `vercel-react-best-practices` skill; for anything Supabase, the `supabase` skill.

@@ -281,7 +281,7 @@ export function AddFoodDialog({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="btn-press inline-flex items-center gap-1.5 rounded-lg border border-ink-700 px-3 py-1.5 text-xs font-semibold text-paper-dim transition-colors hover:border-lime/50 hover:text-lime pointer-coarse:py-2.5"
+        className="btn-press inline-flex items-center gap-1.5 rounded-lg border border-ink-700 px-3 py-1.5 text-xs font-semibold text-paper-dim transition-colors hover:border-flame/50 hover:text-flame pointer-coarse:py-2.5"
       >
         <Plus weight="bold" className="size-3.5" />
         Add food
@@ -339,7 +339,7 @@ export function AddFoodDialog({
                       setView({ kind: "ai" });
                       setError(null);
                     }}
-                    className="btn-press inline-flex items-center gap-1.5 rounded-lg border border-lime/40 px-3 py-2 text-xs font-semibold text-lime transition-colors hover:border-lime hover:bg-lime/10"
+                    className="btn-press inline-flex items-center gap-1.5 rounded-lg border border-flame/40 px-3 py-2 text-xs font-semibold text-flame transition-colors hover:border-flame hover:bg-flame/10"
                   >
                     <Sparkle weight="bold" className="size-3.5" />
                     Describe meal
@@ -350,7 +350,7 @@ export function AddFoodDialog({
                       setView({ kind: "scan" });
                       setError(null);
                     }}
-                    className="btn-press inline-flex items-center gap-1.5 rounded-lg border border-ink-700 px-3 py-2 text-xs font-semibold text-paper-dim transition-colors hover:border-lime/50 hover:text-lime"
+                    className="btn-press inline-flex items-center gap-1.5 rounded-lg border border-ink-700 px-3 py-2 text-xs font-semibold text-paper-dim transition-colors hover:border-flame/50 hover:text-flame"
                   >
                     <Barcode weight="bold" className="size-3.5" />
                     Scan barcode
@@ -361,7 +361,7 @@ export function AddFoodDialog({
                       setView({ kind: "quick" });
                       setError(null);
                     }}
-                    className="btn-press inline-flex items-center gap-1.5 rounded-lg border border-ink-700 px-3 py-2 text-xs font-semibold text-paper-dim transition-colors hover:border-lime/50 hover:text-lime"
+                    className="btn-press inline-flex items-center gap-1.5 rounded-lg border border-ink-700 px-3 py-2 text-xs font-semibold text-paper-dim transition-colors hover:border-flame/50 hover:text-flame"
                   >
                     <Lightning weight="bold" className="size-3.5" />
                     Quick add
@@ -393,7 +393,7 @@ export function AddFoodDialog({
                             Nothing matches “{query}”.{" "}
                             <a
                               href={`/foods/new?name=${encodeURIComponent(query)}`}
-                              className="font-medium text-paper underline underline-offset-4 hover:text-lime"
+                              className="font-medium text-paper underline underline-offset-4 hover:text-flame"
                             >
                               Create it as your own food
                             </a>
@@ -580,7 +580,7 @@ export function AddFoodDialog({
                   type="button"
                   onClick={() => submitRecipe(view.recipe)}
                   disabled={pending || !(Number(servings) > 0)}
-                  className="btn-press mt-4 w-full rounded-xl bg-lime px-5 py-3 font-display text-sm font-bold uppercase tracking-wide text-lime-ink hover:bg-lime-deep disabled:cursor-not-allowed disabled:opacity-40"
+                  className="btn-press mt-4 w-full rounded-xl bg-flame px-5 py-3 font-display text-sm font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   {pending ? "Logging…" : "Log recipe"}
                 </button>
@@ -635,7 +635,7 @@ export function AddFoodDialog({
                   <p className="mt-3 flex flex-wrap items-center justify-center gap-3">
                     <a
                       href={`/foods/new?barcode=${encodeURIComponent(view.code)}`}
-                      className="btn-press rounded-lg bg-lime px-4 py-2 font-display text-xs font-bold uppercase tracking-wide text-lime-ink hover:bg-lime-deep"
+                      className="btn-press rounded-lg bg-flame px-4 py-2 font-display text-xs font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep"
                     >
                       Create this food
                     </a>
@@ -693,7 +693,7 @@ function FoodRow({
         aria-label={favorited ? `Unfavorite ${food.name}` : `Favorite ${food.name}`}
         aria-pressed={favorited}
         className={`btn-press shrink-0 rounded-md p-2 transition-colors ${
-          favorited ? "text-lime" : "text-paper-mute hover:text-paper"
+          favorited ? "text-flame" : "text-paper-mute hover:text-paper"
         }`}
       >
         <Star weight={favorited ? "fill" : "regular"} className="size-4" />
@@ -775,7 +775,7 @@ function SavedMealView({
         type="button"
         onClick={onSubmit}
         disabled={pending}
-        className="btn-press mt-4 w-full rounded-xl bg-lime px-5 py-3 font-display text-sm font-bold uppercase tracking-wide text-lime-ink hover:bg-lime-deep disabled:cursor-not-allowed disabled:opacity-40"
+        className="btn-press mt-4 w-full rounded-xl bg-flame px-5 py-3 font-display text-sm font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep disabled:cursor-not-allowed disabled:opacity-40"
       >
         {pending ? "Logging…" : `Add ${savedMeal.itemCount} item${savedMeal.itemCount === 1 ? "" : "s"} to ${meal}`}
       </button>
@@ -812,7 +812,7 @@ function MacroPreview({
   macros: { kcal: number; protein: number; carbs: number; fat: number; fibre: number };
 }) {
   return (
-    <dl className="mt-4 grid grid-cols-3 gap-x-1 gap-y-3 rounded-xl bg-lime/[0.07] px-3 py-3 text-center ring-1 ring-inset ring-lime/20 sm:grid-cols-5">
+    <dl className="mt-4 grid grid-cols-3 gap-x-1 gap-y-3 rounded-xl bg-flame/[0.07] px-3 py-3 text-center ring-1 ring-inset ring-flame/20 sm:grid-cols-5">
       {(
         [
           ["kcal", macros.kcal, 0],
@@ -892,8 +892,8 @@ function FoodPortion({
                   onClick={() => setGrams(String(g))}
                   className={`btn-press rounded-full border px-3 py-1.5 text-xs transition-colors pointer-coarse:py-2 ${
                     Number(grams) === g
-                      ? "border-lime/60 bg-lime/10 text-lime"
-                      : "border-ink-700 text-paper-dim hover:border-lime/40 hover:text-paper"
+                      ? "border-flame/60 bg-flame/10 text-flame"
+                      : "border-ink-700 text-paper-dim hover:border-flame/40 hover:text-paper"
                   }`}
                 >
                   {n === 0.5 ? "½" : n} × {food.serving_name ?? "serving"}
@@ -941,7 +941,7 @@ function FoodPortion({
         type="button"
         onClick={onSubmit}
         disabled={pending || !(Number(grams) > 0)}
-        className="btn-press mt-4 w-full rounded-xl bg-lime px-5 py-3 font-display text-sm font-bold uppercase tracking-wide text-lime-ink hover:bg-lime-deep disabled:cursor-not-allowed disabled:opacity-40"
+        className="btn-press mt-4 w-full rounded-xl bg-flame px-5 py-3 font-display text-sm font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep disabled:cursor-not-allowed disabled:opacity-40"
       >
         {pending ? "Logging…" : `Log ${grams || 0} g`}
       </button>
@@ -1033,7 +1033,7 @@ function QuickAddForm({
       <button
         type="submit"
         disabled={pending}
-        className="btn-press mt-4 w-full rounded-xl bg-lime px-5 py-3 font-display text-sm font-bold uppercase tracking-wide text-lime-ink hover:bg-lime-deep disabled:cursor-not-allowed disabled:opacity-40"
+        className="btn-press mt-4 w-full rounded-xl bg-flame px-5 py-3 font-display text-sm font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep disabled:cursor-not-allowed disabled:opacity-40"
       >
         {pending ? "Logging…" : "Quick add"}
       </button>

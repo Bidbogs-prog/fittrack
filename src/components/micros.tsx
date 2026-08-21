@@ -51,7 +51,7 @@ export function MicroPanel({ totals }: { totals: MicroValues }) {
                     {def.dv != null && (
                       <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-ink-700">
                         <div
-                          className={`h-full rounded-full ${over ? "bg-danger" : "bg-lime"}`}
+                          className={`h-full rounded-full ${over ? "bg-danger" : "bg-flame"}`}
                           style={{ width: `${value == null ? 0 : Math.min((value / def.dv) * 100, 100)}%` }}
                         />
                       </div>

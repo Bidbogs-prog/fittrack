@@ -42,7 +42,7 @@ export default async function PlanDetailPage({
       </Link>
 
       <Reveal as="header" onScroll={false} className="rounded-2xl border border-ink-800 bg-ink-900/60 p-6 md:p-8">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-lime">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-flame">
           {GOALS[plan.goal].label}
         </p>
         <h1 className="mt-1.5 font-display text-3xl font-bold tracking-tighter text-paper md:text-4xl">
@@ -62,7 +62,7 @@ export default async function PlanDetailPage({
           </div>
           <MacroInline macros={total} />
           {fitPct !== null && (
-            <p className="rounded-full bg-lime/[0.08] px-3 py-1.5 text-xs font-medium text-lime ring-1 ring-inset ring-lime/25">
+            <p className="rounded-full bg-flame/[0.08] px-3 py-1.5 text-xs font-medium text-flame ring-1 ring-inset ring-flame/25">
               {fitPct}% of your {targets!.kcal.toLocaleString()} kcal target
             </p>
           )}

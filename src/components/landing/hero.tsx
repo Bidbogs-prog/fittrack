@@ -112,7 +112,7 @@ export function Hero() {
           single-column tablet range */}
       <div className="md:max-w-2xl lg:max-w-none">
         <p className="h-badge mb-6 inline-flex items-center gap-2 rounded-full border border-ink-700 bg-ink-900/70 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-paper-dim" data-reveal>
-          <Lightning weight="fill" className="size-3 text-lime" />
+          <Lightning weight="fill" className="size-3 text-flame" />
           <span dir="rtl" lang="ar" className="normal-case tracking-normal">سعرة</span>
           — Arabic for &ldquo;calorie&rdquo;
         </p>
@@ -124,7 +124,7 @@ export function Hero() {
           </span>
           <span className="block overflow-hidden pb-2">
             <span className="h-line block translate-y-[118%] motion-reduce:translate-y-0">
-              <span className="text-lime">counted</span>.
+              <span className="bg-gradient-to-r from-flame-glow via-flame to-flame-deep bg-clip-text text-transparent">counted</span>.
             </span>
           </span>
         </h1>
@@ -137,10 +137,10 @@ export function Hero() {
           <Magnetic strength={0.3}>
             <Link
               href="/signup"
-              className="group btn-press flex items-center gap-3 rounded-full bg-lime py-2.5 pl-6 pr-2.5 font-display text-sm font-bold uppercase tracking-wide text-lime-ink shadow-[0_12px_40px_-12px_var(--lime)] transition-colors hover:bg-lime-deep"
+              className="group btn-press flex items-center gap-3 rounded-full bg-flame py-2.5 pl-6 pr-2.5 font-display text-sm font-bold uppercase tracking-wide text-flame-ink shadow-[0_12px_40px_-12px_var(--flame)] transition-colors hover:bg-flame-deep"
             >
               Start counting free
-              <span className="grid size-9 place-items-center rounded-full bg-lime-ink/10 transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:-translate-y-px group-hover:translate-x-0.5 group-hover:scale-105">
+              <span className="grid size-9 place-items-center rounded-full bg-flame-ink/10 transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:-translate-y-px group-hover:translate-x-0.5 group-hover:scale-105">
                 <ArrowRight weight="bold" className="size-4" />
               </span>
             </Link>
@@ -182,7 +182,7 @@ export function Hero() {
         >
           {/* Sized relative to the scene so they scale with the column
               instead of overflowing it at intermediate widths. */}
-          <div className="orbit-ring absolute aspect-square w-[124%] rounded-full border border-lime/[0.14]" />
+          <div className="orbit-ring absolute aspect-square w-[124%] rounded-full border border-flame/[0.14]" />
           <div className="orbit-ring-slow absolute aspect-square w-[96%] rounded-full border border-white/[0.07]" />
         </div>
 
@@ -205,7 +205,7 @@ export function Hero() {
 
               <div className="mt-5 flex flex-col items-center gap-5 min-[400px]:flex-row min-[400px]:gap-6" data-depth="26">
                 <div className="relative size-32 shrink-0">
-                  <DrawnRing pct={0.79} radius={56} stroke={9} color="var(--lime)" delay={0.9} className="size-full" />
+                  <DrawnRing pct={0.79} radius={56} stroke={9} color="var(--flame)" delay={0.9} className="size-full" />
                   <div className="absolute inset-0 grid place-items-center text-center">
                     <div>
                       <p className="font-mono text-xl font-semibold tracking-tight text-paper tabular">
@@ -246,8 +246,8 @@ export function Hero() {
           <div className="h-chip absolute -right-4 -top-6 xl:-right-10" data-depth="70" data-reveal>
             <span className="floaty flex items-center gap-2 rounded-full border border-white/10 bg-ink-850/95 px-3.5 py-2 text-xs font-medium text-paper shadow-[0_20px_40px_-16px_rgba(0,0,0,0.8)]">
               <span className="relative flex size-2">
-                <span className="absolute inline-flex size-full animate-ping rounded-full bg-lime opacity-60" />
-                <span className="relative inline-flex size-2 rounded-full bg-lime" />
+                <span className="absolute inline-flex size-full animate-ping rounded-full bg-flame opacity-60" />
+                <span className="relative inline-flex size-2 rounded-full bg-flame" />
               </span>
               Streak · 18 days
             </span>
@@ -258,7 +258,7 @@ export function Hero() {
             </span>
           </div>
           <div className="h-chip absolute -bottom-5 right-8" data-depth="45" data-reveal>
-            <span className="floaty block rounded-full border border-lime/25 bg-lime/10 px-3.5 py-2 font-mono text-xs text-lime shadow-[0_20px_40px_-16px_rgba(0,0,0,0.8)] tabular [animation-delay:-4.1s]">
+            <span className="floaty block rounded-full border border-flame/25 bg-flame/10 px-3.5 py-2 font-mono text-xs text-flame shadow-[0_20px_40px_-16px_rgba(0,0,0,0.8)] tabular [animation-delay:-4.1s]">
               528 kcal left
             </span>
           </div>

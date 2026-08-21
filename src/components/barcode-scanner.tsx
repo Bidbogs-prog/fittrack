@@ -120,7 +120,7 @@ export function BarcodeScanner({
           <video ref={videoRef} muted playsInline className="aspect-[4/3] w-full object-cover" />
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute inset-x-8 top-1/2 h-px -translate-y-1/2 bg-lime/70"
+            className="pointer-events-none absolute inset-x-8 top-1/2 h-px -translate-y-1/2 bg-flame/70"
           />
           <p className="absolute inset-x-0 bottom-0 bg-ink-950/70 px-3 py-2 text-center text-[11px] text-paper-dim backdrop-blur-sm">
             Point the camera at the barcode

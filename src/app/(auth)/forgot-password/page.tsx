@@ -48,7 +48,7 @@ export default async function ForgotPasswordPage({
         <button
           data-reveal
           type="submit"
-          className="btn-press w-full rounded-xl bg-lime px-5 py-3 font-display text-sm font-bold uppercase tracking-wide text-lime-ink transition-colors hover:bg-lime-deep"
+          className="btn-press w-full rounded-xl bg-flame px-5 py-3 font-display text-sm font-bold uppercase tracking-wide text-flame-ink transition-colors hover:bg-flame-deep"
         >
           {t("sendResetLink")}
         </button>

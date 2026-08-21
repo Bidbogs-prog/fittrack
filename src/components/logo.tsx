@@ -9,7 +9,7 @@ import { LOGO_MARK_PATH } from "@/lib/site";
 export function LogoMark({ className = "size-8" }: { className?: string }) {
   return (
     <span
-      className={`${className} grid shrink-0 place-items-center overflow-hidden rounded-lg bg-lime text-lime-ink`}
+      className={`${className} grid shrink-0 place-items-center overflow-hidden rounded-lg bg-gradient-to-br from-flame-glow via-flame to-flame-deep text-flame-ink`}
       aria-hidden
     >
       <svg viewBox="0 0 100 100" className="size-full">
@@ -24,7 +24,7 @@ export function Logo({ href = "/" }: { href?: string }) {
     <Link href={href} className="group inline-flex items-center gap-2.5 py-1">
       <LogoMark />
       <span className="font-display text-lg font-bold tracking-tight text-paper">
-        So<span className="text-lime">3</span>ra
+        So<span className="text-flame">3</span>ra
       </span>
     </Link>
   );

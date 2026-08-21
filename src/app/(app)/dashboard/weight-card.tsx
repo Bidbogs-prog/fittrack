@@ -33,7 +33,7 @@ function Sparkline({ points }: { points: TrendPoint[] }) {
       <polyline
         points={coords}
         fill="none"
-        stroke="var(--color-lime)"
+        stroke="var(--color-flame)"
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -104,7 +104,7 @@ export function WeightCard({
           {delta != null && (
             <span
               className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-xs tabular ${
-                falling ? "bg-lime/10 text-lime" : "bg-ink-800 text-paper-dim"
+                falling ? "bg-flame/10 text-flame" : "bg-ink-800 text-paper-dim"
               }`}
             >
               {falling ? (
@@ -147,7 +147,7 @@ export function WeightCard({
             <button
               type="submit"
               disabled={pending || !(inputKg >= 25 && inputKg <= 400)}
-              className="btn-press rounded-xl bg-lime px-4 py-2.5 font-display text-xs font-bold uppercase tracking-wide text-lime-ink hover:bg-lime-deep disabled:cursor-not-allowed disabled:opacity-40"
+              className="btn-press rounded-xl bg-flame px-4 py-2.5 font-display text-xs font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep disabled:cursor-not-allowed disabled:opacity-40"
             >
               {pending ? "Saving…" : logged ? "Update" : "Log"}
             </button>

@@ -131,7 +131,7 @@ export function FoodForm({ food }: { food?: Food }) {
 
       <button
         type="submit"
-        className="btn-press w-full rounded-xl bg-lime px-6 py-3 font-display text-sm font-bold uppercase tracking-wide text-lime-ink hover:bg-lime-deep sm:w-auto"
+        className="btn-press w-full rounded-xl bg-flame px-6 py-3 font-display text-sm font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep sm:w-auto"
       >
         {food ? "Save changes" : "Add to library"}
       </button>

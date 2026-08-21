@@ -73,7 +73,7 @@ export default async function AdminPlansPage({
           <div className="sm:col-span-2">
             <button
               type="submit"
-              className="btn-press rounded-xl bg-lime px-6 py-3 font-display text-sm font-bold uppercase tracking-wide text-lime-ink hover:bg-lime-deep"
+              className="btn-press rounded-xl bg-flame px-6 py-3 font-display text-sm font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep"
             >
               Create and build
             </button>
@@ -104,13 +104,13 @@ export default async function AdminPlansPage({
                     <p className="mt-0.5 text-xs text-paper-mute">
                       {GOALS[plan.goal].label} · {plan.items[0]?.count ?? 0} items
                       {plan.assigned_to != null && (
-                        <span className="text-lime"> · assigned</span>
+                        <span className="text-flame"> · assigned</span>
                       )}
                     </p>
                   </div>
                   <ArrowRight
                     weight="bold"
-                    className="size-4 shrink-0 text-paper-mute transition-transform group-hover:translate-x-0.5 group-hover:text-lime"
+                    className="size-4 shrink-0 text-paper-mute transition-transform group-hover:translate-x-0.5 group-hover:text-flame"
                   />
                 </Link>
               </li>

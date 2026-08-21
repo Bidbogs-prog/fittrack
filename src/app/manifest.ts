@@ -10,8 +10,8 @@ export default function manifest(): MetadataRoute.Manifest {
       "So3ra (سعرة) — calorie and macro tracker with per-gram precision, adaptive targets and an AI coach.",
     start_url: "/dashboard",
     display: "standalone",
-    background_color: "#090b08",
-    theme_color: "#090b08",
+    background_color: "#0b0907",
+    theme_color: "#0b0907",
     icons: [
       { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
       { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },

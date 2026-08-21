@@ -23,14 +23,14 @@ export default async function OnboardingPage({
     <div className="blueprint relative min-h-[100dvh] overflow-x-clip">
       <div
         aria-hidden
-        className="pointer-events-none absolute -top-40 left-1/2 size-[560px] -translate-x-1/2 rounded-full bg-lime/[0.06] blur-[110px]"
+        className="pointer-events-none absolute -top-40 left-1/2 size-[560px] -translate-x-1/2 rounded-full bg-flame/[0.06] blur-[110px]"
       />
       <header className="relative z-10 mx-auto w-full max-w-[1100px] px-6 py-6">
         <Logo href="/onboarding" />
       </header>
       <main className="relative z-10 mx-auto w-full max-w-[1100px] px-6 pb-24">
         <Reveal onScroll={false} stagger={0.08} y={18}>
-          <p data-reveal className="text-xs font-semibold uppercase tracking-[0.16em] text-lime">
+          <p data-reveal className="text-xs font-semibold uppercase tracking-[0.16em] text-flame">
             {editing ? "Update your stats" : "Step 1 of 1 — your engine"}
           </p>
           <h1 data-reveal className="mt-3 max-w-[24ch] font-display text-3xl font-bold leading-tight tracking-tighter text-paper sm:text-4xl md:text-5xl">

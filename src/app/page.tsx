@@ -31,14 +31,18 @@ const FOOTER_LINKS: { title: string; links: [string, string][] }[] = [
 export default function Home() {
   return (
     <div className="relative flex min-h-[100dvh] flex-col overflow-x-clip">
-      {/* atmosphere: blueprint grid fading out + lime orbs */}
+      {/* atmosphere: blueprint grid fading out + flame orbs */}
       <div
         aria-hidden
         className="blueprint pointer-events-none absolute inset-x-0 top-0 h-[110dvh] [mask-image:linear-gradient(to_bottom,black_55%,transparent)]"
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute -top-40 right-[-15%] size-[640px] rounded-full bg-lime/[0.07] blur-[120px]"
+        className="pointer-events-none absolute -top-40 right-[-15%] size-[640px] rounded-full bg-flame/[0.07] blur-[120px]"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-[-12%] top-[46dvh] size-[520px] rounded-full bg-flame-deep/[0.05] blur-[130px]"
       />
 
       <LandingNav />
@@ -60,7 +64,7 @@ export default function Home() {
               <span className="inline-flex items-center gap-2.5">
                 <LogoMark />
                 <span className="font-display text-lg font-bold tracking-tight text-paper">
-                  So<span className="text-lime">3</span>ra
+                  So<span className="text-flame">3</span>ra
                 </span>
               </span>
               <p className="mt-3 text-sm leading-relaxed text-paper-mute">

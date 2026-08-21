@@ -20,7 +20,7 @@ export function CalorieRing({
         pct={pct}
         radius={64}
         stroke={10}
-        color={over ? "var(--danger)" : "var(--lime)"}
+        color={over ? "var(--danger)" : "var(--flame)"}
         className="size-full"
         delay={0.15}
       />

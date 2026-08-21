@@ -124,8 +124,8 @@ export function CoachChat({
       <div ref={scrollRef} className="relative flex-1 space-y-4 overflow-y-auto px-4 py-5 sm:px-6">
         {messages.length === 0 && !pending ? (
           <div className="flex h-full flex-col items-center justify-center gap-5 py-10 text-center">
-            <span className="grid size-12 place-items-center rounded-2xl bg-lime/10 ring-1 ring-inset ring-lime/25">
-              <ChatCircleText weight="fill" className="size-6 text-lime" />
+            <span className="grid size-12 place-items-center rounded-2xl bg-flame/10 ring-1 ring-inset ring-flame/25">
+              <ChatCircleText weight="fill" className="size-6 text-flame" />
             </span>
             <div>
               <h2 className="font-display text-lg font-semibold text-paper">
@@ -142,7 +142,7 @@ export function CoachChat({
                   key={s}
                   type="button"
                   onClick={() => send(s)}
-                  className="btn-press rounded-lg border border-ink-700 px-3 py-2 text-xs font-medium text-paper-dim transition-colors hover:border-lime/50 hover:text-lime"
+                  className="btn-press rounded-lg border border-ink-700 px-3 py-2 text-xs font-medium text-paper-dim transition-colors hover:border-flame/50 hover:text-flame"
                 >
                   {s}
                 </button>
@@ -159,7 +159,7 @@ export function CoachChat({
               <div
                 className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-4 py-3 text-sm leading-relaxed sm:max-w-[75%] ${
                   m.role === "user"
-                    ? "rounded-br-md bg-lime/10 text-paper ring-1 ring-inset ring-lime/20"
+                    ? "rounded-br-md bg-flame/10 text-paper ring-1 ring-inset ring-flame/20"
                     : "rounded-bl-md bg-ink-800/80 text-paper-dim"
                 }`}
               >
@@ -217,7 +217,7 @@ export function CoachChat({
           type="submit"
           disabled={pending || input.trim().length === 0}
           aria-label="Send"
-          className="btn-press grid size-11 shrink-0 place-items-center rounded-xl bg-lime text-lime-ink hover:bg-lime-deep disabled:cursor-not-allowed disabled:opacity-40"
+          className="btn-press grid size-11 shrink-0 place-items-center rounded-xl bg-flame text-flame-ink hover:bg-flame-deep disabled:cursor-not-allowed disabled:opacity-40"
         >
           <PaperPlaneRight weight="fill" className="size-4.5" />
         </button>

@@ -38,9 +38,9 @@ export function HowItWorks() {
             <div key={title} data-reveal className="relative border-t border-ink-700 pt-6">
               <span
                 aria-hidden
-                className="absolute -top-px left-0 h-px w-16 bg-lime"
+                className="absolute -top-px left-0 h-px w-16 bg-flame"
               />
-              <p className="font-mono text-sm text-lime tabular">0{i + 1}</p>
+              <p className="font-mono text-sm text-flame tabular">0{i + 1}</p>
               <h3 className="mt-3 font-display text-xl font-semibold tracking-tight text-paper">
                 {title}
               </h3>

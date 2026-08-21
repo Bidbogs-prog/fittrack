@@ -56,7 +56,7 @@ export function Faq() {
               </span>
               <Plus
                 weight="bold"
-                className="size-4 shrink-0 text-paper-mute transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] group-open:rotate-45 group-open:text-lime"
+                className="size-4 shrink-0 text-paper-mute transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] group-open:rotate-45 group-open:text-flame"
               />
             </summary>
             <p className="pb-5 pr-8 text-sm leading-relaxed text-paper-dim">{a}</p>

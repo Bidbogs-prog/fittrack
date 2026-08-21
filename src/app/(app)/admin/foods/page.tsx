@@ -40,7 +40,7 @@ export default async function AdminFoodsPage({
   return (
     <div className="space-y-8">
       {saved && (
-        <p className="flex items-start gap-2 rounded-lg border border-lime/25 bg-lime/[0.06] px-3.5 py-3 text-sm text-lime">
+        <p className="flex items-start gap-2 rounded-lg border border-flame/25 bg-flame/[0.06] px-3.5 py-3 text-sm text-flame">
           <CheckCircle className="mt-0.5 size-4 shrink-0" weight="bold" />
           “{saved}” saved to the library.
         </p>

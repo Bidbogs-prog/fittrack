@@ -28,7 +28,7 @@ export function AdminTabs() {
             aria-current={active ? "page" : undefined}
             className={`border-b-2 py-3 text-sm font-semibold transition-colors ${
               active
-                ? "border-lime text-lime"
+                ? "border-flame text-flame"
                 : "border-transparent text-paper-mute hover:text-paper"
             }`}
           >

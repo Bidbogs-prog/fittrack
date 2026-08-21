@@ -21,7 +21,7 @@ export default async function RecipesPage() {
     <div className="space-y-7">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-lime">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-flame">
             Cook once, log in one tap
           </p>
           <h1 className="mt-1.5 font-display text-3xl font-bold tracking-tighter text-paper md:text-4xl">
@@ -34,7 +34,7 @@ export default async function RecipesPage() {
         </div>
         <Link
           href="/recipes/new"
-          className="btn-press inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-lime px-3.5 py-2.5 font-display text-xs font-bold uppercase tracking-wide text-lime-ink hover:bg-lime-deep"
+          className="btn-press inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-flame px-3.5 py-2.5 font-display text-xs font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep"
         >
           <Plus weight="bold" className="size-4" />
           New recipe
@@ -70,7 +70,7 @@ export default async function RecipesPage() {
                         {recipe.items.length} ingredient{recipe.items.length === 1 ? "" : "s"} ·{" "}
                         {Number(recipe.servings)} serving{Number(recipe.servings) === 1 ? "" : "s"}
                       </p>
-                      <p className="mt-1 font-mono text-lg font-semibold tracking-tight text-lime tabular">
+                      <p className="mt-1 font-mono text-lg font-semibold tracking-tight text-flame tabular">
                         {Math.round(per.kcal)}
                         <span className="text-xs text-paper-mute"> kcal / serving</span>
                       </p>

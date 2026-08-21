@@ -22,7 +22,7 @@ export function Pillars() {
       <Reveal className="mt-14 grid gap-5 md:grid-cols-12" stagger={0.12}>
         {/* pillar 1 — the equation */}
         <Shell className="md:col-span-7">
-          <ChartLineUp weight="duotone" className="size-7 text-lime" />
+          <ChartLineUp weight="duotone" className="size-7 text-flame" />
           <h3 className="mt-4 font-display text-xl font-semibold tracking-tight text-paper">
             Targets built on science
           </h3>
@@ -45,7 +45,7 @@ export function Pillars() {
                   <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-paper-mute">
                     {label}
                   </p>
-                  <p className={`font-mono text-2xl font-semibold tracking-tight tabular lg:text-3xl ${label === "Target" ? "text-lime" : "text-paper"}`}>
+                  <p className={`font-mono text-2xl font-semibold tracking-tight tabular lg:text-3xl ${label === "Target" ? "text-flame" : "text-paper"}`}>
                     <CountUp value={value} />
                   </p>
                   <p className="text-[11px] text-paper-mute">{sub}</p>
@@ -57,7 +57,7 @@ export function Pillars() {
 
         {/* pillar 2 — per-gram precision */}
         <Shell className="md:col-span-5">
-          <ForkKnife weight="duotone" className="size-7 text-lime" />
+          <ForkKnife weight="duotone" className="size-7 text-flame" />
           <h3 className="mt-4 font-display text-xl font-semibold tracking-tight text-paper">
             Per-gram precision
           </h3>
@@ -68,7 +68,7 @@ export function Pillars() {
           <div className="mt-7 rounded-xl border border-ink-700 bg-ink-950/50 p-4">
             <div className="flex items-baseline justify-between">
               <p className="text-sm font-medium text-paper">Basmati rice</p>
-              <p className="font-mono text-lg font-semibold text-lime tabular">
+              <p className="font-mono text-lg font-semibold text-flame tabular">
                 <CountUp value={137} /> g
               </p>
             </div>
@@ -98,7 +98,7 @@ export function Pillars() {
         <Shell className="md:col-span-12">
           <div className="grid items-center gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
             <div>
-              <Barbell weight="duotone" className="size-7 text-lime" />
+              <Barbell weight="duotone" className="size-7 text-flame" />
               <h3 className="mt-4 font-display text-xl font-semibold tracking-tight text-paper">
                 Coach-built meal plans
               </h3>
@@ -107,7 +107,7 @@ export function Pillars() {
                 from the same verified library your diary uses, totalled to the
                 calorie.
               </p>
-              <p className="mt-5 inline-flex items-center gap-2 rounded-full border border-lime/25 bg-lime/[0.07] px-3.5 py-1.5 text-xs font-medium text-lime">
+              <p className="mt-5 inline-flex items-center gap-2 rounded-full border border-flame/25 bg-flame/[0.07] px-3.5 py-1.5 text-xs font-medium text-flame">
                 <SealCheck weight="fill" className="size-4" />
                 Every plan verified against the library
               </p>

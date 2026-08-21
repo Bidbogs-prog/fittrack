@@ -27,8 +27,8 @@ export default function GlobalError({
           minHeight: "100dvh",
           display: "grid",
           placeItems: "center",
-          background: "#090b08",
-          color: "#f2f4ee",
+          background: "#0b0907",
+          color: "#f4f1ea",
           fontFamily: "system-ui, sans-serif",
           textAlign: "center",
           padding: 24,
@@ -36,14 +36,14 @@ export default function GlobalError({
       >
         <div>
           <h1 style={{ fontSize: "1.4rem", margin: "0 0 0.5rem" }}>Something broke</h1>
-          <p style={{ color: "#9aa392", fontSize: "0.95rem", margin: "0 0 1.25rem" }}>
+          <p style={{ color: "#9a9083", fontSize: "0.95rem", margin: "0 0 1.25rem" }}>
             The error has been reported. Your logged data is safe.
           </p>
           <button
             onClick={reset}
             style={{
-              background: "#bef264",
-              color: "#090b08",
+              background: "#ff9d3b",
+              color: "#0b0907",
               fontWeight: 700,
               border: 0,
               padding: "10px 20px",

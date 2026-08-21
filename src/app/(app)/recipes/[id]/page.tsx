@@ -102,7 +102,7 @@ export default async function RecipePage({
         </div>
         <button
           type="submit"
-          className="btn-press rounded-lg border border-ink-700 px-4 py-2.5 text-xs font-semibold text-paper-dim transition-colors hover:border-lime/50 hover:text-lime"
+          className="btn-press rounded-lg border border-ink-700 px-4 py-2.5 text-xs font-semibold text-paper-dim transition-colors hover:border-flame/50 hover:text-flame"
         >
           Save details
         </button>
@@ -175,7 +175,7 @@ export default async function RecipePage({
             </div>
             <button
               type="submit"
-              className="btn-press inline-flex items-center gap-1.5 rounded-xl bg-lime px-4 py-2.5 font-display text-xs font-bold uppercase tracking-wide text-lime-ink hover:bg-lime-deep"
+              className="btn-press inline-flex items-center gap-1.5 rounded-xl bg-flame px-4 py-2.5 font-display text-xs font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep"
             >
               <Plus weight="bold" className="size-4" />
               Add
@@ -186,7 +186,7 @@ export default async function RecipePage({
 
       {/* totals */}
       {items.length > 0 && (
-        <section className="max-w-xl rounded-2xl border border-lime/20 bg-lime/[0.05] p-5">
+        <section className="max-w-xl rounded-2xl border border-flame/20 bg-flame/[0.05] p-5">
           <h2 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-paper-mute">
             Per serving ({Number(recipe.servings)} total)
           </h2>

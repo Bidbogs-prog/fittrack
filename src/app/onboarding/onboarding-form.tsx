@@ -113,7 +113,7 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
         {/* 01 — body */}
         <section data-reveal>
           <h2 className="flex items-baseline gap-3 font-display text-lg font-semibold text-paper">
-            <span className="font-mono text-xs text-lime">01</span> Your body
+            <span className="font-mono text-xs text-flame">01</span> Your body
           </h2>
           <div className="mt-5 grid gap-5 sm:grid-cols-2">
             <fieldset className="sm:col-span-2">
@@ -129,7 +129,7 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
                     key={value}
                     className={`btn-press flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3.5 transition-colors ${
                       gender === value
-                        ? "border-lime/60 bg-lime/[0.08] text-paper"
+                        ? "border-flame/60 bg-flame/[0.08] text-paper"
                         : "border-ink-700 bg-ink-900 text-paper-dim hover:border-ink-600"
                     }`}
                   >
@@ -142,7 +142,7 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
                       onChange={() => setGender(value)}
                       className="sr-only"
                     />
-                    <Icon weight="bold" className={`size-5 ${gender === value ? "text-lime" : ""}`} />
+                    <Icon weight="bold" className={`size-5 ${gender === value ? "text-flame" : ""}`} />
                     <span className="text-sm font-medium">{label}</span>
                   </label>
                 ))}
@@ -204,7 +204,7 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
         {/* 02 — training */}
         <section data-reveal>
           <h2 className="flex items-baseline gap-3 font-display text-lg font-semibold text-paper">
-            <span className="font-mono text-xs text-lime">02</span> Training frequency
+            <span className="font-mono text-xs text-flame">02</span> Training frequency
           </h2>
           <p className="mt-1 text-xs text-paper-mute">Sets the TDEE multiplier.</p>
           <div className="mt-5 grid gap-3">
@@ -216,7 +216,7 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
                   key={key}
                   className={`btn-press flex cursor-pointer items-center justify-between gap-4 rounded-xl border px-4 py-3.5 transition-colors ${
                     selected
-                      ? "border-lime/60 bg-lime/[0.08]"
+                      ? "border-flame/60 bg-flame/[0.08]"
                       : "border-ink-700 bg-ink-900 hover:border-ink-600"
                   }`}
                 >
@@ -237,7 +237,7 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
                   </span>
                   <span
                     className={`shrink-0 rounded-md px-2 py-1 font-mono text-xs tabular ${
-                      selected ? "bg-lime text-lime-ink" : "bg-ink-800 text-paper-mute"
+                      selected ? "bg-flame text-flame-ink" : "bg-ink-800 text-paper-mute"
                     }`}
                   >
                     ×{multiplier}
@@ -251,7 +251,7 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
         {/* 03 — goal */}
         <section data-reveal>
           <h2 className="flex items-baseline gap-3 font-display text-lg font-semibold text-paper">
-            <span className="font-mono text-xs text-lime">03</span> Your goal
+            <span className="font-mono text-xs text-flame">03</span> Your goal
           </h2>
           <div className="mt-5 grid gap-3 sm:grid-cols-3">
             {GOAL_KEYS.map((key) => {
@@ -262,7 +262,7 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
                   key={key}
                   className={`btn-press cursor-pointer rounded-xl border px-4 py-4 transition-colors ${
                     selected
-                      ? "border-lime/60 bg-lime/[0.08]"
+                      ? "border-flame/60 bg-flame/[0.08]"
                       : "border-ink-700 bg-ink-900 hover:border-ink-600"
                   }`}
                 >
@@ -275,7 +275,7 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
                     onChange={() => setGoal(key)}
                     className="sr-only"
                   />
-                  <span className={`block font-display text-sm font-semibold ${selected ? "text-lime" : "text-paper"}`}>
+                  <span className={`block font-display text-sm font-semibold ${selected ? "text-flame" : "text-paper"}`}>
                     {label}
                   </span>
                   <span className="mt-1 block text-xs leading-relaxed text-paper-mute">{detail}</span>
@@ -288,7 +288,7 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
         {/* 04 — macro split */}
         <section data-reveal>
           <h2 className="flex items-baseline gap-3 font-display text-lg font-semibold text-paper">
-            <span className="font-mono text-xs text-lime">04</span> Macro split
+            <span className="font-mono text-xs text-flame">04</span> Macro split
           </h2>
           <p className="mt-1 text-xs text-paper-mute">
             How your calories divide into protein, carbs and fat. Pick what suits how you like to
@@ -308,7 +308,7 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
             <label
               className={`btn-press cursor-pointer rounded-xl border px-4 py-4 transition-colors sm:col-span-2 ${
                 macroMode === "auto"
-                  ? "border-lime/60 bg-lime/[0.08]"
+                  ? "border-flame/60 bg-flame/[0.08]"
                   : "border-ink-700 bg-ink-900 hover:border-ink-600"
               }`}
             >
@@ -319,7 +319,7 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
                 onChange={() => setMacroMode("auto")}
                 className="sr-only"
               />
-              <span className={`block font-display text-sm font-semibold ${macroMode === "auto" ? "text-lime" : "text-paper"}`}>
+              <span className={`block font-display text-sm font-semibold ${macroMode === "auto" ? "text-flame" : "text-paper"}`}>
                 Coach formula
               </span>
               <span className="mt-1 block text-xs leading-relaxed text-paper-mute">
@@ -336,7 +336,7 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
                   key={key}
                   className={`btn-press cursor-pointer rounded-xl border px-4 py-4 transition-colors ${
                     selected
-                      ? "border-lime/60 bg-lime/[0.08]"
+                      ? "border-flame/60 bg-flame/[0.08]"
                       : "border-ink-700 bg-ink-900 hover:border-ink-600"
                   }`}
                 >
@@ -348,10 +348,10 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
                     className="sr-only"
                   />
                   <span className="flex items-center justify-between gap-2">
-                    <span className={`font-display text-sm font-semibold ${selected ? "text-lime" : "text-paper"}`}>
+                    <span className={`font-display text-sm font-semibold ${selected ? "text-flame" : "text-paper"}`}>
                       {label}
                     </span>
-                    <span className={`rounded-md px-2 py-1 font-mono text-[11px] tabular ${selected ? "bg-lime text-lime-ink" : "bg-ink-800 text-paper-mute"}`}>
+                    <span className={`rounded-md px-2 py-1 font-mono text-[11px] tabular ${selected ? "bg-flame text-flame-ink" : "bg-ink-800 text-paper-mute"}`}>
                       {split.protein}·{split.carbs}·{split.fat}
                     </span>
                   </span>
@@ -363,7 +363,7 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
             <label
               className={`btn-press cursor-pointer rounded-xl border px-4 py-4 transition-colors ${
                 macroMode === "custom"
-                  ? "border-lime/60 bg-lime/[0.08]"
+                  ? "border-flame/60 bg-flame/[0.08]"
                   : "border-ink-700 bg-ink-900 hover:border-ink-600"
               }`}
             >
@@ -374,7 +374,7 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
                 onChange={() => setMacroMode("custom")}
                 className="sr-only"
               />
-              <span className={`block font-display text-sm font-semibold ${macroMode === "custom" ? "text-lime" : "text-paper"}`}>
+              <span className={`block font-display text-sm font-semibold ${macroMode === "custom" ? "text-flame" : "text-paper"}`}>
                 Custom
               </span>
               <span className="mt-1 block text-xs leading-relaxed text-paper-mute">
@@ -418,7 +418,7 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
               </div>
               <p
                 className={`mt-3 font-mono text-xs tabular ${
-                  customValid ? "text-lime" : "text-danger"
+                  customValid ? "text-flame" : "text-danger"
                 }`}
                 role={customValid ? undefined : "alert"}
               >
@@ -452,9 +452,9 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
                 <span className="ml-1 text-sm text-paper-mute">kcal</span>
               </dd>
             </div>
-            <div className="rounded-xl bg-lime/[0.08] px-4 py-3.5 ring-1 ring-inset ring-lime/25">
-              <dt className="text-xs font-medium text-lime">Daily target</dt>
-              <dd className="mt-1 font-mono text-3xl font-semibold tracking-tight text-lime tabular">
+            <div className="rounded-xl bg-flame/[0.08] px-4 py-3.5 ring-1 ring-inset ring-flame/25">
+              <dt className="text-xs font-medium text-flame">Daily target</dt>
+              <dd className="mt-1 font-mono text-3xl font-semibold tracking-tight text-flame tabular">
                 {preview?.target ? preview.target.toLocaleString() : "—"}
                 <span className="ml-1 text-sm opacity-70">kcal</span>
               </dd>
@@ -488,7 +488,7 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
           <button
             type="submit"
             disabled={!complete || submitting}
-            className="btn-press mt-6 w-full rounded-xl bg-lime px-5 py-3 font-display text-sm font-bold uppercase tracking-wide text-lime-ink transition-opacity hover:bg-lime-deep disabled:cursor-not-allowed disabled:opacity-40"
+            className="btn-press mt-6 w-full rounded-xl bg-flame px-5 py-3 font-display text-sm font-bold uppercase tracking-wide text-flame-ink transition-opacity hover:bg-flame-deep disabled:cursor-not-allowed disabled:opacity-40"
           >
             {submitting ? "Saving…" : "Lock in my targets"}
           </button>

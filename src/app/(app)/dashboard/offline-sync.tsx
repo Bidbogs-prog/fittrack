@@ -69,11 +69,11 @@ export function OfflineSync() {
   return (
     <div
       role="status"
-      className="flex items-center gap-3 rounded-xl border border-lime/25 bg-lime/[0.06] px-4 py-3 text-sm text-paper-dim"
+      className="flex items-center gap-3 rounded-xl border border-flame/25 bg-flame/[0.06] px-4 py-3 text-sm text-paper-dim"
     >
       <CloudArrowUp
         weight="bold"
-        className={`size-4.5 shrink-0 text-lime ${syncing ? "animate-pulse" : ""}`}
+        className={`size-4.5 shrink-0 text-flame ${syncing ? "animate-pulse" : ""}`}
       />
       <span className="min-w-0 flex-1">
         {pendingCount} {pendingCount === 1 ? "entry" : "entries"} logged offline
@@ -83,7 +83,7 @@ export function OfflineSync() {
         <button
           type="button"
           onClick={() => void flush()}
-          className="btn-press shrink-0 rounded-lg border border-ink-700 px-3 py-1.5 text-xs font-semibold text-paper-dim hover:border-lime/50 hover:text-lime"
+          className="btn-press shrink-0 rounded-lg border border-ink-700 px-3 py-1.5 text-xs font-semibold text-paper-dim hover:border-flame/50 hover:text-flame"
         >
           Retry now
         </button>

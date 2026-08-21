@@ -161,7 +161,7 @@ export default async function HistoryPage() {
   return (
     <div className="space-y-8">
       <Reveal as="header" onScroll={false}>
-        <p data-reveal className="text-xs font-semibold uppercase tracking-[0.16em] text-lime">
+        <p data-reveal className="text-xs font-semibold uppercase tracking-[0.16em] text-flame">
           Last 30 days
         </p>
         <h1

@@ -1,29 +1,33 @@
 @import "tailwindcss";
 
 /* ============================================================
-   So3ra design system — dark ink, one lime accent.
+   So3ra design system — ember-dark ink, fire accent ramp.
+   The accent burns through three hues: glow (gold) → flame
+   (orange) → deep (red-orange). Calories are energy; the
+   palette reads as heat.
    ============================================================ */
 :root {
-  --ink-950: #090b08;
-  --ink-900: #0e110c;
-  --ink-850: #131711;
-  --ink-800: #1a1f17;
-  --ink-700: #262c22;
-  --ink-600: #3a4234;
+  --ink-950: #0b0907;
+  --ink-900: #110d0a;
+  --ink-850: #17120e;
+  --ink-800: #1f1913;
+  --ink-700: #2d251c;
+  --ink-600: #443a2e;
 
-  --paper: #f2f4ec;
-  --paper-dim: #b9c0af;
-  --paper-mute: #79816f;
+  --paper: #f4f1ea;
+  --paper-dim: #c2b8a9;
+  --paper-mute: #857a6a;
 
-  --lime: #c9f24e;
-  --lime-deep: #a4cf30;
-  --lime-ink: #131807;
+  --flame-glow: #ffc94d;
+  --flame: #ff9d3b;
+  --flame-deep: #f2701f;
+  --flame-ink: #201004;
 
-  --protein: #c9f24e;
+  --protein: #ff9d3b;
   --carbs: #79b8e8;
-  --fat: #e8b36b;
+  --fat: #ecd464;
   --fibre: #93a884;
-  --danger: #e8756b;
+  --danger: #e85454;
 }
 
 @theme inline {
@@ -36,9 +40,10 @@
   --color-paper: var(--paper);
   --color-paper-dim: var(--paper-dim);
   --color-paper-mute: var(--paper-mute);
-  --color-lime: var(--lime);
-  --color-lime-deep: var(--lime-deep);
-  --color-lime-ink: var(--lime-ink);
+  --color-flame-glow: var(--flame-glow);
+  --color-flame: var(--flame);
+  --color-flame-deep: var(--flame-deep);
+  --color-flame-ink: var(--flame-ink);
   --color-protein: var(--protein);
   --color-carbs: var(--carbs);
   --color-fat: var(--fat);
@@ -106,8 +111,8 @@ body {
 }
 
 ::selection {
-  background: var(--lime);
-  color: var(--lime-ink);
+  background: var(--flame);
+  color: var(--flame-ink);
 }
 
 /* Subtle grain so large dark surfaces don't band. Fixed + pointer-events-none
@@ -302,7 +307,7 @@ body {
      iOS Safari force-zooms the page when a focused control is under 16px,
      and never zooms back out. Fine-pointer devices get the compact 14px. */
   .field {
-    @apply w-full rounded-lg border border-ink-700 bg-ink-900 px-3.5 py-2.5 text-base pointer-fine:text-sm text-paper placeholder:text-paper-mute outline-none transition-colors focus:border-lime/60 focus:ring-2 focus:ring-lime/15;
+    @apply w-full rounded-lg border border-ink-700 bg-ink-900 px-3.5 py-2.5 text-base pointer-fine:text-sm text-paper placeholder:text-paper-mute outline-none transition-colors focus:border-flame/60 focus:ring-2 focus:ring-flame/15;
   }
 }
 

@@ -64,8 +64,8 @@ export function ActivityCard({
     <section className="rounded-2xl border border-ink-800 bg-ink-900/60">
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-ink-800 px-5 py-4">
         <div className="flex items-center gap-3">
-          <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-lime/10 ring-1 ring-inset ring-lime/25">
-            <Barbell weight="fill" className="size-4.5 text-lime" />
+          <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-flame/10 ring-1 ring-inset ring-flame/25">
+            <Barbell weight="fill" className="size-4.5 text-flame" />
           </span>
           <div>
             <h2 className="font-display text-base font-semibold text-paper">Activity</h2>
@@ -84,7 +84,7 @@ export function ActivityCard({
             setShowForm((v) => !v);
             setError(null);
           }}
-          className="btn-press inline-flex items-center gap-1.5 rounded-lg border border-ink-700 px-3 py-1.5 text-xs font-semibold text-paper-dim transition-colors hover:border-lime/50 hover:text-lime pointer-coarse:py-2.5"
+          className="btn-press inline-flex items-center gap-1.5 rounded-lg border border-ink-700 px-3 py-1.5 text-xs font-semibold text-paper-dim transition-colors hover:border-flame/50 hover:text-flame pointer-coarse:py-2.5"
         >
           <Plus weight="bold" className="size-3.5" />
           Add workout
@@ -154,7 +154,7 @@ export function ActivityCard({
             <button
               type="submit"
               disabled={pending}
-              className="btn-press rounded-xl bg-lime px-4 py-2.5 font-display text-xs font-bold uppercase tracking-wide text-lime-ink hover:bg-lime-deep disabled:opacity-40"
+              className="btn-press rounded-xl bg-flame px-4 py-2.5 font-display text-xs font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep disabled:opacity-40"
             >
               {pending ? "Saving…" : "Log"}
             </button>
@@ -184,7 +184,7 @@ export function ActivityCard({
           <button
             type="submit"
             disabled={pending || steps === "" || Number(steps) === (serverSteps ?? NaN)}
-            className="btn-press rounded-lg border border-ink-700 px-3 py-2 text-xs font-semibold text-paper-dim transition-colors hover:border-lime/50 hover:text-lime disabled:opacity-40"
+            className="btn-press rounded-lg border border-ink-700 px-3 py-2 text-xs font-semibold text-paper-dim transition-colors hover:border-flame/50 hover:text-flame disabled:opacity-40"
           >
             Save
           </button>

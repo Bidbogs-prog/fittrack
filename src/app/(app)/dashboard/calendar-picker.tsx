@@ -18,7 +18,7 @@ function shiftMonth(month: string, delta: number): string {
 
 /**
  * Calendar day picker for the dashboard header: pick any diary date at a
- * glance. Days with diary entries carry a lime dot (fetched per month via
+ * glance. Days with diary entries carry a flame dot (fetched per month via
  * /api/diary/days), the viewed day is filled, today is outlined.
  */
 export function CalendarPicker({ selected, today }: { selected: string; today: string }) {
@@ -151,16 +151,16 @@ export function CalendarPicker({ selected, today }: { selected: string; today: s
                     aria-current={isSelected ? "date" : undefined}
                     className={`btn-press flex aspect-square flex-col items-center justify-center gap-0.5 rounded-lg text-sm tabular transition-colors ${
                       isSelected
-                        ? "bg-lime font-semibold text-lime-ink"
+                        ? "bg-flame font-semibold text-flame-ink"
                         : `font-mono hover:bg-ink-800 ${
                             isLogged ? "text-paper" : "text-paper-mute hover:text-paper"
-                          } ${isToday ? "ring-1 ring-inset ring-lime/60" : ""}`
+                          } ${isToday ? "ring-1 ring-inset ring-flame/60" : ""}`
                     }`}
                   >
                     {i + 1}
                     <span
                       className={`size-1 rounded-full ${
-                        isLogged ? (isSelected ? "bg-lime-ink" : "bg-lime") : "bg-transparent"
+                        isLogged ? (isSelected ? "bg-flame-ink" : "bg-flame") : "bg-transparent"
                       }`}
                     />
                   </button>
@@ -169,7 +169,7 @@ export function CalendarPicker({ selected, today }: { selected: string; today: s
             </div>
 
             <p className="mt-3 flex items-center gap-1.5 text-[11px] text-paper-mute">
-              <span className="size-1.5 rounded-full bg-lime" />
+              <span className="size-1.5 rounded-full bg-flame" />
               Days with logged entries
             </p>
           </div>

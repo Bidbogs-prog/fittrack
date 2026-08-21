@@ -5,7 +5,7 @@ import type { TrendPoint } from "@/lib/weight";
 
 /**
  * Dependency-free SVG charts for /history. Marks follow the app's entity
- * tokens (lime = energy, protein/carbs/fat as everywhere else in the UI);
+ * tokens (flame = energy, protein/carbs/fat as everywhere else in the UI);
  * identity is never color-alone — every multi-series chart has a legend,
  * direct end labels and a hover tooltip. Static SVG: nothing animates, so
  * prefers-reduced-motion needs no special casing.
@@ -203,7 +203,7 @@ export function CalorieChart({ days, target }: { days: DayStat[]; target: number
               width={barW}
               height={Math.max(1, PAD.t + PLOT_H - y)}
               rx="2"
-              fill="var(--color-lime)"
+              fill="var(--color-flame)"
               opacity={idx == null || idx === i ? 0.9 : 0.45}
             />
           );
@@ -236,7 +236,7 @@ export function CalorieChart({ days, target }: { days: DayStat[]; target: number
             hovered.kcal == null
               ? [{ label: "logged", value: "—" }]
               : [
-                  { label: "eaten", value: `${Math.round(hovered.kcal)} kcal`, swatch: "var(--color-lime)" },
+                  { label: "eaten", value: `${Math.round(hovered.kcal)} kcal`, swatch: "var(--color-flame)" },
                   {
                     label: "vs target",
                     value: `${hovered.kcal >= target ? "+" : ""}${Math.round(hovered.kcal - target)}`,
@@ -411,7 +411,7 @@ export function WeightChart({ points, unit = "kg" }: { points: TrendPoint[]; uni
     <div>
       <div className="flex flex-wrap gap-4 px-1">
         <span className="flex items-center gap-1.5 text-[11px] text-paper-dim">
-          <span className="size-2 rounded-full bg-lime" />
+          <span className="size-2 rounded-full bg-flame" />
           Trend (smoothed)
         </span>
         <span className="flex items-center gap-1.5 text-[11px] text-paper-dim">
@@ -446,7 +446,7 @@ export function WeightChart({ points, unit = "kg" }: { points: TrendPoint[]; uni
           <path
             d={trendPath}
             fill="none"
-            stroke="var(--color-lime)"
+            stroke="var(--color-flame)"
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -468,7 +468,7 @@ export function WeightChart({ points, unit = "kg" }: { points: TrendPoint[]; uni
             n={points.length}
             title={shortDate(hovered.date)}
             rows={[
-              { label: "Trend", value: `${hovered.trend.toFixed(1)} ${unit}`, swatch: "var(--color-lime)" },
+              { label: "Trend", value: `${hovered.trend.toFixed(1)} ${unit}`, swatch: "var(--color-flame)" },
               { label: "Scale", value: `${hovered.weight.toFixed(1)} ${unit}` },
             ]}
           />

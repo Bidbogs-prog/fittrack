@@ -216,7 +216,7 @@ export function EntryRow({ entry }: { entry: DiaryEntry }) {
               <button
                 type="submit"
                 disabled={pending || (food != null && !(Number(grams) > 0))}
-                className="btn-press w-full rounded-xl bg-lime px-5 py-3 font-display text-sm font-bold uppercase tracking-wide text-lime-ink hover:bg-lime-deep disabled:cursor-not-allowed disabled:opacity-40"
+                className="btn-press w-full rounded-xl bg-flame px-5 py-3 font-display text-sm font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {pending ? "Saving…" : "Save changes"}
               </button>

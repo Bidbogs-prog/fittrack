@@ -34,7 +34,7 @@ export function FastingStatus({ start, end }: { start: string; end: string }) {
   return (
     <span
       className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] ring-1 ring-inset ${
-        open ? "bg-lime/10 text-lime ring-lime/25" : "bg-ink-800 text-paper-mute ring-ink-700"
+        open ? "bg-flame/10 text-flame ring-flame/25" : "bg-ink-800 text-paper-mute ring-ink-700"
       }`}
     >
       {open ? `Open until ${end.slice(0, 5)}` : `Fasting until ${start.slice(0, 5)}`}

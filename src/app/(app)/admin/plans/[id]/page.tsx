@@ -76,7 +76,7 @@ export default async function PlanBuilderPage({
       </div>
 
       <header className="rounded-2xl border border-ink-800 bg-ink-900/60 p-6">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-lime">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-flame">
           {GOALS[plan.goal].label}
         </p>
         <h2 className="mt-1 font-display text-2xl font-bold tracking-tight text-paper">
@@ -97,7 +97,7 @@ export default async function PlanBuilderPage({
       </header>
 
       {message && (
-        <p className="flex items-start gap-2 rounded-lg border border-lime/25 bg-lime/[0.06] px-3.5 py-3 text-sm text-lime">
+        <p className="flex items-start gap-2 rounded-lg border border-flame/25 bg-flame/[0.06] px-3.5 py-3 text-sm text-flame">
           <Info className="mt-0.5 size-4 shrink-0" weight="bold" />
           {message}
         </p>
@@ -147,7 +147,7 @@ export default async function PlanBuilderPage({
           </div>
           <button
             type="submit"
-            className="btn-press rounded-xl bg-lime px-5 py-2.5 font-display text-sm font-bold uppercase tracking-wide text-lime-ink hover:bg-lime-deep"
+            className="btn-press rounded-xl bg-flame px-5 py-2.5 font-display text-sm font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep"
           >
             Add
           </button>
@@ -200,7 +200,7 @@ export default async function PlanBuilderPage({
             </div>
             <button
               type="submit"
-              className="btn-press rounded-xl bg-lime px-5 py-2.5 font-display text-sm font-bold uppercase tracking-wide text-lime-ink hover:bg-lime-deep"
+              className="btn-press rounded-xl bg-flame px-5 py-2.5 font-display text-sm font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep"
             >
               Add all
             </button>

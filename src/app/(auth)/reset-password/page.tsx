@@ -27,7 +27,7 @@ export default async function ResetPasswordPage({
         </p>
         <Link
           href="/forgot-password"
-          className="btn-press mt-6 inline-block rounded-xl bg-lime px-5 py-3 font-display text-sm font-bold uppercase tracking-wide text-lime-ink hover:bg-lime-deep"
+          className="btn-press mt-6 inline-block rounded-xl bg-flame px-5 py-3 font-display text-sm font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep"
         >
           Request a new link
         </Link>
@@ -71,7 +71,7 @@ export default async function ResetPasswordPage({
         <button
           data-reveal
           type="submit"
-          className="btn-press w-full rounded-xl bg-lime px-5 py-3 font-display text-sm font-bold uppercase tracking-wide text-lime-ink transition-colors hover:bg-lime-deep"
+          className="btn-press w-full rounded-xl bg-flame px-5 py-3 font-display text-sm font-bold uppercase tracking-wide text-flame-ink transition-colors hover:bg-flame-deep"
         >
           Set password
         </button>

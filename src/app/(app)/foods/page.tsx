@@ -45,7 +45,7 @@ export default async function FoodsPage({
     <div className="space-y-7">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-lime">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-flame">
             Verified per 100 g
           </p>
           <h1 className="mt-1.5 font-display text-3xl font-bold tracking-tighter text-paper md:text-4xl">
@@ -59,14 +59,14 @@ export default async function FoodsPage({
         <div className="flex shrink-0 gap-2">
           <Link
             href="/recipes"
-            className="btn-press inline-flex items-center gap-1.5 rounded-lg border border-ink-700 px-3.5 py-2.5 text-xs font-semibold text-paper-dim transition-colors hover:border-lime/50 hover:text-lime"
+            className="btn-press inline-flex items-center gap-1.5 rounded-lg border border-ink-700 px-3.5 py-2.5 text-xs font-semibold text-paper-dim transition-colors hover:border-flame/50 hover:text-flame"
           >
             <BowlFood weight="bold" className="size-4" />
             Your recipes
           </Link>
           <Link
             href="/foods/new"
-            className="btn-press inline-flex items-center gap-1.5 rounded-lg bg-lime px-3.5 py-2.5 font-display text-xs font-bold uppercase tracking-wide text-lime-ink hover:bg-lime-deep"
+            className="btn-press inline-flex items-center gap-1.5 rounded-lg bg-flame px-3.5 py-2.5 font-display text-xs font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep"
           >
             <Plus weight="bold" className="size-4" />
             New food
@@ -80,7 +80,7 @@ export default async function FoodsPage({
         <Link
           href={href({ c: category, q })}
           className={`rounded-full px-3.5 py-2 text-xs font-semibold transition-colors pointer-fine:py-1.5 ${
-            !mine ? "bg-lime text-lime-ink" : "border border-ink-700 text-paper-dim hover:text-paper"
+            !mine ? "bg-flame text-flame-ink" : "border border-ink-700 text-paper-dim hover:text-paper"
           }`}
         >
           Library
@@ -88,7 +88,7 @@ export default async function FoodsPage({
         <Link
           href={href({ c: category, q, mine: true })}
           className={`rounded-full px-3.5 py-2 text-xs font-semibold transition-colors pointer-fine:py-1.5 ${
-            mine ? "bg-lime text-lime-ink" : "border border-ink-700 text-paper-dim hover:text-paper"
+            mine ? "bg-flame text-flame-ink" : "border border-ink-700 text-paper-dim hover:text-paper"
           }`}
         >
           Your foods
@@ -99,7 +99,7 @@ export default async function FoodsPage({
         <Link
           href={href({ q, mine })}
           className={`rounded-full px-3.5 py-2 text-xs font-semibold transition-colors pointer-fine:py-1.5 ${
-            !category ? "bg-lime text-lime-ink" : "border border-ink-700 text-paper-dim hover:text-paper"
+            !category ? "bg-flame text-flame-ink" : "border border-ink-700 text-paper-dim hover:text-paper"
           }`}
         >
           All
@@ -110,7 +110,7 @@ export default async function FoodsPage({
             href={href({ c: cat, q, mine })}
             className={`rounded-full px-3.5 py-2 text-xs font-semibold capitalize transition-colors pointer-fine:py-1.5 ${
               category === cat
-                ? "bg-lime text-lime-ink"
+                ? "bg-flame text-flame-ink"
                 : "border border-ink-700 text-paper-dim hover:text-paper"
             }`}
           >
@@ -126,7 +126,7 @@ export default async function FoodsPage({
           ) : mine ? (
             <>
               You haven&rsquo;t created any foods yet.{" "}
-              <Link href="/foods/new" className="font-medium text-paper underline underline-offset-4 hover:text-lime">
+              <Link href="/foods/new" className="font-medium text-paper underline underline-offset-4 hover:text-flame">
                 Create your first one
               </Link>
               .
@@ -164,7 +164,7 @@ export default async function FoodsPage({
                     {food.brand ? `${food.brand} · ` : ""}
                     {food.category.replace("-", " & ")}
                   </p>
-                  <p className="mt-1 font-mono text-lg font-semibold tracking-tight text-lime tabular">
+                  <p className="mt-1 font-mono text-lg font-semibold tracking-tight text-flame tabular">
                     {Math.round(food.kcal)}
                     <span className="text-xs text-paper-mute"> kcal / 100 g</span>
                   </p>
@@ -216,7 +216,7 @@ export default async function FoodsPage({
               )}
               {food.owner_id != null ? (
                 <p className="mt-3 flex items-center justify-between gap-2">
-                  <span className="rounded-full bg-lime/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-lime">
+                  <span className="rounded-full bg-flame/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-flame">
                     Your food
                   </span>
                   <Link

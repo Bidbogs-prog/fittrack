@@ -18,7 +18,7 @@ export function OAuthButtons({ next }: { next?: string }) {
           type="submit"
           name="provider"
           value="google"
-          className="btn-press flex w-full items-center justify-center gap-2.5 rounded-xl border border-ink-700 bg-ink-900 py-3 text-sm font-medium text-paper transition-colors hover:border-ink-600 hover:text-lime"
+          className="btn-press flex w-full items-center justify-center gap-2.5 rounded-xl border border-ink-700 bg-ink-900 py-3 text-sm font-medium text-paper transition-colors hover:border-ink-600 hover:text-flame"
         >
           <GoogleLogo className="size-5" weight="bold" />
           Continue with Google

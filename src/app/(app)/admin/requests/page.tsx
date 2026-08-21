@@ -75,7 +75,7 @@ export default async function AdminRequestsPage({
         <p className="mb-4 text-xs text-paper-mute">
           Assigning a plan makes it private to that user and shows it under &ldquo;From your
           coach&rdquo; on their Meal plans tab. Need a fresh one? Build it in{" "}
-          <Link href="/admin/plans" className="text-lime underline underline-offset-4">
+          <Link href="/admin/plans" className="text-flame underline underline-offset-4">
             Meal plans
           </Link>{" "}
           first, then assign it here.
@@ -146,7 +146,7 @@ export default async function AdminRequestsPage({
                   <button
                     type="submit"
                     disabled={assignable.length === 0}
-                    className="btn-press rounded-xl bg-lime px-5 py-2.5 font-display text-xs font-bold uppercase tracking-wide text-lime-ink hover:bg-lime-deep disabled:cursor-not-allowed disabled:opacity-40"
+                    className="btn-press rounded-xl bg-flame px-5 py-2.5 font-display text-xs font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     Assign
                   </button>
@@ -187,7 +187,7 @@ export default async function AdminRequestsPage({
                   {request.status === "fulfilled" && request.plan_id && (
                     <Link
                       href={`/admin/plans/${request.plan_id}`}
-                      className="btn-press inline-flex items-center gap-1.5 rounded-lg border border-ink-700 px-3 py-1.5 text-xs font-semibold text-paper-dim transition-colors hover:border-lime/50 hover:text-lime"
+                      className="btn-press inline-flex items-center gap-1.5 rounded-lg border border-ink-700 px-3 py-1.5 text-xs font-semibold text-paper-dim transition-colors hover:border-flame/50 hover:text-flame"
                     >
                       <ArrowSquareOut weight="bold" className="size-3.5" />
                       Plan

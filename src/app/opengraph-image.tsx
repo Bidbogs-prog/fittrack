@@ -5,12 +5,14 @@ export const alt = `${SITE_NAME} — ${SITE_TAGLINE.toLowerCase()}`;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-const INK = "#090b08";
-const INK_LINE = "#262c22";
-const PAPER = "#f2f4ec";
-const PAPER_DIM = "#b9c0af";
-const LIME = "#c9f24e";
-const LIME_INK = "#131807";
+const INK = "#0b0907";
+const INK_LINE = "#2d251c";
+const PAPER = "#f4f1ea";
+const PAPER_DIM = "#c2b8a9";
+const FLAME_GLOW = "#ffc94d";
+const FLAME = "#ff9d3b";
+const FLAME_DEEP = "#f2701f";
+const FLAME_INK = "#201004";
 
 /** The "3" mark (Arabizi ع), set in Outfit Bold — same path as public/icons/icon.svg. */
 function Mark({ tile }: { tile: number }) {
@@ -23,11 +25,11 @@ function Mark({ tile }: { tile: number }) {
         alignItems: "center",
         justifyContent: "center",
         borderRadius: tile * 0.22,
-        background: LIME,
+        backgroundImage: `linear-gradient(135deg, ${FLAME_GLOW}, ${FLAME} 55%, ${FLAME_DEEP})`,
       }}
     >
       <svg viewBox="0 0 100 100" width={tile} height={tile}>
-        <path d={LOGO_MARK_PATH} fill={LIME_INK} />
+        <path d={LOGO_MARK_PATH} fill={FLAME_INK} />
       </svg>
     </div>
   );
@@ -76,7 +78,9 @@ export default function Image() {
             style={{
               fontSize: 104,
               fontWeight: 700,
-              color: LIME,
+              backgroundImage: `linear-gradient(90deg, ${FLAME_GLOW}, ${FLAME} 45%, ${FLAME_DEEP})`,
+              backgroundClip: "text",
+              color: "transparent",
               letterSpacing: -4,
               lineHeight: 1.02,
             }}
@@ -91,9 +95,9 @@ export default function Image() {
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
           {(
             [
-              [LIME, 320],
+              [FLAME, 320],
               ["#79b8e8", 220],
-              ["#e8b36b", 140],
+              ["#ecd464", 140],
               ["#93a884", 90],
             ] as const
           ).map(([color, w]) => (

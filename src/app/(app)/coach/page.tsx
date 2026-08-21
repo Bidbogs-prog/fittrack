@@ -25,8 +25,8 @@ export default async function CoachPage({
   if (!profile.birth_date || ageFromBirthDate(profile.birth_date) < SAFETY.minAge) {
     return (
       <div className="mx-auto max-w-lg py-16 text-center">
-        <span className="mx-auto grid size-12 place-items-center rounded-2xl bg-lime/10 ring-1 ring-inset ring-lime/25">
-          <ChatCircleText weight="fill" className="size-6 text-lime" />
+        <span className="mx-auto grid size-12 place-items-center rounded-2xl bg-flame/10 ring-1 ring-inset ring-flame/25">
+          <ChatCircleText weight="fill" className="size-6 text-flame" />
         </span>
         <h1 className="mt-5 font-display text-2xl font-bold tracking-tight text-paper">
           The coach is for adults
@@ -74,7 +74,7 @@ export default async function CoachPage({
       <Reveal as="header" onScroll={false} className="flex flex-wrap items-end justify-between gap-4">
         {/* On mobile the chat owns the whole page; the title is desktop-only. */}
         <div data-reveal className="max-md:hidden">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-lime">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-flame">
             AI coach
           </p>
           <h1 className="mt-1.5 font-display text-3xl font-bold tracking-tighter text-paper md:text-4xl">
@@ -87,8 +87,8 @@ export default async function CoachPage({
               href="/coach?c=new"
               className={`btn-press inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors ${
                 conversation == null
-                  ? "border-lime/50 text-lime"
-                  : "border-ink-700 text-paper-dim hover:border-lime/50 hover:text-lime"
+                  ? "border-flame/50 text-flame"
+                  : "border-ink-700 text-paper-dim hover:border-flame/50 hover:text-flame"
               }`}
             >
               <Plus weight="bold" className="size-3.5" />
@@ -100,7 +100,7 @@ export default async function CoachPage({
                 href={`/coach?c=${c.id}`}
                 className={`shrink-0 truncate rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors max-w-44 ${
                   conversation?.id === c.id
-                    ? "border-lime/50 bg-lime/10 text-lime"
+                    ? "border-flame/50 bg-flame/10 text-flame"
                     : "border-ink-700 text-paper-mute hover:border-ink-600 hover:text-paper"
                 }`}
               >

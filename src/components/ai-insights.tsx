@@ -6,7 +6,7 @@ import { generateDayInsights, type DayInsights } from "@/app/(app)/dashboard/ins
 import { Reveal } from "@/components/motion/reveal";
 
 const KIND_CHIP: Record<DayInsights["insights"][number]["kind"], string> = {
-  win: "bg-lime/10 text-lime ring-lime/25",
+  win: "bg-flame/10 text-flame ring-flame/25",
   watch: "bg-danger/10 text-danger ring-danger/25",
   tip: "bg-carbs/10 text-carbs ring-carbs/25",
 };
@@ -49,8 +49,8 @@ export function AiInsights({
     <Reveal as="section" onScroll={false} delay={0.15} className="rounded-2xl border border-ink-800 bg-ink-900/60">
       <header className="flex items-center justify-between gap-3 border-b border-ink-800 px-5 py-4">
         <div className="flex items-center gap-3">
-          <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-lime/10 ring-1 ring-inset ring-lime/25">
-            <Sparkle weight="fill" className="size-4.5 text-lime" />
+          <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-flame/10 ring-1 ring-inset ring-flame/25">
+            <Sparkle weight="fill" className="size-4.5 text-flame" />
           </span>
           <div>
             <h2 className="font-display text-base font-semibold text-paper">AI coach</h2>
@@ -126,7 +126,7 @@ export function AiInsights({
               <button
                 type="button"
                 onClick={run}
-                className="btn-press rounded-xl bg-lime px-5 py-2.5 font-display text-sm font-bold uppercase tracking-wide text-lime-ink hover:bg-lime-deep"
+                className="btn-press rounded-xl bg-flame px-5 py-2.5 font-display text-sm font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep"
               >
                 {error ? "Try again" : "Analyse this day"}
               </button>

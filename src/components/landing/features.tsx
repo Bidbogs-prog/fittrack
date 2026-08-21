@@ -74,12 +74,12 @@ export function Features() {
         {/* AI meal logging — describe it, get portions */}
         <Shell className="md:col-span-7">
           <TileHead
-            icon={<Sparkle weight="duotone" className="size-7 text-lime" />}
+            icon={<Sparkle weight="duotone" className="size-7 text-flame" />}
             title="Log a meal in one sentence"
             copy="Type it or snap it — the AI splits your plate into foods and gram portions, you confirm, it lands in the diary."
           />
           <div className="mt-6 rounded-xl border border-ink-700 bg-ink-950/50 p-4">
-            <p className="ml-auto w-fit max-w-full rounded-2xl rounded-br-md bg-lime px-4 py-2.5 text-sm font-medium text-lime-ink">
+            <p className="ml-auto w-fit max-w-full rounded-2xl rounded-br-md bg-flame px-4 py-2.5 text-sm font-medium text-flame-ink">
               harira, two msemen and a mint tea
             </p>
             <div className="mt-4 space-y-2">
@@ -102,7 +102,7 @@ export function Features() {
         {/* AI coach insights */}
         <Shell className="md:col-span-5">
           <TileHead
-            icon={<ChatCircleText weight="duotone" className="size-7 text-lime" />}
+            icon={<ChatCircleText weight="duotone" className="size-7 text-flame" />}
             title="A coach that reads your day"
             copy="Daily insights with the rigour of a dietitian — what went well, what to fix at the next meal."
           />
@@ -128,7 +128,7 @@ export function Features() {
         {/* Adaptive targets */}
         <Shell className="md:col-span-7">
           <TileHead
-            icon={<Scales weight="duotone" className="size-7 text-lime" />}
+            icon={<Scales weight="duotone" className="size-7 text-flame" />}
             title="Targets that follow your body"
             copy="Log your weight and So3ra reads the trend, recalibrates your real TDEE and nudges your targets — the formula is just the starting point."
           />
@@ -156,7 +156,7 @@ export function Features() {
         {/* Habits & streaks */}
         <Shell className="md:col-span-5">
           <TileHead
-            icon={<Fire weight="duotone" className="size-7 text-lime" />}
+            icon={<Fire weight="duotone" className="size-7 text-flame" />}
             title="The whole day, not just food"
             copy="Water, steps, workouts, fasting windows and logging streaks live on the same screen as your macros."
           />
@@ -170,7 +170,7 @@ export function Features() {
               ] as const
             ).map(([Icon, label, value]) => (
               <div key={label} className="rounded-xl border border-ink-700 bg-ink-950/50 p-4">
-                <Icon weight="duotone" className="size-5 text-lime" />
+                <Icon weight="duotone" className="size-5 text-flame" />
                 <p className="mt-2 text-[11px] text-paper-mute">{label}</p>
                 <p className="font-mono text-sm font-semibold text-paper tabular">{value}</p>
               </div>
@@ -181,7 +181,7 @@ export function Features() {
         {/* Barcode + food library */}
         <Shell className="md:col-span-6">
           <TileHead
-            icon={<Barcode weight="duotone" className="size-7 text-lime" />}
+            icon={<Barcode weight="duotone" className="size-7 text-flame" />}
             title="Scan it, search it, or make it"
             copy="A barcode scanner backed by Open Food Facts Morocco, plus your own foods and recipes — stored per 100 g, always exact."
           />
@@ -191,7 +191,7 @@ export function Features() {
                 <p className="truncate text-sm font-medium text-paper">Natural yogurt, scanned</p>
                 <p className="font-mono text-[11px] text-paper-mute">611…4302</p>
               </div>
-              <p className="shrink-0 rounded-full border border-lime/25 bg-lime/[0.07] px-3 py-1 font-mono text-xs text-lime tabular">
+              <p className="shrink-0 rounded-full border border-flame/25 bg-flame/[0.07] px-3 py-1 font-mono text-xs text-flame tabular">
                 61 kcal / 100 g
               </p>
             </div>
@@ -206,7 +206,7 @@ export function Features() {
                 <div key={label} className="flex items-center gap-3">
                   <span className="w-14 text-[11px] text-paper-mute">{label}</span>
                   <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-ink-700">
-                    <DrawnBar pct={pct} delay={i * 0.12} className="bg-lime" />
+                    <DrawnBar pct={pct} delay={i * 0.12} className="bg-flame" />
                   </div>
                   <span className="w-12 text-right font-mono text-[11px] text-paper-dim tabular">
                     {grams}
@@ -220,7 +220,7 @@ export function Features() {
         {/* Weekly report */}
         <Shell className="md:col-span-6">
           <TileHead
-            icon={<Leaf weight="duotone" className="size-7 text-lime" />}
+            icon={<Leaf weight="duotone" className="size-7 text-flame" />}
             title="A report card every Monday"
             copy="Calendar-week summaries with charts, averages and a written coach review of what actually happened."
           />
@@ -229,7 +229,7 @@ export function Features() {
               {WEEK.map(({ day, pct, over }, i) => (
                 <div key={`${day}-${i}`} className="flex h-full flex-1 flex-col items-center justify-end gap-1.5">
                   <div
-                    className={`w-full max-w-7 rounded-t ${over ? "bg-fat" : "bg-lime/80"}`}
+                    className={`w-full max-w-7 rounded-t ${over ? "bg-fat" : "bg-flame/80"}`}
                     style={{ height: `${pct * 0.82}%` }}
                   />
                   <span className="text-[10px] text-paper-mute">{day}</span>
@@ -264,7 +264,7 @@ export function Features() {
           ] as const
         ).map(([Icon, title, copy]) => (
           <Shell key={title} className="md:col-span-4">
-            <Icon weight="duotone" className="size-6 text-lime" />
+            <Icon weight="duotone" className="size-6 text-flame" />
             <h3 className="mt-3 font-display text-base font-semibold tracking-tight text-paper">
               {title}
             </h3>
