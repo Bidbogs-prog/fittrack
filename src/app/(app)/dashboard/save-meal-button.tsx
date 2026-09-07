@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import { BookmarkSimple, X } from "@phosphor-icons/react";
 import { track } from "@/lib/analytics";
 import type { MealType } from "@/lib/types";
@@ -19,6 +20,9 @@ export function SaveMealButton({
   date: string;
   defaultName: string;
 }) {
+  const t = useTranslations("dashboard");
+  const tCommon = useTranslations("common");
+  const tMeal = useTranslations("meals");
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(defaultName);
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +44,7 @@ export function SaveMealButton({
     fd.set("name", name);
     startTransition(async () => {
       const res = await saveMealAsGroup(fd).catch(() => ({
-        error: "Saving failed — check your connection and try again.",
+        error: t("saveMealFailed"),
       }));
       if (res?.error) {
         setError(res.error);
@@ -61,8 +65,8 @@ export function SaveMealButton({
           setError(null);
           setOpen(true);
         }}
-        title={`Save this ${meal} as a meal`}
-        aria-label={`Save this ${meal} as a meal`}
+        title={t("saveThisMeal", { meal: tMeal(meal) })}
+        aria-label={t("saveThisMeal", { meal: tMeal(meal) })}
         className="btn-press rounded-lg border border-ink-700 p-2 text-paper-mute transition-colors hover:border-flame/50 hover:text-flame"
       >
         <BookmarkSimple weight="bold" className="size-3.5" />
@@ -78,7 +82,7 @@ export function SaveMealButton({
           <form
             role="dialog"
             aria-modal="true"
-            aria-label={`Save ${meal} as a meal`}
+            aria-label={t("saveMealDialog", { meal: tMeal(meal) })}
             className="dialog-pop w-full max-w-sm rounded-2xl border border-ink-700 bg-ink-900 p-5 shadow-[0_40px_80px_-20px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.05)]"
             onSubmit={(e) => {
               e.preventDefault();
@@ -86,23 +90,22 @@ export function SaveMealButton({
             }}
           >
             <div className="flex items-center justify-between">
-              <h3 className="font-display text-base font-semibold text-paper">Save as meal</h3>
+              <h3 className="font-display text-base font-semibold text-paper">{t("saveAsMeal")}</h3>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                aria-label="Close"
+                aria-label={tCommon("close")}
                 className="btn-press rounded-md p-2.5 text-paper-mute hover:bg-ink-800 hover:text-paper"
               >
                 <X className="size-4" weight="bold" />
               </button>
             </div>
             <p className="mt-2 text-sm text-paper-dim">
-              Everything logged in this {meal} is saved as a group you can add back from the food
-              picker on any day.
+              {t("saveMealDescription", { meal: tMeal(meal) })}
             </p>
             <div className="mt-4 space-y-2">
               <label htmlFor={`save-meal-name-${meal}`} className="field-label">
-                Name
+                {t("mealName")}
               </label>
               <input
                 id={`save-meal-name-${meal}`}
@@ -120,7 +123,7 @@ export function SaveMealButton({
               disabled={pending || !name.trim()}
               className="btn-press mt-4 w-full rounded-xl bg-flame px-5 py-3 font-display text-sm font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep disabled:cursor-not-allowed disabled:opacity-40"
             >
-              {pending ? "Saving…" : "Save meal"}
+              {pending ? tCommon("saving") : t("saveMeal")}
             </button>
           </form>
         </div>

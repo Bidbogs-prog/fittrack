@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { MagnifyingGlass, X } from "@phosphor-icons/react";
+import { useFormatter, useTranslations } from "next-intl";
 import { FoodImage } from "@/components/food-image";
 import type { Food } from "@/lib/types";
 
@@ -11,6 +12,8 @@ import type { Food } from "@/lib/types";
  * are fetched from /api/foods/search instead of being rendered up front.
  */
 export function FoodPicker({ name = "food_id" }: { name?: string }) {
+  const t = useTranslations("addFood");
+  const format = useFormatter();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Food[]>([]);
   const [searching, setSearching] = useState(false);
@@ -60,7 +63,7 @@ export function FoodPicker({ name = "food_id" }: { name?: string }) {
               setSelected(null);
               setQuery("");
             }}
-            aria-label="Clear selected food"
+            aria-label={t("clearSelectedFood")}
             className="btn-press -m-1 shrink-0 rounded-md p-2 text-paper-mute hover:bg-ink-800 hover:text-paper"
           >
             <X className="size-4" weight="bold" />
@@ -75,8 +78,8 @@ export function FoodPicker({ name = "food_id" }: { name?: string }) {
             onChange={(e) => setQuery(e.target.value)}
             onFocus={() => setFocused(true)}
             onBlur={() => setTimeout(() => setFocused(false), 150)}
-            placeholder="Search foods…"
-            aria-label="Search foods"
+            placeholder={t("searchFoodsPlaceholder")}
+            aria-label={t("searchFoods")}
             className="field ps-10"
           />
           {focused && (
@@ -98,11 +101,11 @@ export function FoodPicker({ name = "food_id" }: { name?: string }) {
                       </span>
                       <span className="block truncate text-[11px] text-paper-mute">
                         {food.brand ? `${food.brand} · ` : ""}
-                        {food.category} · per 100 g
+                        {food.category} · {t("per100g")}
                       </span>
                     </span>
                     <span className="shrink-0 font-mono text-xs text-paper-dim tabular">
-                      {Math.round(food.kcal)} kcal
+                      {t("kcalValue", { kcal: format.number(Math.round(food.kcal)) })}
                     </span>
                   </button>
                 </li>
@@ -110,13 +113,13 @@ export function FoodPicker({ name = "food_id" }: { name?: string }) {
               {results.length === 0 && (
                 <li className="px-3 py-6 text-center text-xs text-paper-mute">
                   {searching ? (
-                    "Searching…"
+                    t("searching")
                   ) : searchFailed ? (
-                    <span className="text-danger">Search failed — try again.</span>
+                    <span className="text-danger">{t("searchFailed")}</span>
                   ) : query ? (
-                    `Nothing matches “${query}”.`
+                    t("nothingMatches", { query })
                   ) : (
-                    "No foods yet."
+                    t("noFoodsYet")
                   )}
                 </li>
               )}

@@ -25,10 +25,10 @@ export async function addDiaryEntry(formData: FormData) {
   const grams = Number(formData.get("grams"));
 
   if (!foodId || !MEAL_TYPES.includes(meal) || !/^\d{4}-\d{2}-\d{2}$/.test(entryDate)) {
-    return { error: "Invalid entry." };
+    return { error: "invalidEntry" };
   }
   if (!(grams > 0 && grams <= 5000)) {
-    return { error: "Grams must be between 1 and 5000." };
+    return { error: "gramsRange" };
   }
 
   const { error } = await supabase.from("diary_entries").insert({
@@ -39,7 +39,7 @@ export async function addDiaryEntry(formData: FormData) {
     grams,
   });
 
-  if (error) return { error: error.message };
+  if (error) return { error: "generic" };
 
   revalidatePath("/dashboard");
   return { error: null };
@@ -55,16 +55,16 @@ export async function addQuickEntry(formData: FormData) {
   const kcal = Number(formData.get("quick_kcal"));
 
   if (!MEAL_TYPES.includes(meal) || !DATE_RE.test(entryDate)) {
-    return { error: "Invalid entry." };
+    return { error: "invalidEntry" };
   }
   if (!(kcal >= 0 && kcal <= 10000)) {
-    return { error: "Calories must be between 0 and 10000." };
+    return { error: "caloriesRange" };
   }
 
   const macros: Record<string, number | null> = {};
   for (const key of ["quick_protein_g", "quick_carbs_g", "quick_fat_g", "quick_fibre_g"]) {
     const value = parseOptionalMacro(formData, key);
-    if (value === "invalid") return { error: "Macros must be between 0 and 2000 g." };
+    if (value === "invalid") return { error: "macrosRange" };
     macros[key] = value;
   }
 
@@ -76,7 +76,7 @@ export async function addQuickEntry(formData: FormData) {
     quick_kcal: round1(kcal),
     ...macros,
   });
-  if (error) return { error: error.message };
+  if (error) return { error: "generic" };
 
   revalidatePath("/dashboard");
   return { error: null };
@@ -96,10 +96,10 @@ export async function addRecipeEntry(formData: FormData) {
   const servings = Number(formData.get("servings"));
 
   if (!recipeId || !MEAL_TYPES.includes(meal) || !DATE_RE.test(entryDate)) {
-    return { error: "Invalid entry." };
+    return { error: "invalidEntry" };
   }
   if (!(servings > 0 && servings <= 100)) {
-    return { error: "Servings must be between 0.1 and 100." };
+    return { error: "servingsRange" };
   }
 
   const { data: recipe } = await supabase
@@ -108,10 +108,10 @@ export async function addRecipeEntry(formData: FormData) {
     .eq("id", recipeId)
     .eq("user_id", userId)
     .maybeSingle();
-  if (!recipe) return { error: "Recipe not found." };
+  if (!recipe) return { error: "recipeNotFound" };
 
   const items = (recipe.items ?? []) as RecipeItem[];
-  if (items.length === 0) return { error: "This recipe has no ingredients yet." };
+  if (items.length === 0) return { error: "recipeEmpty" };
 
   const per = recipePerServing(items, Number(recipe.servings));
   const { error } = await supabase.from("diary_entries").insert({
@@ -127,7 +127,7 @@ export async function addRecipeEntry(formData: FormData) {
     quick_fat_g: round1(per.fat * servings),
     quick_fibre_g: round1(per.fibre * servings),
   });
-  if (error) return { error: error.message };
+  if (error) return { error: "generic" };
 
   revalidatePath("/dashboard");
   return { error: null };
@@ -139,7 +139,7 @@ export async function updateDiaryEntry(formData: FormData) {
 
   const id = String(formData.get("id") ?? "");
   const meal = String(formData.get("meal") ?? "") as MealType;
-  if (!id || !MEAL_TYPES.includes(meal)) return { error: "Invalid entry." };
+  if (!id || !MEAL_TYPES.includes(meal)) return { error: "invalidEntry" };
 
   const { data: existing } = await supabase
     .from("diary_entries")
@@ -147,26 +147,26 @@ export async function updateDiaryEntry(formData: FormData) {
     .eq("id", id)
     .eq("user_id", userId)
     .maybeSingle();
-  if (!existing) return { error: "Entry not found." };
+  if (!existing) return { error: "entryNotFound" };
 
   const patch: Record<string, unknown> = { meal };
   if (existing.food_id) {
     const grams = Number(formData.get("grams"));
     if (!(grams > 0 && grams <= 5000)) {
-      return { error: "Grams must be between 1 and 5000." };
+      return { error: "gramsRange" };
     }
     patch.grams = grams;
   } else {
     const kcal = Number(formData.get("quick_kcal"));
     if (!(kcal >= 0 && kcal <= 10000)) {
-      return { error: "Calories must be between 0 and 10000." };
+      return { error: "caloriesRange" };
     }
     patch.quick_name =
       String(formData.get("quick_name") ?? "").trim().slice(0, 80) || "Quick add";
     patch.quick_kcal = round1(kcal);
     for (const key of ["quick_protein_g", "quick_carbs_g", "quick_fat_g", "quick_fibre_g"]) {
       const value = parseOptionalMacro(formData, key);
-      if (value === "invalid") return { error: "Macros must be between 0 and 2000 g." };
+      if (value === "invalid") return { error: "macrosRange" };
       patch[key] = value;
     }
   }
@@ -176,7 +176,7 @@ export async function updateDiaryEntry(formData: FormData) {
     .update(patch)
     .eq("id", id)
     .eq("user_id", userId);
-  if (error) return { error: error.message };
+  if (error) return { error: "generic" };
 
   revalidatePath("/dashboard");
   return { error: null };
@@ -225,9 +225,9 @@ export async function saveMealAsGroup(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim().slice(0, 60);
 
   if (!DATE_RE.test(fromDate) || !MEAL_TYPES.includes(meal)) {
-    return { error: "Invalid request." };
+    return { error: "invalidRequest" };
   }
-  if (!name) return { error: "Give the meal a name." };
+  if (!name) return { error: "mealNameRequired" };
 
   const { data: rows } = await supabase
     .from("diary_entries")
@@ -239,7 +239,7 @@ export async function saveMealAsGroup(formData: FormData) {
     .eq("meal", meal)
     .order("created_at");
   if (!rows || rows.length === 0) {
-    return { error: "Nothing logged in this meal yet." };
+    return { error: "mealEmpty" };
   }
 
   const { data: savedMeal, error } = await supabase
@@ -270,7 +270,7 @@ export async function applySavedMeal(formData: FormData) {
   const entryDate = String(formData.get("entry_date") ?? "");
 
   if (!id || !MEAL_TYPES.includes(meal) || !DATE_RE.test(entryDate)) {
-    return { error: "Invalid request." };
+    return { error: "invalidRequest" };
   }
 
   const { data: savedMeal } = await supabase
@@ -281,15 +281,15 @@ export async function applySavedMeal(formData: FormData) {
     .eq("id", id)
     .eq("user_id", userId)
     .maybeSingle();
-  if (!savedMeal) return { error: "Saved meal not found." };
+  if (!savedMeal) return { error: "savedMealNotFound" };
 
   const items = savedMeal.items ?? [];
-  if (items.length === 0) return { error: "This saved meal has no items left." };
+  if (items.length === 0) return { error: "savedMealEmpty" };
 
   const { error } = await supabase
     .from("diary_entries")
     .insert(items.map((item) => ({ ...item, user_id: userId, meal, entry_date: entryDate })));
-  if (error) return { error: error.message };
+  if (error) return { error: "generic" };
 
   revalidatePath("/dashboard");
   return { error: null };
@@ -298,7 +298,7 @@ export async function applySavedMeal(formData: FormData) {
 export async function deleteSavedMeal(formData: FormData) {
   const { supabase, userId } = await requireUser();
   const id = String(formData.get("saved_meal_id") ?? "");
-  if (!id) return { error: "Invalid request." };
+  if (!id) return { error: "invalidRequest" };
 
   // RLS also enforces ownership; the filter keeps intent explicit.
   const { error } = await supabase
@@ -306,7 +306,7 @@ export async function deleteSavedMeal(formData: FormData) {
     .delete()
     .eq("id", id)
     .eq("user_id", userId);
-  if (error) return { error: error.message };
+  if (error) return { error: "generic" };
   return { error: null };
 }
 
@@ -341,16 +341,16 @@ export async function logWeight(formData: FormData) {
   const date = String(formData.get("date") ?? "");
   const weight = Number(formData.get("weight_kg"));
 
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return { error: "Invalid date." };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return { error: "invalidDate" };
   if (!(weight >= 25 && weight <= 400)) {
-    return { error: "Weight must be between 25 and 400 kg." };
+    return { error: "weightRange" };
   }
 
   const { error } = await supabase.from("weight_logs").upsert(
     { user_id: userId, log_date: date, weight_kg: Math.round(weight * 10) / 10 },
     { onConflict: "user_id,log_date" }
   );
-  if (error) return { error: error.message };
+  if (error) return { error: "generic" };
 
   // profiles.weight_kg is the "current weight" cache the target math reads;
   // keep it at the newest log (the edited date may be in the past).
@@ -383,11 +383,11 @@ export async function logWater(input: { date: string; delta: number }) {
   const date = String(input.date ?? "");
   const delta = Math.round(Number(input.delta));
   if (!DATE_RE.test(date) || !Number.isFinite(delta) || delta === 0 || Math.abs(delta) > 2000) {
-    return { error: "Invalid request." };
+    return { error: "invalidRequest" };
   }
 
   const { error } = await supabase.rpc("log_water", { p_date: date, p_delta: delta });
-  if (error) return { error: error.message };
+  if (error) return { error: "generic" };
 
   revalidatePath("/dashboard");
   return { error: null };
@@ -403,16 +403,16 @@ export async function addExercise(formData: FormData) {
   const minutesRaw = String(formData.get("minutes") ?? "").trim();
   const minutes = minutesRaw === "" ? null : Math.round(Number(minutesRaw));
 
-  if (!DATE_RE.test(date) || !name) return { error: "Give the workout a name." };
-  if (!(kcal >= 1 && kcal <= 5000)) return { error: "Calories must be between 1 and 5000." };
+  if (!DATE_RE.test(date) || !name) return { error: "workoutNameRequired" };
+  if (!(kcal >= 1 && kcal <= 5000)) return { error: "exerciseCaloriesRange" };
   if (minutes != null && !(minutes >= 1 && minutes <= 1440)) {
-    return { error: "Minutes must be between 1 and 1440." };
+    return { error: "minutesRange" };
   }
 
   const { error } = await supabase
     .from("exercise_logs")
     .insert({ user_id: userId, log_date: date, name, minutes, kcal });
-  if (error) return { error: error.message };
+  if (error) return { error: "generic" };
 
   revalidatePath("/dashboard");
   return { error: null };
@@ -434,14 +434,14 @@ export async function logSteps(formData: FormData) {
   const date = String(formData.get("date") ?? "");
   const steps = Math.round(Number(formData.get("steps")));
   if (!DATE_RE.test(date) || !(steps >= 0 && steps <= 200000)) {
-    return { error: "Steps must be between 0 and 200000." };
+    return { error: "stepsRange" };
   }
 
   const { error } = await supabase.from("step_logs").upsert(
     { user_id: userId, log_date: date, steps, updated_at: new Date().toISOString() },
     { onConflict: "user_id,log_date" }
   );
-  if (error) return { error: error.message };
+  if (error) return { error: "generic" };
 
   revalidatePath("/dashboard");
   return { error: null };

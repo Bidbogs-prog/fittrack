@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { parse, TYPE, type MessageFormatElement } from "@formatjs/icu-messageformat-parser";
 import { describe, expect, it } from "vitest";
 import { ACTIVITY_LEVELS, GOALS, MACRO_PRESETS } from "@/lib/nutrition";
+import { MEAL_TYPES } from "@/lib/types";
 import { STATUS_KEYS } from "./status";
 import { DEFAULT_LOCALE, LOCALES } from "./request";
 
@@ -71,6 +72,10 @@ describe("messages", () => {
     expect(missing).toEqual([]);
   });
 
+  it("has a name for every meal type", () => {
+    expect(MEAL_TYPES.filter((meal) => !source.has(`meals.${meal}`))).toEqual([]);
+  });
+
   it("has a message for every status key an action can redirect with", () => {
     expect(STATUS_KEYS.filter((key) => !source.has(`status.${key}`))).toEqual([]);
   });
@@ -87,11 +92,18 @@ describe("messages", () => {
     });
 
     it("is not left untranslated where the source is prose", () => {
-      // A copied English string is usually a forgotten key. Short shared
-      // tokens (units, brand names, "OK") legitimately match, so only flag
-      // multi-word prose.
+      // A copied English string is usually a forgotten key. Only real prose
+      // counts: strip ICU placeholders and rich-text tags first, so a message
+      // that is mostly symbols and units ("/ {litres} L") isn't flagged for
+      // being identical in another language — it legitimately is.
+      const prose = (value: string) =>
+        value
+          .replace(/\{[^}]*\}/g, " ")
+          .replace(/<\/?[a-zA-Z]+>/g, " ")
+          .split(/\s+/)
+          .filter((word) => (word.match(/\p{L}/gu) ?? []).length > 1);
       const copied = [...source]
-        .filter(([key, value]) => value.split(/\s+/).length > 2 && target.get(key) === value)
+        .filter(([key, value]) => prose(value).length > 2 && target.get(key) === value)
         .map(([key]) => key);
       expect(copied).toEqual([]);
     });

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import { Barbell, Footprints, Plus, X } from "@phosphor-icons/react";
 import type { ExerciseLog } from "@/lib/types";
 import { addExercise, deleteExercise, logSteps } from "./actions";
@@ -23,6 +24,9 @@ export function ActivityCard({
   /** True when adaptive TDEE drives the targets. */
   adaptive: boolean;
 }) {
+  const t = useTranslations("dashboard");
+  const tCommon = useTranslations("common");
+  const tMacro = useTranslations("macros");
   const [showForm, setShowForm] = useState(false);
   const [steps, setSteps] = useState(serverSteps != null ? String(serverSteps) : "");
   const [error, setError] = useState<string | null>(null);
@@ -68,13 +72,13 @@ export function ActivityCard({
             <Barbell weight="fill" className="size-4.5 text-flame" />
           </span>
           <div>
-            <h2 className="font-display text-base font-semibold text-paper">Activity</h2>
+            <h2 className="font-display text-base font-semibold text-paper">{t("activity")}</h2>
             <p className="text-[11px] text-paper-mute">
               {burned > 0
                 ? adaptive
-                  ? `${burned} kcal burned — already reflected in your adaptive burn`
-                  : `${burned} kcal burned, added to today's target`
-                : "Log workouts and steps for this day"}
+                  ? t("burnedAdaptive", { kcal: burned })
+                  : t("burnedAddedToTarget", { kcal: burned })
+                : t("activityHint")}
             </p>
           </div>
         </div>
@@ -87,7 +91,7 @@ export function ActivityCard({
           className="btn-press inline-flex items-center gap-1.5 rounded-lg border border-ink-700 px-3 py-1.5 text-xs font-semibold text-paper-dim transition-colors hover:border-flame/50 hover:text-flame pointer-coarse:py-2.5"
         >
           <Plus weight="bold" className="size-3.5" />
-          Add workout
+          {t("addWorkout")}
         </button>
       </header>
 
@@ -99,17 +103,19 @@ export function ActivityCard({
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-paper">{ex.name}</p>
                   {ex.minutes != null && (
-                    <p className="text-[11px] text-paper-mute">{ex.minutes} min</p>
+                    <p className="text-[11px] text-paper-mute">
+                      {t("minutesValue", { minutes: ex.minutes })}
+                    </p>
                   )}
                 </div>
                 <span className="shrink-0 font-mono text-sm text-paper-dim tabular">
-                  {ex.kcal} kcal
+                  {t("kcalValue", { kcal: ex.kcal })}
                 </span>
                 <button
                   type="button"
                   onClick={() => remove(ex.id)}
                   disabled={pending}
-                  aria-label={`Delete ${ex.name}`}
+                  aria-label={t("deleteExercise", { name: ex.name })}
                   className="btn-press -m-1 shrink-0 rounded-md p-1.5 text-paper-mute hover:text-paper disabled:opacity-40 pointer-coarse:p-2.5"
                 >
                   <X weight="bold" className="size-3.5" />
@@ -126,8 +132,8 @@ export function ActivityCard({
               required
               maxLength={80}
               autoFocus
-              placeholder="e.g. Evening run"
-              aria-label="Workout name"
+              placeholder={t("workoutNamePlaceholder")}
+              aria-label={t("workoutName")}
               className="field"
             />
             <input
@@ -136,8 +142,8 @@ export function ActivityCard({
               inputMode="numeric"
               min={1}
               max={1440}
-              placeholder="min"
-              aria-label="Minutes (optional)"
+              placeholder={t("minutesShort")}
+              aria-label={t("minutesOptional")}
               className="field w-full tabular sm:w-24"
             />
             <input
@@ -147,8 +153,8 @@ export function ActivityCard({
               min={1}
               max={5000}
               required
-              placeholder="kcal"
-              aria-label="Calories burned"
+              placeholder={tMacro("kcal")}
+              aria-label={t("caloriesBurned")}
               className="field w-full tabular sm:w-28"
             />
             <button
@@ -156,7 +162,7 @@ export function ActivityCard({
               disabled={pending}
               className="btn-press rounded-xl bg-flame px-4 py-2.5 font-display text-xs font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep disabled:opacity-40"
             >
-              {pending ? "Saving…" : "Log"}
+              {pending ? tCommon("saving") : tCommon("log")}
             </button>
           </form>
         )}
@@ -167,7 +173,7 @@ export function ActivityCard({
         >
           <label className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-paper-mute">
             <Footprints weight="fill" className="size-4" />
-            Steps
+            {t("steps")}
           </label>
           <input
             type="number"
@@ -177,8 +183,8 @@ export function ActivityCard({
             step={100}
             value={steps}
             onChange={(e) => setSteps(e.target.value)}
-            placeholder="e.g. 8000"
-            aria-label="Steps for this day"
+            placeholder={t("stepsPlaceholder")}
+            aria-label={t("stepsForDay")}
             className="field w-32 py-2 tabular"
           />
           <button
@@ -186,11 +192,9 @@ export function ActivityCard({
             disabled={pending || steps === "" || Number(steps) === (serverSteps ?? NaN)}
             className="btn-press rounded-lg border border-ink-700 px-3 py-2 text-xs font-semibold text-paper-dim transition-colors hover:border-flame/50 hover:text-flame disabled:opacity-40"
           >
-            Save
+            {tCommon("save")}
           </button>
-          <span className="text-[11px] text-paper-mute">
-            Manual for now — HealthKit / Google Fit come with the native app.
-          </span>
+          <span className="text-[11px] text-paper-mute">{t("stepsHint")}</span>
         </form>
 
         {error && <p className="mt-3 text-sm text-danger">{error}</p>}

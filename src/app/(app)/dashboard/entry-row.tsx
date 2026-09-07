@@ -4,6 +4,8 @@ import { useEffect, useState, useTransition } from "react";
 import { Trash, X } from "@phosphor-icons/react";
 import { entryAmountLabel, entryMacros, entryName, isFoodEntry } from "@/lib/diary";
 import { macrosForPortion } from "@/lib/nutrition";
+import { useFormatter, useTranslations } from "next-intl";
+import { ActionError } from "@/components/action-error";
 import { MEAL_TYPES, type DiaryEntry } from "@/lib/types";
 import { deleteDiaryEntry, updateDiaryEntry } from "./actions";
 
@@ -46,6 +48,11 @@ export function EntryRow({ entry }: { entry: DiaryEntry }) {
     });
   }
 
+  const t = useTranslations("dashboard");
+  const tMeal = useTranslations("meals");
+  const tMacro = useTranslations("macros");
+  const format = useFormatter();
+
   const preview = food ? macrosForPortion(food, Number(grams) || 0) : null;
 
   return (
@@ -63,16 +70,19 @@ export function EntryRow({ entry }: { entry: DiaryEntry }) {
         >
           <p className="truncate text-sm font-medium text-paper">{entryName(entry)}</p>
           <p className="truncate text-[11px] text-paper-mute">
-            {entryAmountLabel(entry)} · P {m.protein.toFixed(1)} · C {m.carbs.toFixed(1)} · F{" "}
-            {m.fat.toFixed(1)} · Fb {m.fibre.toFixed(1)}
+            {entryAmountLabel(entry)} · {tMacro("proteinShort")} {m.protein.toFixed(1)} ·{" "}
+            {tMacro("carbsShort")} {m.carbs.toFixed(1)} · {tMacro("fatShort")}{" "}
+            {m.fat.toFixed(1)} · {tMacro("fibreShort")} {m.fibre.toFixed(1)}
           </p>
         </button>
-        <span className="font-mono text-sm text-paper-dim tabular">{Math.round(m.kcal)}</span>
+        <span className="font-mono text-sm text-paper-dim tabular">
+          {format.number(Math.round(m.kcal))}
+        </span>
         <form action={deleteDiaryEntry}>
           <input type="hidden" name="id" value={entry.id} />
           <button
             type="submit"
-            aria-label={`Remove ${entryName(entry)}`}
+            aria-label={t("removeEntry", { name: entryName(entry) })}
             className="btn-press rounded-md p-2.5 text-paper-mute transition-opacity hover:bg-danger/10 hover:text-danger focus-visible:opacity-100 pointer-coarse:text-danger/80 pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100"
           >
             <Trash className="size-4" />
@@ -90,7 +100,7 @@ export function EntryRow({ entry }: { entry: DiaryEntry }) {
           <div
             role="dialog"
             aria-modal="true"
-            aria-label={`Edit ${entryName(entry)}`}
+            aria-label={t("editEntry", { name: entryName(entry) })}
             className="dialog-pop max-h-[85dvh] w-full max-w-md overflow-y-auto overscroll-contain rounded-2xl border border-ink-700 bg-ink-900 p-5 shadow-[0_40px_80px_-20px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.05)]"
           >
             <div className="flex items-center justify-between">
@@ -100,7 +110,7 @@ export function EntryRow({ entry }: { entry: DiaryEntry }) {
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                aria-label="Close"
+                aria-label={t("close")}
                 className="btn-press rounded-md p-2.5 text-paper-mute hover:bg-ink-800 hover:text-paper"
               >
                 <X className="size-4" weight="bold" />
@@ -116,17 +126,17 @@ export function EntryRow({ entry }: { entry: DiaryEntry }) {
             >
               <div className="space-y-2">
                 <label htmlFor={`meal-${entry.id}`} className="field-label">
-                  Meal
+                  {t("meal")}
                 </label>
                 <select
                   id={`meal-${entry.id}`}
                   value={meal}
                   onChange={(e) => setMeal(e.target.value as DiaryEntry["meal"])}
-                  className="field capitalize"
+                  className="field"
                 >
                   {MEAL_TYPES.map((option) => (
-                    <option key={option} value={option} className="capitalize">
-                      {option}
+                    <option key={option} value={option}>
+                      {tMeal(option)}
                     </option>
                   ))}
                 </select>
@@ -136,7 +146,7 @@ export function EntryRow({ entry }: { entry: DiaryEntry }) {
                 <>
                   <div className="space-y-2">
                     <label htmlFor={`grams-${entry.id}`} className="field-label">
-                      Amount (grams)
+                      {t("amountGrams")}
                     </label>
                     <input
                       id={`grams-${entry.id}`}
@@ -153,9 +163,11 @@ export function EntryRow({ entry }: { entry: DiaryEntry }) {
                   </div>
                   {preview && (
                     <p className="text-[11px] text-paper-mute">
-                      {Math.round(preview.kcal)} kcal · P {preview.protein.toFixed(1)} · C{" "}
-                      {preview.carbs.toFixed(1)} · F {preview.fat.toFixed(1)} · Fb{" "}
-                      {preview.fibre.toFixed(1)}
+                      {format.number(Math.round(preview.kcal))} {tMacro("kcal")} ·{" "}
+                      {tMacro("proteinShort")} {preview.protein.toFixed(1)} ·{" "}
+                      {tMacro("carbsShort")} {preview.carbs.toFixed(1)} ·{" "}
+                      {tMacro("fatShort")} {preview.fat.toFixed(1)} ·{" "}
+                      {tMacro("fibreShort")} {preview.fibre.toFixed(1)}
                     </p>
                   )}
                 </>
@@ -163,13 +175,12 @@ export function EntryRow({ entry }: { entry: DiaryEntry }) {
                 <>
                   {entry.servings != null && (
                     <p className="text-[11px] text-paper-mute">
-                      Logged as {entryAmountLabel(entry)} of a recipe — macros were snapshotted
-                      when it was logged; adjust them below if needed.
+                      {t("recipeSnapshot", { amount: entryAmountLabel(entry) })}
                     </p>
                   )}
                   <div className="space-y-2">
                     <label htmlFor={`qname-${entry.id}`} className="field-label">
-                      Label
+                      {t("label")}
                     </label>
                     <input
                       id={`qname-${entry.id}`}
@@ -182,11 +193,11 @@ export function EntryRow({ entry }: { entry: DiaryEntry }) {
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                     {(
                       [
-                        ["quick_kcal", "kcal", entry.quick_kcal, 10000],
-                        ["quick_protein_g", "Protein (g)", entry.quick_protein_g, 2000],
-                        ["quick_carbs_g", "Carbs (g)", entry.quick_carbs_g, 2000],
-                        ["quick_fat_g", "Fat (g)", entry.quick_fat_g, 2000],
-                        ["quick_fibre_g", "Fibre (g)", entry.quick_fibre_g, 2000],
+                        ["quick_kcal", tMacro("kcal"), entry.quick_kcal, 10000],
+                        ["quick_protein_g", tMacro("proteinGrams"), entry.quick_protein_g, 2000],
+                        ["quick_carbs_g", tMacro("carbsGrams"), entry.quick_carbs_g, 2000],
+                        ["quick_fat_g", tMacro("fatGrams"), entry.quick_fat_g, 2000],
+                        ["quick_fibre_g", tMacro("fibreGrams"), entry.quick_fibre_g, 2000],
                       ] as const
                     ).map(([name, label, value, max]) => (
                       <div key={name} className="space-y-2">
@@ -211,14 +222,14 @@ export function EntryRow({ entry }: { entry: DiaryEntry }) {
                 </>
               )}
 
-              {error && <p className="text-sm text-danger">{error}</p>}
+              <ActionError error={error} />
 
               <button
                 type="submit"
                 disabled={pending || (food != null && !(Number(grams) > 0))}
                 className="btn-press w-full rounded-xl bg-flame px-5 py-3 font-display text-sm font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep disabled:cursor-not-allowed disabled:opacity-40"
               >
-                {pending ? "Saving…" : "Save changes"}
+                {pending ? t("saving") : t("saveChanges")}
               </button>
             </form>
           </div>

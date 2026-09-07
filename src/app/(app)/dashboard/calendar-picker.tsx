@@ -2,9 +2,18 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useFormatter, useTranslations } from "next-intl";
 import { CalendarBlank, CaretLeft, CaretRight, X } from "@phosphor-icons/react";
 
-const WEEKDAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
+const WEEKDAYS = [
+  "weekdayMon",
+  "weekdayTue",
+  "weekdayWed",
+  "weekdayThu",
+  "weekdayFri",
+  "weekdaySat",
+  "weekdaySun",
+] as const;
 
 function monthOf(date: string): string {
   return date.slice(0, 7);
@@ -22,6 +31,9 @@ function shiftMonth(month: string, delta: number): string {
  * /api/diary/days), the viewed day is filled, today is outlined.
  */
 export function CalendarPicker({ selected, today }: { selected: string; today: string }) {
+  const t = useTranslations("dashboard");
+  const tCommon = useTranslations("common");
+  const format = useFormatter();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [month, setMonth] = useState(monthOf(selected));
@@ -57,7 +69,7 @@ export function CalendarPicker({ selected, today }: { selected: string; today: s
   const daysInMonth = new Date(year, monthNum, 0).getDate();
   const startOffset = (new Date(year, monthNum - 1, 1).getDay() + 6) % 7; // Mon=0 … Sun=6
   const logged = new Set(loggedByMonth[month] ?? []);
-  const monthLabel = new Date(year, monthNum - 1, 1).toLocaleDateString("en-GB", {
+  const monthLabel = format.dateTime(new Date(year, monthNum - 1, 1), {
     month: "long",
     year: "numeric",
   });
@@ -75,8 +87,8 @@ export function CalendarPicker({ selected, today }: { selected: string; today: s
           setMonth(monthOf(selected));
           setOpen(true);
         }}
-        title="Pick a day"
-        aria-label="Pick a day"
+        title={t("pickADay")}
+        aria-label={t("pickADay")}
         className="btn-press rounded-md p-2.5 text-paper-mute hover:bg-ink-800 hover:text-paper pointer-coarse:p-3"
       >
         <CalendarBlank weight="bold" className="size-4" />
@@ -92,7 +104,7 @@ export function CalendarPicker({ selected, today }: { selected: string; today: s
           <div
             role="dialog"
             aria-modal="true"
-            aria-label="Pick a day"
+            aria-label={t("pickADay")}
             className="dialog-pop w-full max-w-sm rounded-2xl border border-ink-700 bg-ink-900 p-5 shadow-[0_40px_80px_-20px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.05)]"
           >
             <div className="flex items-center justify-between">
@@ -101,7 +113,7 @@ export function CalendarPicker({ selected, today }: { selected: string; today: s
                 <button
                   type="button"
                   onClick={() => setMonth(shiftMonth(month, -1))}
-                  aria-label="Previous month"
+                  aria-label={t("previousMonth")}
                   className="btn-press rounded-md p-2 text-paper-mute hover:bg-ink-800 hover:text-paper"
                 >
                   <CaretLeft weight="bold" className="size-4" />
@@ -109,7 +121,7 @@ export function CalendarPicker({ selected, today }: { selected: string; today: s
                 <button
                   type="button"
                   onClick={() => setMonth(shiftMonth(month, 1))}
-                  aria-label="Next month"
+                  aria-label={t("nextMonth")}
                   className="btn-press rounded-md p-2 text-paper-mute hover:bg-ink-800 hover:text-paper"
                 >
                   <CaretRight weight="bold" className="size-4" />
@@ -117,7 +129,7 @@ export function CalendarPicker({ selected, today }: { selected: string; today: s
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  aria-label="Close"
+                  aria-label={tCommon("close")}
                   className="btn-press ms-1 rounded-md p-2 text-paper-mute hover:bg-ink-800 hover:text-paper"
                 >
                   <X weight="bold" className="size-4" />
@@ -131,7 +143,7 @@ export function CalendarPicker({ selected, today }: { selected: string; today: s
                   key={day}
                   className="py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-paper-mute"
                 >
-                  {day}
+                  {t(day)}
                 </span>
               ))}
               {Array.from({ length: startOffset }, (_, i) => (
@@ -147,7 +159,7 @@ export function CalendarPicker({ selected, today }: { selected: string; today: s
                     key={date}
                     type="button"
                     onClick={() => pick(date)}
-                    aria-label={`Go to ${date}${isLogged ? " (has entries)" : ""}`}
+                    aria-label={isLogged ? t("goToDayLogged", { date }) : t("goToDay", { date })}
                     aria-current={isSelected ? "date" : undefined}
                     className={`btn-press flex aspect-square flex-col items-center justify-center gap-0.5 rounded-lg text-sm tabular transition-colors ${
                       isSelected
@@ -170,7 +182,7 @@ export function CalendarPicker({ selected, today }: { selected: string; today: s
 
             <p className="mt-3 flex items-center gap-1.5 text-[11px] text-paper-mute">
               <span className="size-1.5 rounded-full bg-flame" />
-              Days with logged entries
+              {t("daysWithEntries")}
             </p>
           </div>
         </div>

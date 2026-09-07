@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import { TrendDown, TrendUp } from "@phosphor-icons/react";
 import { track } from "@/lib/analytics";
 import { displayWeight, inputWeightToKg, weightUnit } from "@/lib/units";
@@ -61,6 +62,8 @@ export function WeightCard({
   defaultWeight: number | null;
   units?: Units;
 }) {
+  const t = useTranslations("dashboard");
+  const tCommon = useTranslations("common");
   const unit = weightUnit(units);
   const logged = points.find((p) => p.date === date) ?? null;
   const last = points[points.length - 1] ?? null;
@@ -95,7 +98,7 @@ export function WeightCard({
     <section className="grid gap-5 rounded-2xl border border-ink-800 bg-ink-900/60 p-5 sm:grid-cols-[1fr_auto] sm:items-center lg:p-6">
       <div className="min-w-0">
         <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-paper-mute">
-          Weight trend
+          {t("weightTrend")}
         </p>
         <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <span className="font-mono text-2xl font-semibold tracking-tight text-paper tabular">
@@ -113,23 +116,21 @@ export function WeightCard({
                 <TrendUp weight="bold" className="size-3.5" />
               )}
               {delta >= 0 ? "+" : ""}
-              {displayWeight(delta, units).toFixed(1)} {unit} / 7d
+              {t("weightDelta", { value: displayWeight(delta, units).toFixed(1), unit })}
             </span>
           )}
         </div>
         {last ? (
           <Sparkline points={points.slice(-30)} />
         ) : (
-          <p className="mt-2 text-sm text-paper-mute">
-            Log your first weigh-in — the smoothed trend beats any single scale reading.
-          </p>
+          <p className="mt-2 text-sm text-paper-mute">{t("weightEmpty")}</p>
         )}
       </div>
 
       <form onSubmit={submit} className="flex items-end gap-2">
         <div className="space-y-2">
           <label htmlFor="weight_kg" className="field-label">
-            {isToday ? "Today's weigh-in" : `Weigh-in · ${date}`}
+            {isToday ? t("weighInToday") : t("weighInOnDate", { date })}
           </label>
           <div className="flex items-center gap-2">
             <input
@@ -149,7 +150,7 @@ export function WeightCard({
               disabled={pending || !(inputKg >= 25 && inputKg <= 400)}
               className="btn-press rounded-xl bg-flame px-4 py-2.5 font-display text-xs font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep disabled:cursor-not-allowed disabled:opacity-40"
             >
-              {pending ? "Saving…" : logged ? "Update" : "Log"}
+              {pending ? tCommon("saving") : logged ? t("update") : tCommon("log")}
             </button>
           </div>
           {error && <p className="text-xs text-danger">{error}</p>}

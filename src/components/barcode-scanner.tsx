@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 
 /** Minimal typing for the native BarcodeDetector (not yet in lib.dom). */
 interface DetectedBarcode {
@@ -27,8 +28,9 @@ export function BarcodeScanner({
   onDetected: (code: string) => void;
   className?: string;
 }) {
+  const t = useTranslations("addFood");
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(false);
 
   // The latest callback without restarting the camera on re-renders.
   const onDetectedRef = useRef(onDetected);
@@ -93,7 +95,7 @@ export function BarcodeScanner({
         }
       } catch {
         if (!stopped) {
-          setError("Camera unavailable. Allow camera access in your browser and try again.");
+          setError(true);
         }
       }
     };
@@ -112,7 +114,7 @@ export function BarcodeScanner({
     <div className={className}>
       {error ? (
         <p className="rounded-lg border border-danger/30 bg-danger/[0.08] px-3.5 py-3 text-sm text-danger">
-          {error}
+          {t("cameraUnavailable")}
         </p>
       ) : (
         <div className="relative overflow-hidden rounded-xl border border-ink-700 bg-ink-950">
@@ -123,7 +125,7 @@ export function BarcodeScanner({
             className="pointer-events-none absolute inset-x-8 top-1/2 h-px -translate-y-1/2 bg-flame/70"
           />
           <p className="absolute inset-x-0 bottom-0 bg-ink-950/70 px-3 py-2 text-center text-[11px] text-paper-dim backdrop-blur-sm">
-            Point the camera at the barcode
+            {t("pointCameraAtBarcode")}
           </p>
         </div>
       )}

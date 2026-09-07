@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { CloudArrowUp } from "@phosphor-icons/react";
 import { readQueue, removeFromQueue, type QueuedEntry } from "@/lib/offline-queue";
 import { addDiaryEntry, addQuickEntry, addRecipeEntry, applySavedMeal } from "./actions";
@@ -21,6 +22,7 @@ async function replay(entry: QueuedEntry): Promise<{ error: string | null } | un
  * actions they failed on. Renders a banner while anything is waiting.
  */
 export function OfflineSync() {
+  const t = useTranslations("dashboard");
   const router = useRouter();
   const [pendingCount, setPendingCount] = useState(0);
   const [syncing, setSyncing] = useState(false);
@@ -76,8 +78,9 @@ export function OfflineSync() {
         className={`size-4.5 shrink-0 text-flame ${syncing ? "animate-pulse" : ""}`}
       />
       <span className="min-w-0 flex-1">
-        {pendingCount} {pendingCount === 1 ? "entry" : "entries"} logged offline
-        {syncing ? " — syncing…" : " — will sync when you're back online."}
+        {syncing
+          ? t("offlineSyncing", { count: pendingCount })
+          : t("offlineQueued", { count: pendingCount })}
       </span>
       {!syncing && (
         <button
@@ -85,7 +88,7 @@ export function OfflineSync() {
           onClick={() => void flush()}
           className="btn-press shrink-0 rounded-lg border border-ink-700 px-3 py-1.5 text-xs font-semibold text-paper-dim hover:border-flame/50 hover:text-flame"
         >
-          Retry now
+          {t("retryNow")}
         </button>
       )}
     </div>

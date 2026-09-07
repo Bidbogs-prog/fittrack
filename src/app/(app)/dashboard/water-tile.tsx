@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import { Drop, Minus, Plus } from "@phosphor-icons/react";
 import { logWater } from "./actions";
 
@@ -18,6 +19,7 @@ export function WaterTile({
   target: number;
   date: string;
 }) {
+  const t = useTranslations("dashboard");
   const [ml, setMl] = useState(serverMl);
   const [error, setError] = useState<string | null>(null);
   const [, startTransition] = useTransition();
@@ -54,11 +56,13 @@ export function WaterTile({
         <div>
           <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-paper-mute">
             <Drop weight="fill" className={`size-3.5 ${pct >= 100 ? "text-flame" : ""}`} />
-            Water
+            {t("water")}
           </p>
           <p className="mt-1 font-mono text-2xl font-semibold tracking-tight text-paper tabular">
             {litres(ml)}
-            <span className="ms-1.5 text-sm font-normal text-paper-mute">/ {litres(target)} L</span>
+            <span className="ms-1.5 text-sm font-normal text-paper-mute">
+              {t("waterOfTarget", { litres: litres(target) })}
+            </span>
           </p>
         </div>
         <div className="flex shrink-0 gap-1">
@@ -66,7 +70,7 @@ export function WaterTile({
             type="button"
             onClick={() => add(-250)}
             disabled={ml <= 0}
-            aria-label="Remove a 250 ml glass"
+            aria-label={t("removeGlass")}
             className="btn-press rounded-lg border border-ink-700 p-2 text-paper-mute transition-colors hover:text-paper disabled:opacity-30 pointer-coarse:p-3"
           >
             <Minus weight="bold" className="size-3.5" />
@@ -74,7 +78,7 @@ export function WaterTile({
           <button
             type="button"
             onClick={() => add(250)}
-            aria-label="Add a 250 ml glass"
+            aria-label={t("addGlass")}
             className="btn-press rounded-lg border border-ink-700 p-2 text-paper-dim transition-colors hover:border-flame/50 hover:text-flame pointer-coarse:p-3"
           >
             <Plus weight="bold" className="size-3.5" />
@@ -86,7 +90,7 @@ export function WaterTile({
         aria-valuenow={ml}
         aria-valuemin={0}
         aria-valuemax={target}
-        aria-label="Water drunk"
+        aria-label={t("waterDrunk")}
         className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-ink-800"
       >
         <div

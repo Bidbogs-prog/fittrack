@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { MagnifyingGlass } from "@phosphor-icons/react";
+import { useTranslations } from "next-intl";
 import { usePathname, useRouter } from "next/navigation";
 
 export function FoodSearch({
@@ -13,6 +14,7 @@ export function FoodSearch({
   category: string | null;
   mine?: boolean;
 }) {
+  const t = useTranslations("addFood");
   const router = useRouter();
   const pathname = usePathname();
   const [value, setValue] = useState(initialQuery);
@@ -43,8 +45,8 @@ export function FoodSearch({
           if (debounce.current) clearTimeout(debounce.current);
           debounce.current = setTimeout(() => navigate(next), 300);
         }}
-        placeholder="Search by name or brand…"
-        aria-label="Search foods"
+        placeholder={t("searchByNameOrBrand")}
+        aria-label={t("searchFoods")}
         className="field ps-10"
       />
     </div>

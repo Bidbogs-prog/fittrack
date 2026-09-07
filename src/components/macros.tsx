@@ -1,16 +1,19 @@
+import { getFormatter, getTranslations } from "next-intl/server";
 import type { Macros } from "@/lib/nutrition";
 import { CountUp } from "@/components/motion/count-up";
 import { DrawnBar, DrawnRing } from "@/components/motion/progress";
 import { Reveal } from "@/components/motion/reveal";
 
 /** Big calorie ring for the dashboard hero — GSAP-drawn with counted center. */
-export function CalorieRing({
+export async function CalorieRing({
   eaten,
   target,
 }: {
   eaten: number;
   target: number;
 }) {
+  const t = await getTranslations("common");
+  const format = await getFormatter();
   const pct = target > 0 ? Math.min(eaten / target, 1) : 0;
   const over = eaten > target;
 
@@ -29,7 +32,9 @@ export function CalorieRing({
           <p className="font-mono text-2xl font-semibold tracking-tight text-paper tabular">
             <CountUp value={Math.round(eaten)} />
           </p>
-          <p className="text-[11px] text-paper-mute">of {target.toLocaleString()} kcal</p>
+          <p className="text-[11px] text-paper-mute">
+            {t("ofTargetKcal", { target: format.number(target) })}
+          </p>
         </div>
       </div>
     </div>
@@ -37,17 +42,18 @@ export function CalorieRing({
 }
 
 const MACRO_META = [
-  ["protein", "Protein", "bg-protein"],
-  ["carbs", "Carbs", "bg-carbs"],
-  ["fat", "Fat", "bg-fat"],
-  ["fibre", "Fibre", "bg-fibre"],
+  ["protein", "bg-protein"],
+  ["carbs", "bg-carbs"],
+  ["fat", "bg-fat"],
+  ["fibre", "bg-fibre"],
 ] as const;
 
 /** Four labelled progress bars: eaten vs target grams. */
-export function MacroBars({ eaten, targets }: { eaten: Macros; targets: Macros }) {
+export async function MacroBars({ eaten, targets }: { eaten: Macros; targets: Macros }) {
+  const t = await getTranslations("macros");
   return (
     <Reveal className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" stagger={0.09}>
-      {MACRO_META.map(([key, label, color], i) => {
+      {MACRO_META.map(([key, color], i) => {
         const value = eaten[key];
         const target = targets[key];
         const pct = target > 0 ? Math.min((value / target) * 100, 100) : 0;
@@ -58,9 +64,9 @@ export function MacroBars({ eaten, targets }: { eaten: Macros; targets: Macros }
             className="card-lift rounded-xl border border-ink-800 bg-ink-900/60 px-4 py-3.5"
           >
             <div className="flex items-baseline justify-between">
-              <p className="text-xs font-medium text-paper-dim">{label}</p>
+              <p className="text-xs font-medium text-paper-dim">{t(key)}</p>
               <p className="font-mono text-xs text-paper-mute tabular">
-                <CountUp value={Math.round(value)} /> / {Math.round(target)} g
+                <CountUp value={Math.round(value)} /> / {Math.round(target)} {t("grams")}
               </p>
             </div>
             <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-ink-700">
@@ -74,11 +80,17 @@ export function MacroBars({ eaten, targets }: { eaten: Macros; targets: Macros }
 }
 
 /** Compact inline macro readout, e.g. under a food row. */
-export function MacroInline({ macros }: { macros: Macros }) {
+export async function MacroInline({ macros }: { macros: Macros }) {
+  const t = await getTranslations("common");
+  const format = await getFormatter();
   return (
     <span className="font-mono text-[11px] text-paper-mute tabular">
-      P {Math.round(macros.protein)} · C {Math.round(macros.carbs)} · F {Math.round(macros.fat)} · Fb{" "}
-      {Math.round(macros.fibre)}
+      {t("macroInline", {
+        protein: format.number(Math.round(macros.protein)),
+        carbs: format.number(Math.round(macros.carbs)),
+        fat: format.number(Math.round(macros.fat)),
+        fibre: format.number(Math.round(macros.fibre)),
+      })}
     </span>
   );
 }

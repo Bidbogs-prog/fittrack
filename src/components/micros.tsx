@@ -1,4 +1,5 @@
 import { CaretRight } from "@phosphor-icons/react/dist/ssr";
+import { getTranslations } from "next-intl/server";
 import { MICRONUTRIENTS, MICRO_GROUPS, formatAmount, percentDv } from "@/lib/nutrition";
 import type { MicroValues } from "@/lib/types";
 
@@ -7,13 +8,14 @@ import type { MicroValues } from "@/lib/types";
  * daily value per nutrient. Null totals mean no logged food carried data for
  * that nutrient — shown as "no data", never as zero.
  */
-export function MicroPanel({ totals }: { totals: MicroValues }) {
+export async function MicroPanel({ totals }: { totals: MicroValues }) {
+  const t = await getTranslations("micros");
   return (
     <details className="group rounded-2xl border border-ink-800 bg-ink-900/60">
       <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 [&::-webkit-details-marker]:hidden">
         <div>
-          <h2 className="font-display text-base font-semibold text-paper">Micronutrients</h2>
-          <p className="text-[11px] text-paper-mute">% of adult daily value, from foods with full profiles</p>
+          <h2 className="font-display text-base font-semibold text-paper">{t("title")}</h2>
+          <p className="text-[11px] text-paper-mute">{t("subtitle")}</p>
         </div>
         <CaretRight
           weight="bold"
@@ -37,7 +39,7 @@ export function MicroPanel({ totals }: { totals: MicroValues }) {
                     <div className="flex items-baseline justify-between gap-3">
                       <span className="text-paper-dim">{def.label}</span>
                       {value == null ? (
-                        <span className="text-paper-mute">no data</span>
+                        <span className="text-paper-mute">{t("noData")}</span>
                       ) : (
                         <span className="font-mono text-paper tabular">
                           {formatAmount(value)}

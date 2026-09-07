@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 
 /**
  * Live open/closed state for the user's eating window. Rendered only
@@ -8,6 +9,7 @@ import { useEffect, useState } from "react";
  * shows just the window range.
  */
 export function FastingStatus({ start, end }: { start: string; end: string }) {
+  const t = useTranslations("dashboard");
   const [now, setNow] = useState<number | null>(null);
 
   useEffect(() => {
@@ -37,7 +39,9 @@ export function FastingStatus({ start, end }: { start: string; end: string }) {
         open ? "bg-flame/10 text-flame ring-flame/25" : "bg-ink-800 text-paper-mute ring-ink-700"
       }`}
     >
-      {open ? `Open until ${end.slice(0, 5)}` : `Fasting until ${start.slice(0, 5)}`}
+      {open
+        ? t("eatingWindowOpenUntil", { time: end.slice(0, 5) })
+        : t("fastingUntil", { time: start.slice(0, 5) })}
     </span>
   );
 }

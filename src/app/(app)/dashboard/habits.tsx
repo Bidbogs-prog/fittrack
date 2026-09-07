@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { CalendarCheck, Fire, Timer } from "@phosphor-icons/react/dist/ssr";
 import type { Streaks } from "@/lib/streak";
 import { FastingStatus } from "./fasting-status";
@@ -8,7 +9,7 @@ import { WaterTile } from "./water-tile";
  * one-tap water tracking, and the optional fasting window. Server
  * component — the water buttons are plain forms into the logWater action.
  */
-export function Habits({
+export async function Habits({
   streaks,
   waterMl,
   waterTarget,
@@ -25,39 +26,40 @@ export function Habits({
   fastingStart: string | null;
   fastingEnd: string | null;
 }) {
+  const t = await getTranslations("dashboard");
   const hasFasting = fastingStart != null && fastingEnd != null;
 
   return (
     <section
-      aria-label="Habits"
+      aria-label={t("habits")}
       className={`grid grid-cols-2 gap-4 ${hasFasting ? "lg:grid-cols-4" : "lg:grid-cols-3"}`}
     >
       <div className="rounded-2xl border border-ink-800 bg-ink-900/60 p-4">
         <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-paper-mute">
           <Fire weight="fill" className={`size-3.5 ${streaks.current > 0 ? "text-flame" : ""}`} />
-          Streak
+          {t("streak")}
         </p>
         <p className="mt-1 font-mono text-2xl font-semibold tracking-tight text-paper tabular">
           {streaks.current}
           <span className="ms-1.5 text-sm font-normal text-paper-mute">
-            day{streaks.current === 1 ? "" : "s"}
+            {t("dayUnit", { count: streaks.current })}
           </span>
         </p>
         <p className="text-[11px] text-paper-mute">
-          {streaks.current > 0 ? "consecutive days logged" : "log a meal to start one"}
+          {streaks.current > 0 ? t("streakActive") : t("streakEmpty")}
         </p>
       </div>
 
       <div className="rounded-2xl border border-ink-800 bg-ink-900/60 p-4">
         <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-paper-mute">
           <CalendarCheck weight="fill" className="size-3.5" />
-          Consistency
+          {t("consistency")}
         </p>
         <p className="mt-1 font-mono text-2xl font-semibold tracking-tight text-paper tabular">
           {streaks.consistency30}
           <span className="ms-0.5 text-sm font-normal text-paper-mute">%</span>
         </p>
-        <p className="text-[11px] text-paper-mute">of the last 30 days logged</p>
+        <p className="text-[11px] text-paper-mute">{t("consistencyHint")}</p>
       </div>
 
       <WaterTile ml={waterMl} target={waterTarget} date={date} />
@@ -66,7 +68,7 @@ export function Habits({
         <div className="col-span-2 rounded-2xl border border-ink-800 bg-ink-900/60 p-4 lg:col-span-1">
           <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-paper-mute">
             <Timer weight="fill" className="size-3.5" />
-            Eating window
+            {t("eatingWindow")}
           </p>
           <p className="mt-1 font-mono text-2xl font-semibold tracking-tight text-paper tabular">
             {fastingStart.slice(0, 5)}
@@ -74,7 +76,11 @@ export function Habits({
             {fastingEnd.slice(0, 5)}
           </p>
           <p className="mt-0.5 text-[11px] text-paper-mute">
-            {isToday ? <FastingStatus start={fastingStart} end={fastingEnd} /> : "intermittent fasting"}
+            {isToday ? (
+              <FastingStatus start={fastingStart} end={fastingEnd} />
+            ) : (
+              t("intermittentFasting")
+            )}
           </p>
         </div>
       )}

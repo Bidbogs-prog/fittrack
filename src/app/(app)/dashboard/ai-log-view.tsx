@@ -2,6 +2,7 @@
 
 import { useRef, useState, useTransition } from "react";
 import { Camera, Sparkle, X } from "@phosphor-icons/react";
+import { useFormatter, useTranslations } from "next-intl";
 import { track } from "@/lib/analytics";
 import { macrosForPortion, round1 } from "@/lib/nutrition";
 import type { MealType } from "@/lib/types";
@@ -74,6 +75,10 @@ export function AiLogView({
   onBack: () => void;
   onLogged: () => void;
 }) {
+  const t = useTranslations("addFood");
+  const tCommon = useTranslations("common");
+  const tMacro = useTranslations("macros");
+  const format = useFormatter();
   const [description, setDescription] = useState("");
   const [photo, setPhoto] = useState<File | null>(null);
   const [items, setItems] = useState<ReviewItem[] | null>(null);
@@ -90,7 +95,7 @@ export function AiLogView({
         const compressed = await compressPhoto(photo);
         if (compressed) fd.set("photo", compressed, "meal.jpg");
         else if (!description.trim()) {
-          setError("Couldn't read that photo — describe the meal in words instead.");
+          setError(t("photoUnreadable"));
           return;
         }
       }
@@ -156,11 +161,10 @@ export function AiLogView({
           onClick={onBack}
           className="-m-2 inline-block p-2 text-xs font-medium text-paper-mute underline-offset-4 hover:text-paper hover:underline"
         >
-          ← back
+          ← {tCommon("back")}
         </button>
         <p className="mt-3 text-sm text-paper-dim">
-          Describe the meal in your own words — any language — or snap a photo. The coach splits it
-          into foods you confirm before anything is logged.
+          {t("aiIntro")}
         </p>
         <textarea
           autoFocus
@@ -168,7 +172,7 @@ export function AiLogView({
           onChange={(e) => setDescription(e.target.value)}
           maxLength={1000}
           rows={3}
-          placeholder="e.g. tagine de poulet aux olives, un petit khobz, thé à la menthe avec 2 sucres"
+          placeholder={t("aiDescriptionPlaceholder")}
           className="field mt-4 h-auto resize-none py-3 leading-relaxed"
         />
         <input
@@ -183,14 +187,14 @@ export function AiLogView({
           {photo ? (
             <span className="inline-flex max-w-full items-center gap-2 rounded-lg border border-ink-700 bg-ink-850 py-1.5 ps-3 pe-1.5 text-xs text-paper-dim">
               <Camera weight="bold" className="size-3.5 shrink-0 text-flame" />
-              <span className="truncate">Photo attached</span>
+              <span className="truncate">{t("photoAttached")}</span>
               <button
                 type="button"
                 onClick={() => {
                   setPhoto(null);
                   if (fileRef.current) fileRef.current.value = "";
                 }}
-                aria-label="Remove photo"
+                aria-label={t("removePhoto")}
                 className="btn-press rounded p-1 text-paper-mute hover:text-paper"
               >
                 <X weight="bold" className="size-3" />
@@ -203,7 +207,7 @@ export function AiLogView({
               className="btn-press inline-flex items-center gap-1.5 rounded-lg border border-ink-700 px-3 py-2 text-xs font-semibold text-paper-dim transition-colors hover:border-flame/50 hover:text-flame"
             >
               <Camera weight="bold" className="size-3.5" />
-              Add a photo
+              {t("addPhoto")}
             </button>
           )}
         </div>
@@ -215,7 +219,7 @@ export function AiLogView({
           className="btn-press mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-flame px-5 py-3 font-display text-sm font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep disabled:cursor-not-allowed disabled:opacity-40"
         >
           <Sparkle weight="bold" className="size-4" />
-          {pending ? "Reading your meal…" : "Analyse meal"}
+          {pending ? t("readingMeal") : t("analyseMeal")}
         </button>
       </div>
     );
@@ -231,7 +235,7 @@ export function AiLogView({
         }}
         className="-m-2 inline-block p-2 text-xs font-medium text-paper-mute underline-offset-4 hover:text-paper hover:underline"
       >
-        ← edit description
+        ← {t("editDescription")}
       </button>
       <ul className="mt-3 space-y-2">
         {items.map((item, index) => {
@@ -253,7 +257,7 @@ export function AiLogView({
                 <button
                   type="button"
                   onClick={() => setItems((prev) => prev?.filter((_, i) => i !== index) ?? null)}
-                  aria-label={`Remove ${item.base.name}`}
+                  aria-label={t("removeItem", { name: item.base.name })}
                   className="btn-press -m-1 shrink-0 rounded-md p-1.5 text-paper-mute hover:text-paper pointer-coarse:p-2.5"
                 >
                   <X weight="bold" className="size-3.5" />
@@ -262,16 +266,20 @@ export function AiLogView({
               <select
                 value={item.source}
                 onChange={(e) => patchItem(index, { source: e.target.value })}
-                aria-label={`Data source for ${item.base.name}`}
+                aria-label={t("dataSourceFor", { name: item.base.name })}
                 className="field mt-2 text-xs"
               >
                 {item.base.matches.map((food) => (
                   <option key={food.id} value={food.id}>
                     {food.brand ? `${food.name} — ${food.brand}` : food.name} ·{" "}
-                    {Math.round(food.kcal)} kcal/100 g
+                    {t("kcalPer100g", { kcal: format.number(Math.round(food.kcal)) })}
                   </option>
                 ))}
-                <option value="est">AI estimate · {Math.round(item.base.est.kcal)} kcal as described</option>
+                <option value="est">
+                  {t("aiEstimateOption", {
+                    kcal: format.number(Math.round(item.base.est.kcal)),
+                  })}
+                </option>
               </select>
               {/* flex-wrap: on narrow phones the macro preview drops to its own line */}
               <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5">
@@ -283,14 +291,18 @@ export function AiLogView({
                     max={5000}
                     value={item.grams}
                     onChange={(e) => patchItem(index, { grams: e.target.value })}
-                    aria-label={`Grams of ${item.base.name}`}
+                    aria-label={t("gramsOf", { name: item.base.name })}
                     className="field w-24 py-2 text-sm tabular"
                   />
-                  g
+                  {tMacro("grams")}
                 </label>
                 <span className="ms-auto text-end font-mono text-xs text-paper-dim tabular">
-                  {Math.round(macros.kcal)} kcal · P {round1(macros.protein)} · C{" "}
-                  {round1(macros.carbs)} · F {round1(macros.fat)}
+                  {t("macroSummary", {
+                    kcal: format.number(Math.round(macros.kcal)),
+                    protein: format.number(round1(macros.protein)),
+                    carbs: format.number(round1(macros.carbs)),
+                    fat: format.number(round1(macros.fat)),
+                  })}
                 </span>
               </div>
             </li>
@@ -298,7 +310,7 @@ export function AiLogView({
         })}
         {items.length === 0 && (
           <li className="rounded-lg border border-dashed border-ink-700 px-4 py-8 text-center text-sm text-paper-mute">
-            Everything removed — go back and describe the meal again.
+            {t("allItemsRemoved")}
           </li>
         )}
       </ul>
@@ -310,11 +322,14 @@ export function AiLogView({
         className="btn-press mt-4 w-full rounded-xl bg-flame px-5 py-3 font-display text-sm font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep disabled:cursor-not-allowed disabled:opacity-40"
       >
         {pending
-          ? "Logging…"
-          : `Log ${items.length} item${items.length === 1 ? "" : "s"} · ${Math.round(totalKcal)} kcal`}
+          ? tCommon("logging")
+          : t("logItems", {
+              count: items.length,
+              kcal: format.number(Math.round(totalKcal)),
+            })}
       </button>
       <p className="mt-2 text-center text-[10px] text-paper-mute">
-        AI estimates can be off — check portions before logging.
+        {t("aiEstimateWarning")}
       </p>
     </div>
   );

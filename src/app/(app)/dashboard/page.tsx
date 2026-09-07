@@ -1,6 +1,7 @@
 import { CaretLeft, CaretRight, CopySimple } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getFormatter, getTranslations } from "next-intl/server";
 import { AiInsights } from "@/components/ai-insights";
 import type { DayInsights } from "./insights";
 import { CalorieRing, MacroBars, MacroInline } from "@/components/macros";
@@ -10,7 +11,7 @@ import { Reveal } from "@/components/motion/reveal";
 import { getActiveTargets } from "@/lib/adaptive";
 import { getProfile } from "@/lib/auth";
 import { entryMacros, entryMicros } from "@/lib/diary";
-import { GOALS, calcWaterTargetMl, sumMacros, sumMicros } from "@/lib/nutrition";
+import { calcWaterTargetMl, sumMacros, sumMicros } from "@/lib/nutrition";
 import { calcStreaks } from "@/lib/streak";
 import { displayWeight, weightUnit } from "@/lib/units";
 import {
@@ -136,13 +137,17 @@ export default async function DashboardPage({
   const kcalTarget = adaptive ? targets.kcal : targets.kcal + burned;
   const remaining = Math.round(kcalTarget - eaten.kcal);
   const isToday = date === today;
-  const dateLabel = new Date(date + "T12:00:00").toLocaleDateString("en-GB", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  });
-  const firstName = profile.full_name?.split(" ")[0] ?? "athlete";
-  const weekday = new Date(date + "T12:00:00").toLocaleDateString("en-GB", { weekday: "long" });
+  const [t, tMeal, tMacro, tGoal, format] = await Promise.all([
+    getTranslations("dashboard"),
+    getTranslations("meals"),
+    getTranslations("macros"),
+    getTranslations("goal"),
+    getFormatter(),
+  ]);
+  const noon = new Date(date + "T12:00:00");
+  const dateLabel = format.dateTime(noon, { weekday: "long", day: "numeric", month: "long" });
+  const firstName = profile.full_name?.split(" ")[0] ?? t("defaultName");
+  const weekday = format.dateTime(noon, { weekday: "long" });
 
   return (
     <div className="space-y-8">
@@ -150,16 +155,16 @@ export default async function DashboardPage({
       <Reveal as="header" className="flex flex-wrap items-end justify-between gap-4" onScroll={false}>
         <div data-reveal>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-flame">
-            {GOALS[targets.goal].label} · {isToday ? "today" : dateLabel}
+            {tGoal(targets.goal)} · {isToday ? t("today") : dateLabel}
           </p>
           <h1 className="mt-1.5 font-display text-3xl font-bold tracking-tighter text-paper md:text-4xl">
-            {isToday ? `Fuel the work, ${firstName}.` : dateLabel}
+            {isToday ? t("greeting", { name: firstName }) : dateLabel}
           </h1>
         </div>
         <nav data-reveal className="flex items-center gap-1 rounded-lg border border-ink-700 bg-ink-900 p-1">
           <Link
             href={`/dashboard?d=${shiftDate(date, -1)}`}
-            aria-label="Previous day"
+            aria-label={t("previousDay")}
             className="btn-press rounded-md p-2.5 text-paper-mute hover:bg-ink-800 hover:text-paper pointer-coarse:p-3"
           >
             <CaretLeft weight="bold" className="size-4" />
@@ -170,11 +175,11 @@ export default async function DashboardPage({
               isToday ? "bg-flame text-flame-ink" : "text-paper-dim hover:text-paper"
             }`}
           >
-            Today
+            {t("todayShort")}
           </Link>
           <Link
             href={`/dashboard?d=${shiftDate(date, 1)}`}
-            aria-label="Next day"
+            aria-label={t("nextDay")}
             className="btn-press rounded-md p-2.5 text-paper-mute hover:bg-ink-800 hover:text-paper pointer-coarse:p-3"
           >
             <CaretRight weight="bold" className="size-4" />
@@ -197,27 +202,27 @@ export default async function DashboardPage({
           <p className="font-display text-xl font-semibold tracking-tight text-paper">
             {remaining >= 0 ? (
               <>
-                <CountUp value={remaining} className="font-mono text-flame tabular" /> kcal
-                left {isToday ? "today" : "that day"}
+                <CountUp value={remaining} className="font-mono text-flame tabular" />{" "}
+                {isToday ? t("kcalLeftToday") : t("kcalLeftThatDay")}
               </>
             ) : (
               <>
                 <CountUp value={Math.abs(remaining)} className="font-mono text-danger tabular" />{" "}
-                kcal over target
+                {t("kcalOverTarget")}
               </>
             )}
           </p>
           <dl className="mt-4 grid grid-cols-3 divide-x divide-ink-700 border-y border-ink-700">
             {(
               [
-                ["BMR", targets.bmr, "resting burn"],
-                ["TDEE", targets.tdee, adaptive ? "adaptive burn" : "daily burn"],
+                [t("bmr"), targets.bmr, t("restingBurn")],
+                [t("tdee"), targets.tdee, adaptive ? t("adaptiveBurn") : t("dailyBurn")],
                 [
-                  "Target",
+                  t("target"),
                   kcalTarget,
                   burned > 0 && !adaptive
-                    ? `incl. +${burned} exercise`
-                    : GOALS[targets.goal].label.toLowerCase(),
+                    ? t("inclExercise", { kcal: burned })
+                    : tGoal(targets.goal),
                 ],
               ] as const
             ).map(([label, value, sub]) => (
@@ -228,21 +233,28 @@ export default async function DashboardPage({
                 <dd className="mt-0.5 font-mono text-lg font-semibold tracking-tight text-paper tabular sm:text-xl">
                   <CountUp value={value} />
                 </dd>
-                <dd className="text-[11px] text-paper-mute">{sub}</dd>
+                <dd className="text-[11px] lowercase text-paper-mute">{sub}</dd>
               </div>
             ))}
           </dl>
           {adaptive && (
             <p className="mt-3 text-[11px] leading-relaxed text-paper-mute">
-              Adaptive target: over {adaptive.spanDays} days you averaged{" "}
-              <span className="font-mono text-paper-dim tabular">{adaptive.intakeAvg}</span> kcal/day
-              while your trend weight {adaptive.weightDeltaKg <= 0 ? "dropped" : "rose"}{" "}
-              <span className="font-mono text-paper-dim tabular">
-                {displayWeight(Math.abs(adaptive.weightDeltaKg), profile.units).toFixed(1)}
-              </span>{" "}
-              {weightUnit(profile.units)}, so your measured burn is{" "}
-              <span className="font-mono text-paper-dim tabular">{adaptive.tdee}</span> kcal.
-              Recalibrates every Monday from your diary and weigh-ins.
+              {t.rich(
+                adaptive.weightDeltaKg <= 0 ? "adaptiveDropped" : "adaptiveRose",
+                {
+                  days: adaptive.spanDays,
+                  intake: adaptive.intakeAvg,
+                  weight: displayWeight(
+                    Math.abs(adaptive.weightDeltaKg),
+                    profile.units
+                  ).toFixed(1),
+                  unit: weightUnit(profile.units),
+                  burn: adaptive.tdee,
+                  n: (chunks) => (
+                    <span className="font-mono text-paper-dim tabular">{chunks}</span>
+                  ),
+                }
+              )}
             </p>
           )}
         </div>
@@ -296,7 +308,7 @@ export default async function DashboardPage({
             className="btn-press inline-flex items-center gap-2 rounded-lg border border-ink-700 px-4 py-2.5 text-xs font-semibold text-paper-dim transition-colors hover:border-flame/50 hover:text-flame"
           >
             <CopySimple weight="bold" className="size-4" />
-            Copy everything from yesterday
+            {t("copyYesterdayAll")}
           </button>
         </form>
       )}
@@ -320,20 +332,20 @@ export default async function DashboardPage({
             >
               <header className="flex flex-wrap items-center justify-between gap-2 border-b border-ink-800 px-5 py-4">
                 <div className="min-w-0">
-                  <h2 className="font-display text-base font-semibold capitalize text-paper">
-                    {meal}
+                  <h2 className="font-display text-base font-semibold text-paper">
+                    {tMeal(meal)}
                   </h2>
                   <MacroInline macros={mealTotal} />
                 </div>
                 <div className="flex shrink-0 items-center gap-3">
                   <span className="font-mono text-sm text-paper-dim tabular">
-                    {Math.round(mealTotal.kcal)} kcal
+                    {format.number(Math.round(mealTotal.kcal))} {tMacro("kcal")}
                   </span>
                   {mealEntries.length > 0 && (
                     <SaveMealButton
                       meal={meal}
                       date={date}
-                      defaultName={`${weekday} ${meal}`}
+                      defaultName={`${weekday} ${tMeal(meal)}`}
                     />
                   )}
                   {mealEntries.length === 0 && yesterdayMeals.has(meal) && (
@@ -343,8 +355,8 @@ export default async function DashboardPage({
                       <input type="hidden" name="meal" value={meal} />
                       <button
                         type="submit"
-                        title={`Copy yesterday's ${meal}`}
-                        aria-label={`Copy yesterday's ${meal}`}
+                        title={t("copyYesterdayMeal", { meal: tMeal(meal) })}
+                        aria-label={t("copyYesterdayMeal", { meal: tMeal(meal) })}
                         className="btn-press rounded-lg border border-ink-700 p-2 text-paper-mute transition-colors hover:border-flame/50 hover:text-flame"
                       >
                         <CopySimple weight="bold" className="size-3.5" />
@@ -356,7 +368,7 @@ export default async function DashboardPage({
               </header>
               {mealEntries.length === 0 ? (
                 <p className="px-5 py-7 text-center text-sm text-paper-mute">
-                  Nothing logged yet.
+                  {t("nothingLogged")}
                 </p>
               ) : (
                 <ul className="divide-y divide-ink-800/70">

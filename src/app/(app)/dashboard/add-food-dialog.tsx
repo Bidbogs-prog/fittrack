@@ -14,6 +14,8 @@ import {
   Trash,
   X,
 } from "@phosphor-icons/react";
+import { useFormatter, useTranslations } from "next-intl";
+import { ActionError } from "@/components/action-error";
 import { BarcodeScanner } from "@/components/barcode-scanner";
 import { track } from "@/lib/analytics";
 import { enqueue, type QueuedKind } from "@/lib/offline-queue";
@@ -76,6 +78,11 @@ export function AddFoodDialog({
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const searchRef = useRef<HTMLInputElement>(null);
+  const t = useTranslations("addFood");
+  const tCommon = useTranslations("common");
+  const tMeal = useTranslations("meals");
+  const tMacro = useTranslations("macros");
+  const format = useFormatter();
 
   // Lock the page scroll behind the dialog (iOS scrolls the body otherwise)
   // and close on Escape for keyboard users.
@@ -221,7 +228,7 @@ export function AddFoodDialog({
     startTransition(async () => {
       const fd = new FormData();
       fd.set("saved_meal_id", savedMeal.id);
-      const res = await deleteSavedMeal(fd).catch(() => ({ error: "Delete failed — try again." }));
+      const res = await deleteSavedMeal(fd).catch(() => ({ error: "generic" }));
       if (res?.error) {
         setError(res.error);
         return;
@@ -284,7 +291,7 @@ export function AddFoodDialog({
         className="btn-press inline-flex items-center gap-1.5 rounded-lg border border-ink-700 px-3 py-1.5 text-xs font-semibold text-paper-dim transition-colors hover:border-flame/50 hover:text-flame pointer-coarse:py-2.5"
       >
         <Plus weight="bold" className="size-3.5" />
-        Add food
+        {t("addFood")}
       </button>
 
       {open && (
@@ -301,17 +308,17 @@ export function AddFoodDialog({
           <div
             role="dialog"
             aria-modal="true"
-            aria-label={`Add food to ${meal}`}
+            aria-label={t("addFoodToMeal", { meal: tMeal(meal) })}
             className="dialog-pop max-h-[85dvh] w-full max-w-md overflow-y-auto overscroll-contain rounded-2xl border border-ink-700 bg-ink-900 p-5 shadow-[0_40px_80px_-20px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.05)] lg:max-w-lg"
           >
             <div className="flex items-center justify-between">
-              <h3 className="font-display text-base font-semibold capitalize text-paper">
-                Add to {meal}
+              <h3 className="font-display text-base font-semibold text-paper">
+                {t("addToMeal", { meal: tMeal(meal) })}
               </h3>
               <button
                 type="button"
                 onClick={reset}
-                aria-label="Close"
+                aria-label={tCommon("close")}
                 className="btn-press rounded-md p-2.5 text-paper-mute hover:bg-ink-800 hover:text-paper"
               >
                 <X className="size-4" weight="bold" />
@@ -327,7 +334,7 @@ export function AddFoodDialog({
                     autoFocus
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Search the food library…"
+                    placeholder={t("searchPlaceholder")}
                     className="field ps-10"
                   />
                 </div>
@@ -342,7 +349,7 @@ export function AddFoodDialog({
                     className="btn-press inline-flex items-center gap-1.5 rounded-lg border border-flame/40 px-3 py-2 text-xs font-semibold text-flame transition-colors hover:border-flame hover:bg-flame/10"
                   >
                     <Sparkle weight="bold" className="size-3.5" />
-                    Describe meal
+                    {t("describeMeal")}
                   </button>
                   <button
                     type="button"
@@ -353,7 +360,7 @@ export function AddFoodDialog({
                     className="btn-press inline-flex items-center gap-1.5 rounded-lg border border-ink-700 px-3 py-2 text-xs font-semibold text-paper-dim transition-colors hover:border-flame/50 hover:text-flame"
                   >
                     <Barcode weight="bold" className="size-3.5" />
-                    Scan barcode
+                    {t("scanBarcode")}
                   </button>
                   <button
                     type="button"
@@ -364,7 +371,7 @@ export function AddFoodDialog({
                     className="btn-press inline-flex items-center gap-1.5 rounded-lg border border-ink-700 px-3 py-2 text-xs font-semibold text-paper-dim transition-colors hover:border-flame/50 hover:text-flame"
                   >
                     <Lightning weight="bold" className="size-3.5" />
-                    Quick add
+                    {t("quickAdd")}
                   </button>
                 </div>
 
@@ -383,22 +390,21 @@ export function AddFoodDialog({
                     {results.length === 0 && (
                       <li className="rounded-lg border border-dashed border-ink-700 px-4 py-8 text-center text-sm text-paper-mute">
                         {searching ? (
-                          "Searching…"
+                          t("searching")
                         ) : searchFailed ? (
-                          <span className="text-danger">
-                            Search failed — check your connection and try again.
-                          </span>
+                          <span className="text-danger">{t("searchFailed")}</span>
                         ) : (
-                          <>
-                            Nothing matches “{query}”.{" "}
-                            <a
-                              href={`/foods/new?name=${encodeURIComponent(query)}`}
-                              className="font-medium text-paper underline underline-offset-4 hover:text-flame"
-                            >
-                              Create it as your own food
-                            </a>
-                            .
-                          </>
+                          t.rich("noMatches", {
+                            query,
+                            link: (chunks) => (
+                              <a
+                                href={`/foods/new?name=${encodeURIComponent(query)}`}
+                                className="font-medium text-paper underline underline-offset-4 hover:text-flame"
+                              >
+                                {chunks}
+                              </a>
+                            ),
+                          })
                         )}
                       </li>
                     )}
@@ -408,7 +414,7 @@ export function AddFoodDialog({
                     {suggestions && suggestions.savedMeals.length > 0 && (
                       <section>
                         <h4 className="px-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-paper-mute">
-                          Saved meals
+                          {t("savedMeals")}
                         </h4>
                         <ul className="mt-1.5 space-y-1">
                           {suggestions.savedMeals.map((savedMeal) => (
@@ -429,12 +435,14 @@ export function AddFoodDialog({
                                     {savedMeal.name}
                                   </span>
                                   <span className="block truncate text-[11px] text-paper-mute">
-                                    {savedMeal.itemCount} item{savedMeal.itemCount === 1 ? "" : "s"} ·{" "}
-                                    {savedMeal.itemNames.join(", ")}
+                                    {t("savedMealSummary", {
+                                      count: savedMeal.itemCount,
+                                      items: savedMeal.itemNames.join(", "),
+                                    })}
                                   </span>
                                 </span>
                                 <span className="shrink-0 font-mono text-xs text-paper-dim tabular">
-                                  {Math.round(savedMeal.total.kcal)} kcal
+                                  {format.number(Math.round(savedMeal.total.kcal))} {tMacro("kcal")}
                                 </span>
                               </button>
                             </li>
@@ -445,7 +453,7 @@ export function AddFoodDialog({
                     {suggestions && suggestions.recipes.length > 0 && (
                       <section>
                         <h4 className="px-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-paper-mute">
-                          Your recipes
+                          {t("yourRecipes")}
                         </h4>
                         <ul className="mt-1.5 space-y-1">
                           {suggestions.recipes.map((recipe) => (
@@ -466,12 +474,11 @@ export function AddFoodDialog({
                                     {recipe.name}
                                   </span>
                                   <span className="block text-[11px] text-paper-mute">
-                                    {recipe.itemCount} ingredient{recipe.itemCount === 1 ? "" : "s"} ·
-                                    per serving
+                                    {t("recipeSummary", { count: recipe.itemCount })}
                                   </span>
                                 </span>
                                 <span className="shrink-0 font-mono text-xs text-paper-dim tabular">
-                                  {Math.round(recipe.perServing.kcal)} kcal
+                                  {format.number(Math.round(recipe.perServing.kcal))} {tMacro("kcal")}
                                 </span>
                               </button>
                             </li>
@@ -482,21 +489,21 @@ export function AddFoodDialog({
                     {suggestions && (
                       <>
                         <Shelf
-                          title="Favorites"
+                          title={t("favorites")}
                           foods={suggestions.favorites}
                           favoriteIds={favoriteIds}
                           onSelect={selectFood}
                           onToggleFavorite={toggleFavorite}
                         />
                         <Shelf
-                          title="Recent"
+                          title={t("recent")}
                           foods={suggestions.recents}
                           favoriteIds={favoriteIds}
                           onSelect={selectFood}
                           onToggleFavorite={toggleFavorite}
                         />
                         <Shelf
-                          title="Frequent"
+                          title={t("frequent")}
                           foods={suggestions.frequents.filter(
                             (f) =>
                               !suggestions.favorites.some((x) => x.id === f.id) &&
@@ -510,15 +517,13 @@ export function AddFoodDialog({
                     )}
                     {!hasShelves && (
                       <p className="rounded-lg border border-dashed border-ink-700 px-4 py-8 text-center text-sm text-paper-mute">
-                        {suggestions
-                          ? "Search the library — foods you log will show up here for one-tap re-logging."
-                          : "Loading your usual foods…"}
+                        {suggestions ? t("emptyShelves") : t("loadingFoods")}
                       </p>
                     )}
                   </div>
                 )}
                 <p className="mt-3 text-center text-[10px] text-paper-mute">
-                  Includes Open Food Facts data (ODbL)
+                  {t("openFoodFactsAttribution")}
                 </p>
               </>
             )}
@@ -541,15 +546,15 @@ export function AddFoodDialog({
                 <div className="mt-3 rounded-xl border border-ink-700 bg-ink-850 px-4 py-3.5">
                   <p className="text-sm font-medium text-paper">{view.recipe.name}</p>
                   <p className="text-[11px] text-paper-mute">
-                    per serving: {Math.round(view.recipe.perServing.kcal)} kcal · P{" "}
-                    {view.recipe.perServing.protein.toFixed(1)} · C{" "}
-                    {view.recipe.perServing.carbs.toFixed(1)} · F{" "}
-                    {view.recipe.perServing.fat.toFixed(1)}
+                    {t("perServingKcal", { kcal: Math.round(view.recipe.perServing.kcal) })} ·{" "}
+                    {tMacro("proteinShort")} {view.recipe.perServing.protein.toFixed(1)} ·{" "}
+                    {tMacro("carbsShort")} {view.recipe.perServing.carbs.toFixed(1)} ·{" "}
+                    {tMacro("fatShort")} {view.recipe.perServing.fat.toFixed(1)}
                   </p>
                 </div>
                 <div className="mt-4 space-y-2">
                   <label htmlFor="servings" className="field-label">
-                    Servings
+                    {t("servings")}
                   </label>
                   <input
                     id="servings"
@@ -575,14 +580,14 @@ export function AddFoodDialog({
                     }}
                   />
                 )}
-                {error && <p className="mt-3 text-sm text-danger">{error}</p>}
+                <ActionError error={error} className="mt-3 text-sm text-danger" />
                 <button
                   type="button"
                   onClick={() => submitRecipe(view.recipe)}
                   disabled={pending || !(Number(servings) > 0)}
                   className="btn-press mt-4 w-full rounded-xl bg-flame px-5 py-3 font-display text-sm font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep disabled:cursor-not-allowed disabled:opacity-40"
                 >
-                  {pending ? "Logging…" : "Log recipe"}
+                  {pending ? tCommon("logging") : t("logRecipe")}
                 </button>
               </div>
             )}
@@ -629,22 +634,26 @@ export function AddFoodDialog({
                 <BackLink onClick={backToBrowse} />
                 <div className="mt-3 rounded-lg border border-dashed border-ink-700 px-4 py-8 text-center text-sm text-paper-mute">
                   <p>
-                    Barcode <span className="font-mono text-paper tabular">{view.code}</span>{" "}
-                    isn&rsquo;t in the library yet.
+                    {t.rich("barcodeNotFound", {
+                      code: view.code,
+                      mono: (chunks) => (
+                        <span className="font-mono text-paper tabular">{chunks}</span>
+                      ),
+                    })}
                   </p>
                   <p className="mt-3 flex flex-wrap items-center justify-center gap-3">
                     <a
                       href={`/foods/new?barcode=${encodeURIComponent(view.code)}`}
                       className="btn-press rounded-lg bg-flame px-4 py-2 font-display text-xs font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep"
                     >
-                      Create this food
+                      {t("createThisFood")}
                     </a>
                     <button
                       type="button"
                       onClick={() => setView({ kind: "scan" })}
                       className="btn-press rounded-lg border border-ink-700 px-4 py-2 text-xs font-semibold text-paper-dim hover:text-paper"
                     >
-                      Scan again
+                      {t("scanAgain")}
                     </button>
                   </p>
                 </div>
@@ -668,6 +677,9 @@ function FoodRow({
   onSelect: (food: Food) => void;
   onToggleFavorite: (food: Food) => void;
 }) {
+  const t = useTranslations("addFood");
+  const tMacro = useTranslations("macros");
+  const format = useFormatter();
   return (
     <div className="group/row flex items-center gap-1">
       <button
@@ -680,17 +692,21 @@ function FoodRow({
           <span className="block truncate text-sm font-medium text-paper">{food.name}</span>
           <span className="block truncate text-[11px] text-paper-mute">
             {food.brand ? `${food.brand} · ` : ""}
-            {food.category} · per 100 g
+            {food.category} · {t("per100g")}
           </span>
         </span>
         <span className="shrink-0 font-mono text-xs text-paper-dim tabular">
-          {Math.round(food.kcal)} kcal
+          {format.number(Math.round(food.kcal))} {tMacro("kcal")}
         </span>
       </button>
       <button
         type="button"
         onClick={() => onToggleFavorite(food)}
-        aria-label={favorited ? `Unfavorite ${food.name}` : `Favorite ${food.name}`}
+        aria-label={
+          favorited
+            ? t("unfavoriteFood", { name: food.name })
+            : t("favoriteFood", { name: food.name })
+        }
         aria-pressed={favorited}
         className={`btn-press shrink-0 rounded-md p-2 transition-colors ${
           favorited ? "text-flame" : "text-paper-mute hover:text-paper"
@@ -755,6 +771,9 @@ function SavedMealView({
   onDelete: () => void;
 }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const t = useTranslations("addFood");
+  const tCommon = useTranslations("common");
+  const tMeal = useTranslations("meals");
 
   return (
     <div className="mt-4">
@@ -770,14 +789,16 @@ function SavedMealView({
         </ul>
       </div>
       <MacroPreview macros={savedMeal.total} />
-      {error && <p className="mt-3 text-sm text-danger">{error}</p>}
+      <ActionError error={error} className="mt-3 text-sm text-danger" />
       <button
         type="button"
         onClick={onSubmit}
         disabled={pending}
         className="btn-press mt-4 w-full rounded-xl bg-flame px-5 py-3 font-display text-sm font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep disabled:cursor-not-allowed disabled:opacity-40"
       >
-        {pending ? "Logging…" : `Add ${savedMeal.itemCount} item${savedMeal.itemCount === 1 ? "" : "s"} to ${meal}`}
+        {pending
+          ? tCommon("logging")
+          : t("addItemsToMeal", { count: savedMeal.itemCount, meal: tMeal(meal) })}
       </button>
       <button
         type="button"
@@ -788,20 +809,21 @@ function SavedMealView({
         }`}
       >
         <Trash weight="bold" className="size-3.5" />
-        {confirmDelete ? "Tap again to delete this saved meal" : "Delete saved meal"}
+        {confirmDelete ? t("confirmDeleteSavedMeal") : t("deleteSavedMeal")}
       </button>
     </div>
   );
 }
 
 function BackLink({ onClick }: { onClick: () => void }) {
+  const tCommon = useTranslations("common");
   return (
     <button
       type="button"
       onClick={onClick}
       className="-m-2 inline-block p-2 text-xs font-medium text-paper-mute underline-offset-4 hover:text-paper hover:underline"
     >
-      ← back
+      ← {tCommon("back")}
     </button>
   );
 }
@@ -811,15 +833,16 @@ function MacroPreview({
 }: {
   macros: { kcal: number; protein: number; carbs: number; fat: number; fibre: number };
 }) {
+  const tMacro = useTranslations("macros");
   return (
     <dl className="mt-4 grid grid-cols-3 gap-x-1 gap-y-3 rounded-xl bg-flame/[0.07] px-3 py-3 text-center ring-1 ring-inset ring-flame/20 sm:grid-cols-5">
       {(
         [
-          ["kcal", macros.kcal, 0],
-          ["protein", macros.protein, 1],
-          ["carbs", macros.carbs, 1],
-          ["fat", macros.fat, 1],
-          ["fibre", macros.fibre, 1],
+          [tMacro("kcal"), macros.kcal, 0],
+          [tMacro("protein"), macros.protein, 1],
+          [tMacro("carbs"), macros.carbs, 1],
+          [tMacro("fat"), macros.fat, 1],
+          [tMacro("fibre"), macros.fibre, 1],
         ] as const
       ).map(([label, value, dp]) => (
         <div key={label}>
@@ -850,6 +873,10 @@ function FoodPortion({
   onBack: () => void;
   onSubmit: () => void;
 }) {
+  const t = useTranslations("addFood");
+  const tCommon = useTranslations("common");
+  const tMacro = useTranslations("macros");
+  const format = useFormatter();
   const portion = macrosForPortion(food, Number(grams) || 0);
   const portionMicros = microsForPortion(food, Number(grams) || 0);
   const providedMicros = MICRO_KEYS.filter((key) => food[key] != null);
@@ -860,13 +887,14 @@ function FoodPortion({
       <div className="mt-3 rounded-xl border border-ink-700 bg-ink-850 px-4 py-3.5">
         <p className="text-sm font-medium text-paper">{food.name}</p>
         <p className="text-[11px] text-paper-mute">
-          per 100 g: {Math.round(food.kcal)} kcal · P {food.protein_g} · C {food.carbs_g} · F{" "}
-          {food.fat_g} · Fb {food.fibre_g}
+          {t("per100gKcal", { kcal: Math.round(food.kcal) })} · {tMacro("proteinShort")}{" "}
+          {food.protein_g} · {tMacro("carbsShort")} {food.carbs_g} · {tMacro("fatShort")}{" "}
+          {food.fat_g} · {tMacro("fibreShort")} {food.fibre_g}
         </p>
       </div>
       <div className="mt-4 space-y-2">
         <label htmlFor="grams" className="field-label">
-          Amount (grams)
+          {t("amountGrams")}
         </label>
         <input
           id="grams"
@@ -896,8 +924,10 @@ function FoodPortion({
                       : "border-ink-700 text-paper-dim hover:border-flame/40 hover:text-paper"
                   }`}
                 >
-                  {n === 0.5 ? "½" : n} × {food.serving_name ?? "serving"}
-                  <span className="ms-1 font-mono tabular">({g} g)</span>
+                  {n === 0.5 ? "½" : n} × {food.serving_name ?? t("serving")}
+                  <span className="ms-1 font-mono tabular">
+                    ({format.number(g)} {tMacro("grams")})
+                  </span>
                 </button>
               );
             })}
@@ -911,7 +941,7 @@ function FoodPortion({
         <details className="group mt-3">
           <summary className="flex cursor-pointer list-none items-center gap-1.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-paper-mute transition-colors hover:text-paper [&::-webkit-details-marker]:hidden">
             <CaretRight weight="bold" className="size-3 transition-transform group-open:rotate-90" />
-            Micronutrients in this portion
+            {t("micronutrientsInPortion")}
           </summary>
           <ul className="mt-2 max-h-40 divide-y divide-ink-800/70 overflow-y-auto rounded-lg border border-ink-800">
             {providedMicros.map((key) => {
@@ -926,7 +956,9 @@ function FoodPortion({
                   <span className="text-paper-dim">{MICRONUTRIENTS[key].label}</span>
                   <span className="font-mono text-paper tabular">
                     {formatAmount(value)} {MICRONUTRIENTS[key].unit}
-                    {pct != null && <span className="text-paper-mute"> · {pct}% DV</span>}
+                    {pct != null && (
+                      <span className="text-paper-mute"> · {t("percentDv", { pct })}</span>
+                    )}
                   </span>
                 </li>
               );
@@ -935,7 +967,7 @@ function FoodPortion({
         </details>
       )}
 
-      {error && <p className="mt-3 text-sm text-danger">{error}</p>}
+      <ActionError error={error} className="mt-3 text-sm text-danger" />
 
       <button
         type="button"
@@ -943,7 +975,7 @@ function FoodPortion({
         disabled={pending || !(Number(grams) > 0)}
         className="btn-press mt-4 w-full rounded-xl bg-flame px-5 py-3 font-display text-sm font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep disabled:cursor-not-allowed disabled:opacity-40"
       >
-        {pending ? "Logging…" : `Log ${grams || 0} g`}
+        {pending ? tCommon("logging") : t("logGrams", { grams: Number(grams) || 0 })}
       </button>
     </div>
   );
@@ -960,6 +992,9 @@ function QuickAddForm({
   onBack: () => void;
   onSubmit: (fd: FormData) => void;
 }) {
+  const t = useTranslations("addFood");
+  const tCommon = useTranslations("common");
+  const tMacro = useTranslations("macros");
   return (
     <form
       className="mt-4"
@@ -969,25 +1004,23 @@ function QuickAddForm({
       }}
     >
       <BackLink onClick={onBack} />
-      <p className="mt-3 text-sm text-paper-dim">
-        Log calories without picking a food — macros are optional, micronutrients stay unknown.
-      </p>
+      <p className="mt-3 text-sm text-paper-dim">{t("quickAddHelp")}</p>
       <div className="mt-4 space-y-4">
         <div className="space-y-2">
           <label htmlFor="quick_name" className="field-label">
-            Label (optional)
+            {t("labelOptional")}
           </label>
           <input
             id="quick_name"
             name="quick_name"
             maxLength={80}
-            placeholder="e.g. Restaurant dinner"
+            placeholder={t("labelPlaceholder")}
             className="field"
           />
         </div>
         <div className="space-y-2">
           <label htmlFor="quick_kcal" className="field-label">
-            Calories (kcal)
+            {t("caloriesKcal")}
           </label>
           <input
             id="quick_kcal"
@@ -1005,10 +1038,10 @@ function QuickAddForm({
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {(
             [
-              ["quick_protein_g", "Protein (g)"],
-              ["quick_carbs_g", "Carbs (g)"],
-              ["quick_fat_g", "Fat (g)"],
-              ["quick_fibre_g", "Fibre (g)"],
+              ["quick_protein_g", tMacro("proteinGrams")],
+              ["quick_carbs_g", tMacro("carbsGrams")],
+              ["quick_fat_g", tMacro("fatGrams")],
+              ["quick_fibre_g", tMacro("fibreGrams")],
             ] as const
           ).map(([name, label]) => (
             <div key={name} className="space-y-2">
@@ -1029,13 +1062,13 @@ function QuickAddForm({
           ))}
         </div>
       </div>
-      {error && <p className="mt-3 text-sm text-danger">{error}</p>}
+      <ActionError error={error} className="mt-3 text-sm text-danger" />
       <button
         type="submit"
         disabled={pending}
         className="btn-press mt-4 w-full rounded-xl bg-flame px-5 py-3 font-display text-sm font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep disabled:cursor-not-allowed disabled:opacity-40"
       >
-        {pending ? "Logging…" : "Quick add"}
+        {pending ? tCommon("logging") : t("quickAdd")}
       </button>
     </form>
   );
