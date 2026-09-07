@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
+import { statusUrl } from "@/i18n/status";
 import { MACRO_PCT_MAX, MACRO_PCT_MIN } from "@/lib/nutrition";
 import type { ActivityLevel, Gender, Goal } from "@/lib/types";
 
@@ -53,7 +54,7 @@ export async function completeOnboarding(formData: FormData) {
     !(weightKg >= 25 && weightKg <= 400);
 
   if (invalid) {
-    redirect("/onboarding?error=Please double-check your details — some values look off.");
+    redirect(statusUrl("/onboarding", "error", "checkYourDetails"));
   }
 
   const { error } = await supabase
@@ -74,7 +75,7 @@ export async function completeOnboarding(formData: FormData) {
     .eq("id", userId);
 
   if (error) {
-    redirect(`/onboarding?error=${encodeURIComponent(error.message)}`);
+    redirect(statusUrl("/onboarding", "error", "couldNotSave"));
   }
 
   revalidatePath("/", "layout");

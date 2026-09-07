@@ -27,7 +27,7 @@ export function FinalCta() {
           <Magnetic strength={0.3}>
             <Link
               href="/signup"
-              className="group btn-press flex items-center gap-2 whitespace-nowrap rounded-full bg-flame py-3 ps-5 pe-2 font-display text-[13px] font-bold uppercase tracking-wide text-flame-ink shadow-[0_16px_48px_-12px_var(--flame)] transition-colors hover:bg-flame-deep sm:gap-3 sm:pl-7 sm:pr-3 sm:text-sm"
+              className="group btn-press flex items-center gap-2 whitespace-nowrap rounded-full bg-flame py-3 ps-5 pe-2 font-display text-[13px] font-bold uppercase tracking-wide text-flame-ink shadow-[0_16px_48px_-12px_var(--flame)] transition-colors hover:bg-flame-deep sm:gap-3 sm:ps-7 sm:pe-3 sm:text-sm"
             >
               <span className="sm:hidden">Create free account</span>
               <span className="hidden sm:inline">Create your free account</span>

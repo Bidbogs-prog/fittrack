@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { GenderFemale, GenderMale } from "@phosphor-icons/react";
+import { useFormatter, useTranslations } from "next-intl";
 import {
   ACTIVITY_LEVELS,
   GOALS,
@@ -28,6 +29,12 @@ const sameSplit = (a: MacroSplit, b: MacroSplit) =>
   a.protein === b.protein && a.carbs === b.carbs && a.fat === b.fat;
 
 export function OnboardingForm({ profile }: { profile?: Profile | null }) {
+  const t = useTranslations("onboarding");
+  const tMacro = useTranslations("macros");
+  const tActivity = useTranslations("activity");
+  const tGoal = useTranslations("goal");
+  const tPreset = useTranslations("macroPreset");
+  const format = useFormatter();
   const [gender, setGender] = useState<Gender | null>(profile?.gender ?? null);
   const [birthDate, setBirthDate] = useState(profile?.birth_date ?? "");
   const [height, setHeight] = useState(profile?.height_cm ? String(profile.height_cm) : "");
@@ -113,16 +120,16 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
         {/* 01 — body */}
         <section data-reveal>
           <h2 className="flex items-baseline gap-3 font-display text-lg font-semibold text-paper">
-            <span className="font-mono text-xs text-flame">01</span> Your body
+            <span className="font-mono text-xs text-flame">01</span> {t("sectionBody")}
           </h2>
           <div className="mt-5 grid gap-5 sm:grid-cols-2">
             <fieldset className="sm:col-span-2">
-              <legend className="field-label mb-2">Biological sex (for the BMR formula)</legend>
+              <legend className="field-label mb-2">{t("sex")}</legend>
               <div className="grid grid-cols-2 gap-3">
                 {(
                   [
-                    ["male", "Male", GenderMale],
-                    ["female", "Female", GenderFemale],
+                    ["male", t("male"), GenderMale],
+                    ["female", t("female"), GenderFemale],
                   ] as const
                 ).map(([value, label, Icon]) => (
                   <label
@@ -150,7 +157,7 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
             </fieldset>
 
             <div className="space-y-2">
-              <label htmlFor="birth_date" className="field-label">Date of birth</label>
+              <label htmlFor="birth_date" className="field-label">{t("birthDate")}</label>
               <input
                 id="birth_date"
                 name="birth_date"
@@ -160,11 +167,11 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
                 onChange={(e) => setBirthDate(e.target.value)}
                 className="field [color-scheme:dark]"
               />
-              <p className="text-xs text-paper-mute">Age is part of the BMR equation.</p>
+              <p className="text-xs text-paper-mute">{t("birthDateHint")}</p>
             </div>
             <div className="grid gap-4 min-[400px]:grid-cols-2">
               <div className="space-y-2">
-                <label htmlFor="height_cm" className="field-label">Height (cm)</label>
+                <label htmlFor="height_cm" className="field-label">{t("height")}</label>
                 <input
                   id="height_cm"
                   name="height_cm"
@@ -181,7 +188,7 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
                 />
               </div>
               <div className="space-y-2">
-                <label htmlFor="weight_kg" className="field-label">Weight (kg)</label>
+                <label htmlFor="weight_kg" className="field-label">{t("weight")}</label>
                 <input
                   id="weight_kg"
                   name="weight_kg"
@@ -204,12 +211,12 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
         {/* 02 — training */}
         <section data-reveal>
           <h2 className="flex items-baseline gap-3 font-display text-lg font-semibold text-paper">
-            <span className="font-mono text-xs text-flame">02</span> Training frequency
+            <span className="font-mono text-xs text-flame">02</span> {t("sectionTraining")}
           </h2>
-          <p className="mt-1 text-xs text-paper-mute">Sets the TDEE multiplier.</p>
+          <p className="mt-1 text-xs text-paper-mute">{t("sectionTrainingHint")}</p>
           <div className="mt-5 grid gap-3">
             {LEVEL_KEYS.map((key) => {
-              const { label, detail, multiplier } = ACTIVITY_LEVELS[key];
+              const { multiplier } = ACTIVITY_LEVELS[key];
               const selected = activity === key;
               return (
                 <label
@@ -231,9 +238,11 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
                   />
                   <span className="min-w-0">
                     <span className={`block text-sm font-medium ${selected ? "text-paper" : "text-paper-dim"}`}>
-                      {label}
+                      {tActivity(key)}
                     </span>
-                    <span className="mt-0.5 block text-xs text-paper-mute">{detail}</span>
+                    <span className="mt-0.5 block text-xs text-paper-mute">
+                      {tActivity(`${key}Detail`)}
+                    </span>
                   </span>
                   <span
                     className={`shrink-0 rounded-md px-2 py-1 font-mono text-xs tabular ${
@@ -251,11 +260,10 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
         {/* 03 — goal */}
         <section data-reveal>
           <h2 className="flex items-baseline gap-3 font-display text-lg font-semibold text-paper">
-            <span className="font-mono text-xs text-flame">03</span> Your goal
+            <span className="font-mono text-xs text-flame">03</span> {t("sectionGoal")}
           </h2>
           <div className="mt-5 grid gap-3 sm:grid-cols-3">
             {GOAL_KEYS.map((key) => {
-              const { label, detail } = GOALS[key];
               const selected = goal === key;
               return (
                 <label
@@ -276,9 +284,11 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
                     className="sr-only"
                   />
                   <span className={`block font-display text-sm font-semibold ${selected ? "text-flame" : "text-paper"}`}>
-                    {label}
+                    {tGoal(key)}
                   </span>
-                  <span className="mt-1 block text-xs leading-relaxed text-paper-mute">{detail}</span>
+                  <span className="mt-1 block text-xs leading-relaxed text-paper-mute">
+                    {tGoal(`${key}Detail`)}
+                  </span>
                 </label>
               );
             })}
@@ -288,11 +298,10 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
         {/* 04 — macro split */}
         <section data-reveal>
           <h2 className="flex items-baseline gap-3 font-display text-lg font-semibold text-paper">
-            <span className="font-mono text-xs text-flame">04</span> Macro split
+            <span className="font-mono text-xs text-flame">04</span> {t("sectionMacros")}
           </h2>
           <p className="mt-1 text-xs text-paper-mute">
-            How your calories divide into protein, carbs and fat. Pick what suits how you like to
-            eat — you can change it any time.
+            {t("sectionMacrosHint")}
           </p>
 
           <input type="hidden" name="macro_mode" value={macroMode === "auto" ? "auto" : "custom"} />
@@ -320,16 +329,16 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
                 className="sr-only"
               />
               <span className={`block font-display text-sm font-semibold ${macroMode === "auto" ? "text-flame" : "text-paper"}`}>
-                Coach formula
+                {t("coachFormula")}
               </span>
               <span className="mt-1 block text-xs leading-relaxed text-paper-mute">
-                Protein pinned to your bodyweight ({goal ? GOALS[goal].proteinPerKg : "1.8–2.2"} g/kg
-                for your goal), fat at 25% of calories, carbs fill the rest. Protein-forward — heavier
-                than some people want.
+                {t("coachFormulaHint", {
+                  proteinPerKg: goal ? GOALS[goal].proteinPerKg : "1.8–2.2",
+                })}
               </span>
             </label>
 
-            {MACRO_PRESETS.map(({ key, label, detail, split }) => {
+            {MACRO_PRESETS.map(({ key, split }) => {
               const selected = macroMode === key;
               return (
                 <label
@@ -349,13 +358,13 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
                   />
                   <span className="flex items-center justify-between gap-2">
                     <span className={`font-display text-sm font-semibold ${selected ? "text-flame" : "text-paper"}`}>
-                      {label}
+                      {tPreset(key)}
                     </span>
                     <span className={`rounded-md px-2 py-1 font-mono text-[11px] tabular ${selected ? "bg-flame text-flame-ink" : "bg-ink-800 text-paper-mute"}`}>
                       {split.protein}·{split.carbs}·{split.fat}
                     </span>
                   </span>
-                  <span className="mt-1 block text-xs leading-relaxed text-paper-mute">{detail}</span>
+                  <span className="mt-1 block text-xs leading-relaxed text-paper-mute">{tPreset(`${key}Detail`)}</span>
                 </label>
               );
             })}
@@ -375,10 +384,10 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
                 className="sr-only"
               />
               <span className={`block font-display text-sm font-semibold ${macroMode === "custom" ? "text-flame" : "text-paper"}`}>
-                Custom
+                {t("customSplit")}
               </span>
               <span className="mt-1 block text-xs leading-relaxed text-paper-mute">
-                Set your own percentages — they just need to total 100.
+                {t("customSplitHint")}
               </span>
             </label>
           </div>
@@ -388,15 +397,15 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
               <div className="grid grid-cols-3 gap-3">
                 {(
                   [
-                    ["protein_pct", "Protein", "protein", "bg-protein"],
-                    ["carbs_pct", "Carbs", "carbs", "bg-carbs"],
-                    ["fat_pct", "Fat", "fat", "bg-fat"],
+                    ["protein_pct", "protein", "bg-protein"],
+                    ["carbs_pct", "carbs", "bg-carbs"],
+                    ["fat_pct", "fat", "bg-fat"],
                   ] as const
-                ).map(([name, label, key, dot]) => (
+                ).map(([name, key, dot]) => (
                   <div key={key} className="space-y-2">
                     <label htmlFor={name} className="field-label flex items-center gap-1.5">
                       <span className={`size-2 rounded-full ${dot}`} aria-hidden />
-                      {label} %
+                      {t("macroPercent", { macro: tMacro(key) })}
                     </label>
                     <input
                       id={name}
@@ -423,8 +432,8 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
                 role={customValid ? undefined : "alert"}
               >
                 {customValid
-                  ? "Adds up to 100% — you're set."
-                  : `Currently ${customSum}% — the three must total 100% (${MACRO_PCT_MIN}–${MACRO_PCT_MAX}% each).`}
+                  ? t("splitValid")
+                  : t("splitInvalid", { sum: customSum, min: MACRO_PCT_MIN, max: MACRO_PCT_MAX })}
               </p>
             </div>
           )}
@@ -435,49 +444,49 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
       <aside data-reveal className="md:sticky md:top-8 md:self-start">
         <div className="rounded-2xl border border-ink-700 bg-ink-900/80 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-paper-mute">
-            Your numbers
+            {t("yourNumbers")}
           </p>
           <dl className="mt-5 space-y-5">
             <div>
-              <dt className="text-xs text-paper-mute">BMR — resting burn</dt>
+              <dt className="text-xs text-paper-mute">{t("bmr")}</dt>
               <dd className="mt-1 font-mono text-3xl font-semibold tracking-tight text-paper tabular">
-                {preview ? preview.bmr.toLocaleString() : "—"}
-                <span className="ms-1 text-sm text-paper-mute">kcal</span>
+                {preview ? format.number(preview.bmr) : "—"}
+                <span className="ms-1 text-sm text-paper-mute">{tMacro("kcal")}</span>
               </dd>
             </div>
             <div>
-              <dt className="text-xs text-paper-mute">TDEE — daily burn with training</dt>
+              <dt className="text-xs text-paper-mute">{t("tdee")}</dt>
               <dd className="mt-1 font-mono text-3xl font-semibold tracking-tight text-paper tabular">
-                {preview?.tdee ? preview.tdee.toLocaleString() : "—"}
-                <span className="ms-1 text-sm text-paper-mute">kcal</span>
+                {preview?.tdee ? format.number(preview.tdee) : "—"}
+                <span className="ms-1 text-sm text-paper-mute">{tMacro("kcal")}</span>
               </dd>
             </div>
             <div className="rounded-xl bg-flame/[0.08] px-4 py-3.5 ring-1 ring-inset ring-flame/25">
-              <dt className="text-xs font-medium text-flame">Daily target</dt>
+              <dt className="text-xs font-medium text-flame">{t("dailyTarget")}</dt>
               <dd className="mt-1 font-mono text-3xl font-semibold tracking-tight text-flame tabular">
-                {preview?.target ? preview.target.toLocaleString() : "—"}
-                <span className="ms-1 text-sm opacity-70">kcal</span>
+                {preview?.target ? format.number(preview.target) : "—"}
+                <span className="ms-1 text-sm opacity-70">{tMacro("kcal")}</span>
               </dd>
             </div>
             {preview?.targets && (
               <div>
-                <dt className="text-xs text-paper-mute">Daily macros</dt>
+                <dt className="text-xs text-paper-mute">{t("dailyMacros")}</dt>
                 <dd className="mt-2 grid grid-cols-3 divide-x divide-ink-700 border-y border-ink-700">
                   {(
                     [
-                      ["Protein", preview.targets.protein, "bg-protein"],
-                      ["Carbs", preview.targets.carbs, "bg-carbs"],
-                      ["Fat", preview.targets.fat, "bg-fat"],
+                      ["protein", preview.targets.protein, "bg-protein"],
+                      ["carbs", preview.targets.carbs, "bg-carbs"],
+                      ["fat", preview.targets.fat, "bg-fat"],
                     ] as const
-                  ).map(([label, grams, dot]) => (
-                    <div key={label} className="px-3 py-2.5 first:pl-0">
+                  ).map(([macro, grams, dot]) => (
+                    <div key={macro} className="px-3 py-2.5 first:ps-0">
                       <p className="flex items-center gap-1.5 text-[11px] text-paper-mute">
                         <span className={`size-1.5 rounded-full ${dot}`} aria-hidden />
-                        {label}
+                        {tMacro(macro)}
                       </p>
                       <p className="mt-0.5 font-mono text-base font-semibold text-paper tabular">
-                        {grams}
-                        <span className="ms-0.5 text-xs text-paper-mute">g</span>
+                        {format.number(grams)}
+                        <span className="ms-0.5 text-xs text-paper-mute">{tMacro("grams")}</span>
                       </p>
                     </div>
                   ))}
@@ -490,12 +499,10 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
             disabled={!complete || submitting}
             className="btn-press mt-6 w-full rounded-xl bg-flame px-5 py-3 font-display text-sm font-bold uppercase tracking-wide text-flame-ink transition-opacity hover:bg-flame-deep disabled:cursor-not-allowed disabled:opacity-40"
           >
-            {submitting ? "Saving…" : "Lock in my targets"}
+            {submitting ? t("saving") : t("submit")}
           </button>
           <p className="mt-3 text-center text-xs text-paper-mute">
-            {complete
-              ? "You can change all of this later."
-              : "Complete all three sections to unlock."}
+            {complete ? t("changeLater") : t("completeToUnlock")}
           </p>
         </div>
       </aside>

@@ -1,17 +1,26 @@
+import type { Metadata } from "next";
 import Link from "next/link";
-import { WarningCircle } from "@phosphor-icons/react/dist/ssr";
+import { getTranslations } from "next-intl/server";
 import { Reveal } from "@/components/motion/reveal";
+import { StatusMessage } from "@/components/status-message";
 import { createClient } from "@/lib/supabase/server";
 import { resetPassword } from "../actions";
 
-export const metadata = { title: "Choose a new password" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("meta");
+  return { title: t("resetPassword") };
+}
 
 export default async function ResetPasswordPage({
   searchParams,
 }: {
   searchParams: Promise<{ error?: string }>;
 }) {
-  const [{ error }, supabase] = await Promise.all([searchParams, createClient()]);
+  const [{ error }, supabase, t] = await Promise.all([
+    searchParams,
+    createClient(),
+    getTranslations("auth"),
+  ]);
   const { data } = await supabase.auth.getClaims();
 
   // The recovery link from the email establishes a session via /auth/confirm.
@@ -20,16 +29,14 @@ export default async function ResetPasswordPage({
     return (
       <div className="w-full max-w-sm">
         <h1 className="font-display text-3xl font-bold tracking-tight text-paper">
-          Link expired
+          {t("linkExpired")}
         </h1>
-        <p className="mt-2 text-sm text-paper-mute">
-          This reset link is invalid or has expired. Request a fresh one and try again.
-        </p>
+        <p className="mt-2 text-sm text-paper-mute">{t("linkExpiredHint")}</p>
         <Link
           href="/forgot-password"
           className="btn-press mt-6 inline-block rounded-xl bg-flame px-5 py-3 font-display text-sm font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep"
         >
-          Request a new link
+          {t("requestNewLink")}
         </Link>
       </div>
     );
@@ -38,25 +45,15 @@ export default async function ResetPasswordPage({
   return (
     <Reveal className="w-full max-w-sm" onScroll={false} stagger={0.06} y={16}>
       <h1 data-reveal className="font-display text-3xl font-bold tracking-tight text-paper">
-        Choose a new password
+        {t("chooseNewPassword")}
       </h1>
-      <p data-reveal className="mt-2 text-sm text-paper-mute">
-        At least 8 characters. You&rsquo;ll be signed in right after.
-      </p>
+      <p data-reveal className="mt-2 text-sm text-paper-mute">{t("chooseNewPasswordHint")}</p>
 
-      {error && (
-        <p
-          data-reveal
-          className="mt-5 flex items-start gap-2 rounded-lg border border-danger/30 bg-danger/[0.08] px-3.5 py-3 text-sm text-danger"
-        >
-          <WarningCircle className="mt-0.5 size-4 shrink-0" weight="bold" />
-          <span className="min-w-0 break-words">{error}</span>
-        </p>
-      )}
+      <StatusMessage error={error} />
 
       <form action={resetPassword} className="mt-7 space-y-5">
         <div data-reveal className="space-y-2">
-          <label htmlFor="password" className="field-label">New password</label>
+          <label htmlFor="password" className="field-label">{t("newPassword")}</label>
           <input
             id="password"
             name="password"
@@ -73,7 +70,7 @@ export default async function ResetPasswordPage({
           type="submit"
           className="btn-press w-full rounded-xl bg-flame px-5 py-3 font-display text-sm font-bold uppercase tracking-wide text-flame-ink transition-colors hover:bg-flame-deep"
         >
-          Set password
+          {t("setPassword")}
         </button>
       </form>
     </Reveal>

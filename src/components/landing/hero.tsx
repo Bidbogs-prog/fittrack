@@ -161,7 +161,7 @@ export function Hero() {
               [90, " s", "to set your targets"],
             ] as const
           ).map(([n, suffix, label]) => (
-            <div key={label} className="px-3 py-4 first:pl-0 sm:px-4">
+            <div key={label} className="px-3 py-4 first:ps-0 sm:px-4">
               <dt className="font-mono text-2xl font-semibold tracking-tight text-paper tabular">
                 <CountUp value={n} delay={1} />
                 {suffix}
@@ -186,7 +186,7 @@ export function Hero() {
           <div className="orbit-ring-slow absolute aspect-square w-[96%] rounded-full border border-white/[0.07]" />
         </div>
 
-        <TiltCard maxTilt={8} className="lg:pl-8">
+        <TiltCard maxTilt={8} className="lg:ps-8">
           {/* double-bezel shell */}
           <div
             className="rounded-[1.9rem] border border-white/10 bg-white/[0.04] p-2 shadow-[0_48px_96px_-40px_rgba(0,0,0,0.85)]"

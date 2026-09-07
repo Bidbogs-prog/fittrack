@@ -144,9 +144,12 @@ This is a living document. Check items off as they ship, add notes/links to PRs,
 - [x] Imperial display option: `profiles.units` + `src/lib/units.ts`, account toggle; weight card (incl. lb input converted to kg), history chart/tiles and the adaptive explanation all convert at the display edge. Storage stays metric everywhere
 
 ### 2.3 i18n — French + Arabic (RTL) first
-- [x] Infrastructure: next-intl (cookie locale, no URL restructure), `messages/{en,fr,ar}.json`, language switcher on `/account`, `html lang` + `dir=rtl` for Arabic
-- [x] First translated surfaces: nav, login, forgot-password, account
-- [ ] Remaining surfaces: signup/reset, dashboard, add-food dialog, foods, plans, history, onboarding (extract strings into the existing namespaces — pattern established)
+- [x] Infrastructure: next-intl (cookie locale, no URL restructure), `messages/{en,fr,ar-MA}.json`, language switcher on `/account`, `html lang` + `dir=rtl` for Arabic
+- [x] Arabic is `ar-MA`, not bare `ar`: Latin digits, French-style separators (1.234,5) and Moroccan month names (شتنبر). Verified identical in Node and browser ICU, so numbers are hydration-safe. Legacy `ar` cookies alias forward in `resolveLocale`
+- [x] Status messages travel through the URL as KEYS, not prose (`src/i18n/status.ts` + `<StatusMessage>`): an action can't know the reader's language when it redirects. Supabase auth errors map by `error.code`; unknown values fall back to a generic message rather than being echoed, since `searchParams` is attacker-controlled
+- [x] Guardrail: `src/i18n/messages.test.ts` — key parity, ICU validity, placeholder/rich-tag drift, untranslated copies, and the runtime-built enum lookups (`activity.*`, `goal.*`, `macroPreset.*`) plus every `STATUS_KEYS` member
+- [x] Translated surfaces: nav, login, forgot-password, account, signup, reset-password, OAuth buttons, onboarding (142 keys × 3 locales)
+- [ ] Remaining surfaces: dashboard + add-food dialog + entry row (the daily loop), then foods, plans, history, recipes; admin last and arguably never. Enum labels stay English in `nutrition.ts` because `insights.ts`/`report.ts` feed them to Gemini — translate at the render edge via the `activity`/`goal` namespaces
 - [x] RTL layout audit: directional utilities across the app and landing converted to logical ones (`ps/pe`, `ms/me`, `start/end`, `text-start/end`, `border-e`, `rounded-ee/es`); the progress bar has no logical `origin-*` so it uses `rtl:origin-right`. Purely decorative absolute positions (landing blur blobs, hero float cards, marquee edge fades) stay physical on purpose — they are composition, not reading order
 - [x] Language switcher reflects the tapped radio via `has-[:checked]`, not the saved cookie — the `sr-only` input previously made selection invisible until save, so the control read as dead (this is what "can't switch back from Arabic" was)
 

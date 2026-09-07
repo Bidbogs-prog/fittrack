@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { authErrorKey, statusUrl } from "@/i18n/status";
 
 const OAUTH_PROVIDERS = ["google"] as const;
 type OAuthProvider = (typeof OAUTH_PROVIDERS)[number];
@@ -24,7 +25,7 @@ export async function login(formData: FormData) {
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
-    redirect(`/login?error=${encodeURIComponent(error.message)}&next=${encodeURIComponent(next)}`);
+    redirect(`/login?error=${authErrorKey(error)}&next=${encodeURIComponent(next)}`);
   }
 
   revalidatePath("/", "layout");
@@ -39,7 +40,7 @@ export async function signup(formData: FormData) {
   const password = String(formData.get("password") ?? "");
 
   if (password.length < 8) {
-    redirect(`/signup?error=${encodeURIComponent("Password must be at least 8 characters.")}`);
+    redirect(statusUrl("/signup", "error", "passwordTooShort"));
   }
 
   const { data, error } = await supabase.auth.signUp({
@@ -49,12 +50,12 @@ export async function signup(formData: FormData) {
   });
 
   if (error) {
-    redirect(`/signup?error=${encodeURIComponent(error.message)}`);
+    redirect(`/signup?error=${authErrorKey(error)}`);
   }
 
   // Email confirmation on: no session yet, tell them to check their inbox.
   if (!data.session) {
-    redirect(`/login?message=${encodeURIComponent("Check your email to confirm your account, then log in.")}`);
+    redirect(statusUrl("/login", "message", "checkEmail"));
   }
 
   revalidatePath("/", "layout");
@@ -66,7 +67,7 @@ export async function oauthSignIn(formData: FormData) {
   const next = sanitizeNext(formData.get("next"));
 
   if (!OAUTH_PROVIDERS.includes(provider as OAuthProvider)) {
-    redirect(`/login?error=${encodeURIComponent("Unknown sign-in provider.")}`);
+    redirect(statusUrl("/login", "error", "unknownProvider"));
   }
 
   const supabase = await createClient();
@@ -83,9 +84,7 @@ export async function oauthSignIn(formData: FormData) {
   });
 
   if (error || !data.url) {
-    redirect(
-      `/login?error=${encodeURIComponent(error?.message ?? "Could not start sign-in.")}&next=${encodeURIComponent(next)}`
-    );
+    redirect(`/login?error=${authErrorKey(error)}&next=${encodeURIComponent(next)}`);
   }
 
   redirect(data.url);
@@ -94,7 +93,7 @@ export async function oauthSignIn(formData: FormData) {
 export async function forgotPassword(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim();
   if (!email) {
-    redirect(`/forgot-password?error=${encodeURIComponent("Enter your email address.")}`);
+    redirect(statusUrl("/forgot-password", "error", "enterEmail"));
   }
 
   const supabase = await createClient();
@@ -108,26 +107,20 @@ export async function forgotPassword(formData: FormData) {
   });
 
   // Same message whether or not the account exists — no account enumeration.
-  redirect(
-    `/login?message=${encodeURIComponent(
-      "If an account exists for that email, a reset link is on its way."
-    )}`
-  );
+  redirect(statusUrl("/login", "message", "resetLinkSent"));
 }
 
 /** Runs with the recovery session established by /auth/confirm. */
 export async function resetPassword(formData: FormData) {
   const password = String(formData.get("password") ?? "");
   if (password.length < 8) {
-    redirect(
-      `/reset-password?error=${encodeURIComponent("Password must be at least 8 characters.")}`
-    );
+    redirect(statusUrl("/reset-password", "error", "passwordTooShort"));
   }
 
   const supabase = await createClient();
   const { error } = await supabase.auth.updateUser({ password });
   if (error) {
-    redirect(`/reset-password?error=${encodeURIComponent(error.message)}`);
+    redirect(`/reset-password?error=${authErrorKey(error)}`);
   }
 
   revalidatePath("/", "layout");

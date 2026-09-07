@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Outfit } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import { Analytics } from "@/components/analytics";
+import { isRtl } from "@/i18n/request";
 import { SwRegister } from "@/components/sw-register";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, SITE_URL } from "@/lib/site";
 import "./globals.css";
@@ -92,7 +93,7 @@ export default async function RootLayout({
   return (
     <html
       lang={locale}
-      dir={locale === "ar" ? "rtl" : "ltr"}
+      dir={isRtl(locale) ? "rtl" : "ltr"}
       className={`${geistSans.variable} ${geistMono.variable} ${outfit.variable} antialiased`}
     >
       {/* min-h-[100dvh] (not h-full chains): tracks the iOS dynamic toolbar

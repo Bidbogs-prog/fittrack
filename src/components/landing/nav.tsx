@@ -64,7 +64,7 @@ export function LandingNav() {
           <Magnetic strength={0.25}>
             <Link
               href="/signup"
-              className="group btn-press flex items-center gap-2 whitespace-nowrap rounded-full bg-flame py-1.5 ps-3.5 pe-1.5 text-[13px] font-semibold text-flame-ink transition-colors hover:bg-flame-deep pointer-coarse:py-2 sm:gap-2.5 sm:pl-4 sm:text-sm"
+              className="group btn-press flex items-center gap-2 whitespace-nowrap rounded-full bg-flame py-1.5 ps-3.5 pe-1.5 text-[13px] font-semibold text-flame-ink transition-colors hover:bg-flame-deep pointer-coarse:py-2 sm:gap-2.5 sm:ps-4 sm:text-sm"
             >
               Get started
               <span className="grid size-7 place-items-center rounded-full bg-flame-ink/10 transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5 group-hover:scale-105">

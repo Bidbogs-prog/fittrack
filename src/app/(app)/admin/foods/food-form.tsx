@@ -125,7 +125,7 @@ export function FoodForm({ food }: { food?: Food }) {
           name="image"
           type="file"
           accept="image/*"
-          className="block w-full text-sm text-paper-mute file:mr-4 file:cursor-pointer file:rounded-lg file:border-0 file:bg-ink-700 file:px-4 file:py-3 file:text-sm file:font-semibold file:text-paper hover:file:bg-ink-600"
+          className="block w-full text-sm text-paper-mute file:me-4 file:cursor-pointer file:rounded-lg file:border-0 file:bg-ink-700 file:px-4 file:py-3 file:text-sm file:font-semibold file:text-paper hover:file:bg-ink-600"
         />
       </div>
 

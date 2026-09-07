@@ -1,11 +1,15 @@
+import type { Metadata } from "next";
 import Link from "next/link";
-import { Info, WarningCircle } from "@phosphor-icons/react/dist/ssr";
 import { getTranslations } from "next-intl/server";
 import { Reveal } from "@/components/motion/reveal";
+import { StatusMessage } from "@/components/status-message";
 import { login } from "../actions";
 import { OAuthButtons } from "../oauth-buttons";
 
-export const metadata = { title: "Log in" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("meta");
+  return { title: t("login") };
+}
 
 export default async function LoginPage({
   searchParams,
@@ -19,18 +23,7 @@ export default async function LoginPage({
       <h1 data-reveal className="font-display text-3xl font-bold tracking-tight text-paper">{t("welcomeBack")}</h1>
       <p data-reveal className="mt-2 text-sm text-paper-mute">{t("loginSubtitle")}</p>
 
-      {message && (
-        <p data-reveal className="mt-5 flex items-start gap-2 rounded-lg border border-flame/25 bg-flame/[0.06] px-3.5 py-3 text-sm text-flame">
-          <Info className="mt-0.5 size-4 shrink-0" weight="bold" />
-          <span className="min-w-0 break-words">{message}</span>
-        </p>
-      )}
-      {error && (
-        <p data-reveal className="mt-5 flex items-start gap-2 rounded-lg border border-danger/30 bg-danger/[0.08] px-3.5 py-3 text-sm text-danger">
-          <WarningCircle className="mt-0.5 size-4 shrink-0" weight="bold" />
-          <span className="min-w-0 break-words">{error}</span>
-        </p>
-      )}
+      <StatusMessage error={error} message={message} />
 
       <form action={login} className="mt-7 space-y-5">
         {next && <input type="hidden" name="next" value={next} />}

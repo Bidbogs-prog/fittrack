@@ -1,18 +1,27 @@
-import { WarningCircle } from "@phosphor-icons/react/dist/ssr";
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { Logo } from "@/components/logo";
 import { Reveal } from "@/components/motion/reveal";
+import { StatusMessage } from "@/components/status-message";
 import { getProfile } from "@/lib/auth";
 import { OnboardingForm } from "./onboarding-form";
 
-export const metadata = { title: "Set up your targets" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("meta");
+  return { title: t("onboarding") };
+}
 
 export default async function OnboardingPage({
   searchParams,
 }: {
   searchParams: Promise<{ error?: string; edit?: string }>;
 }) {
-  const [{ profile }, { error, edit }] = await Promise.all([getProfile(), searchParams]);
+  const [{ profile }, { error, edit }, t] = await Promise.all([
+    getProfile(),
+    searchParams,
+    getTranslations("onboarding"),
+  ]);
 
   const editing = edit === "1" && profile.onboarded;
   if (profile.onboarded && !editing) redirect("/dashboard");
@@ -31,26 +40,17 @@ export default async function OnboardingPage({
       <main className="relative z-10 mx-auto w-full max-w-[1100px] px-6 pb-24">
         <Reveal onScroll={false} stagger={0.08} y={18}>
           <p data-reveal className="text-xs font-semibold uppercase tracking-[0.16em] text-flame">
-            {editing ? "Update your stats" : "Step 1 of 1 — your engine"}
+            {editing ? t("eyebrowEditing") : t("eyebrow")}
           </p>
           <h1 data-reveal className="mt-3 max-w-[24ch] font-display text-3xl font-bold leading-tight tracking-tighter text-paper sm:text-4xl md:text-5xl">
-            {editing
-              ? "Body changed? Targets should too."
-              : "Tell us about your body. We'll do the math."}
+            {editing ? t("titleEditing") : t("title")}
           </h1>
           <p data-reveal className="mt-3 max-w-[58ch] text-sm leading-relaxed text-paper-dim">
-            These numbers feed the Mifflin-St Jeor equation for your BMR, then your training
-            frequency sets the multiplier for TDEE. Your daily calorie and macro targets update
-            live as you type.
+            {t("intro")}
           </p>
         </Reveal>
 
-        {error && (
-          <p className="mt-6 flex max-w-lg items-start gap-2 rounded-lg border border-danger/30 bg-danger/[0.08] px-3.5 py-3 text-sm text-danger">
-            <WarningCircle className="mt-0.5 size-4 shrink-0" weight="bold" />
-            <span className="min-w-0 break-words">{error}</span>
-          </p>
-        )}
+        <StatusMessage error={error} className="mt-6 max-w-lg" />
 
         <OnboardingForm profile={editing ? profile : null} />
       </main>

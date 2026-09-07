@@ -221,7 +221,7 @@ export default async function DashboardPage({
                 ],
               ] as const
             ).map(([label, value, sub]) => (
-              <div key={label} className="px-3 py-3 first:pl-0 sm:px-4">
+              <div key={label} className="px-3 py-3 first:ps-0 sm:px-4">
                 <dt className="text-[11px] font-semibold uppercase tracking-[0.14em] text-paper-mute">
                   {label}
                 </dt>
