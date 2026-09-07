@@ -79,7 +79,7 @@ export function Features() {
             copy="Type it or snap it — the AI splits your plate into foods and gram portions, you confirm, it lands in the diary."
           />
           <div className="mt-6 rounded-xl border border-ink-700 bg-ink-950/50 p-4">
-            <p className="ml-auto w-fit max-w-full rounded-2xl rounded-br-md bg-flame px-4 py-2.5 text-sm font-medium text-flame-ink">
+            <p className="ms-auto w-fit max-w-full rounded-2xl rounded-ee-md bg-flame px-4 py-2.5 text-sm font-medium text-flame-ink">
               harira, two msemen and a mint tea
             </p>
             <div className="mt-4 space-y-2">
@@ -208,7 +208,7 @@ export function Features() {
                   <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-ink-700">
                     <DrawnBar pct={pct} delay={i * 0.12} className="bg-flame" />
                   </div>
-                  <span className="w-12 text-right font-mono text-[11px] text-paper-dim tabular">
+                  <span className="w-12 text-end font-mono text-[11px] text-paper-dim tabular">
                     {grams}
                   </span>
                 </div>

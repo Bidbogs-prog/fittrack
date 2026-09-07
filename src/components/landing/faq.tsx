@@ -50,7 +50,7 @@ export function Faq() {
       <Reveal className="mt-12 max-w-3xl divide-y divide-ink-800 border-y border-ink-800">
         {FAQS.map(([q, a]) => (
           <details key={q} className="group" data-reveal>
-            <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 py-4 text-left [&::-webkit-details-marker]:hidden">
+            <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 py-4 text-start [&::-webkit-details-marker]:hidden">
               <span className="font-display text-base font-semibold tracking-tight text-paper sm:text-lg">
                 {q}
               </span>
@@ -59,7 +59,7 @@ export function Faq() {
                 className="size-4 shrink-0 text-paper-mute transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] group-open:rotate-45 group-open:text-flame"
               />
             </summary>
-            <p className="pb-5 pr-8 text-sm leading-relaxed text-paper-dim">{a}</p>
+            <p className="pb-5 pe-8 text-sm leading-relaxed text-paper-dim">{a}</p>
           </details>
         ))}
       </Reveal>

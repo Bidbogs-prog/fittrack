@@ -78,14 +78,14 @@ export default async function AdminFoodsPage({
           <div className="overflow-x-auto overscroll-x-contain rounded-2xl border border-ink-800">
             <table className="w-full min-w-[720px] text-sm">
               <thead>
-                <tr className="border-b border-ink-800 text-left text-[11px] uppercase tracking-[0.12em] text-paper-mute">
+                <tr className="border-b border-ink-800 text-start text-[11px] uppercase tracking-[0.12em] text-paper-mute">
                   <th className="px-4 py-3 font-semibold">Food</th>
-                  <th className="px-3 py-3 text-right font-semibold">kcal</th>
-                  <th className="px-3 py-3 text-right font-semibold">Protein</th>
-                  <th className="px-3 py-3 text-right font-semibold">Carbs</th>
-                  <th className="px-3 py-3 text-right font-semibold">Fat</th>
-                  <th className="px-3 py-3 text-right font-semibold">Fibre</th>
-                  <th className="sticky right-0 bg-ink-950 px-4 py-3 text-right font-semibold">
+                  <th className="px-3 py-3 text-end font-semibold">kcal</th>
+                  <th className="px-3 py-3 text-end font-semibold">Protein</th>
+                  <th className="px-3 py-3 text-end font-semibold">Carbs</th>
+                  <th className="px-3 py-3 text-end font-semibold">Fat</th>
+                  <th className="px-3 py-3 text-end font-semibold">Fibre</th>
+                  <th className="sticky end-0 bg-ink-950 px-4 py-3 text-end font-semibold">
                     Actions
                   </th>
                 </tr>
@@ -112,14 +112,14 @@ export default async function AdminFoodsPage({
                     </td>
                     {([food.kcal, food.protein_g, food.carbs_g, food.fat_g, food.fibre_g] as const).map(
                       (v, i) => (
-                        <td key={i} className="px-3 py-2.5 text-right font-mono text-paper-dim tabular">
+                        <td key={i} className="px-3 py-2.5 text-end font-mono text-paper-dim tabular">
                           {v}
                         </td>
                       )
                     )}
                     {/* Sticky so edit/delete stay reachable while the wide
                         table scrolls horizontally on narrow screens. */}
-                    <td className="sticky right-0 bg-ink-900 px-4 py-2.5">
+                    <td className="sticky end-0 bg-ink-900 px-4 py-2.5">
                       <div className="flex items-center justify-end gap-1.5">
                         <Link
                           href={`/admin/foods/${food.id}`}

@@ -321,14 +321,14 @@ export function AddFoodDialog({
             {view.kind === "browse" && (
               <>
                 <div className="relative mt-4">
-                  <MagnifyingGlass className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-paper-mute" />
+                  <MagnifyingGlass className="pointer-events-none absolute start-3.5 top-1/2 size-4 -translate-y-1/2 text-paper-mute" />
                   <input
                     ref={searchRef}
                     autoFocus
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder="Search the food library…"
-                    className="field pl-10"
+                    className="field ps-10"
                   />
                 </div>
 
@@ -419,7 +419,7 @@ export function AddFoodDialog({
                                   setView({ kind: "savedMeal", savedMeal });
                                   setError(null);
                                 }}
-                                className="btn-press flex w-full items-center gap-3 rounded-lg border border-transparent px-3 py-2.5 text-left transition-colors hover:border-ink-700 hover:bg-ink-850 active:bg-ink-850"
+                                className="btn-press flex w-full items-center gap-3 rounded-lg border border-transparent px-3 py-2.5 text-start transition-colors hover:border-ink-700 hover:bg-ink-850 active:bg-ink-850"
                               >
                                 <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-ink-800 text-paper-dim">
                                   <ForkKnife className="size-5" />
@@ -456,7 +456,7 @@ export function AddFoodDialog({
                                   setView({ kind: "recipe", recipe });
                                   setError(null);
                                 }}
-                                className="btn-press flex w-full items-center gap-3 rounded-lg border border-transparent px-3 py-2.5 text-left transition-colors hover:border-ink-700 hover:bg-ink-850 active:bg-ink-850"
+                                className="btn-press flex w-full items-center gap-3 rounded-lg border border-transparent px-3 py-2.5 text-start transition-colors hover:border-ink-700 hover:bg-ink-850 active:bg-ink-850"
                               >
                                 <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-ink-800 text-paper-dim">
                                   <BowlFood className="size-5" />
@@ -673,7 +673,7 @@ function FoodRow({
       <button
         type="button"
         onClick={() => onSelect(food)}
-        className="btn-press flex min-w-0 flex-1 items-center gap-3 rounded-lg border border-transparent px-3 py-2.5 text-left transition-colors hover:border-ink-700 hover:bg-ink-850 active:bg-ink-850"
+        className="btn-press flex min-w-0 flex-1 items-center gap-3 rounded-lg border border-transparent px-3 py-2.5 text-start transition-colors hover:border-ink-700 hover:bg-ink-850 active:bg-ink-850"
       >
         <FoodImage src={food.image_url} alt="" className="size-9 rounded-md" />
         <span className="min-w-0 flex-1">
@@ -897,7 +897,7 @@ function FoodPortion({
                   }`}
                 >
                   {n === 0.5 ? "½" : n} × {food.serving_name ?? "serving"}
-                  <span className="ml-1 font-mono tabular">({g} g)</span>
+                  <span className="ms-1 font-mono tabular">({g} g)</span>
                 </button>
               );
             })}

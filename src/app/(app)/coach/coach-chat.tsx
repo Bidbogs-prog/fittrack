@@ -159,8 +159,8 @@ export function CoachChat({
               <div
                 className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-4 py-3 text-sm leading-relaxed sm:max-w-[75%] ${
                   m.role === "user"
-                    ? "rounded-br-md bg-flame/10 text-paper ring-1 ring-inset ring-flame/20"
-                    : "rounded-bl-md bg-ink-800/80 text-paper-dim"
+                    ? "rounded-ee-md bg-flame/10 text-paper ring-1 ring-inset ring-flame/20"
+                    : "rounded-es-md bg-ink-800/80 text-paper-dim"
                 }`}
               >
                 {m.content}
@@ -170,7 +170,7 @@ export function CoachChat({
         )}
         {pending && (
           <div className="flex justify-start" aria-live="polite" aria-busy="true">
-            <div className="space-y-2 rounded-2xl rounded-bl-md bg-ink-800/80 px-4 py-3">
+            <div className="space-y-2 rounded-2xl rounded-es-md bg-ink-800/80 px-4 py-3">
               <p className="text-xs text-paper-mute">Reading your data…</p>
               {[120, 180, 90].map((w, i) => (
                 <div

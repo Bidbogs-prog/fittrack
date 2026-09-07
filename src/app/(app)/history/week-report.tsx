@@ -92,7 +92,7 @@ export function WeekReportCard({ weeks }: { weeks: WeekOption[] }) {
               onClick={run}
               disabled={isPending}
               aria-label="Regenerate report"
-              className="btn-press ml-1 rounded-md p-2.5 text-paper-mute hover:bg-ink-800 hover:text-paper disabled:opacity-40"
+              className="btn-press ms-1 rounded-md p-2.5 text-paper-mute hover:bg-ink-800 hover:text-paper disabled:opacity-40"
             >
               <ArrowClockwise className={`size-4 ${isPending ? "animate-spin" : ""}`} />
             </button>
@@ -130,7 +130,7 @@ export function WeekReportCard({ weeks }: { weeks: WeekOption[] }) {
               ))}
             </ul>
             <p className="rounded-lg bg-ink-850 px-3.5 py-2.5 text-sm text-paper">
-              <span className="mr-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-flame">
+              <span className="me-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-flame">
                 {partial ? "Rest of week" : "Next week"}
               </span>
               {report.focus}

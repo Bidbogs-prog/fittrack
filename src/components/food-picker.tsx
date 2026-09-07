@@ -68,7 +68,7 @@ export function FoodPicker({ name = "food_id" }: { name?: string }) {
         </div>
       ) : (
         <>
-          <MagnifyingGlass className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-paper-mute" />
+          <MagnifyingGlass className="pointer-events-none absolute start-3.5 top-1/2 size-4 -translate-y-1/2 text-paper-mute" />
           <input
             type="search"
             value={query}
@@ -77,7 +77,7 @@ export function FoodPicker({ name = "food_id" }: { name?: string }) {
             onBlur={() => setTimeout(() => setFocused(false), 150)}
             placeholder="Search foods…"
             aria-label="Search foods"
-            className="field pl-10"
+            className="field ps-10"
           />
           {focused && (
             <ul className="absolute z-50 mt-2 max-h-[40dvh] w-full overflow-y-auto overscroll-contain rounded-xl border border-ink-700 bg-ink-900 p-1.5 shadow-[0_24px_48px_-12px_rgba(0,0,0,0.8)]">
@@ -89,7 +89,7 @@ export function FoodPicker({ name = "food_id" }: { name?: string }) {
                       e.preventDefault();
                       setSelected(food);
                     }}
-                    className="btn-press flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-ink-850 active:bg-ink-850"
+                    className="btn-press flex w-full items-center gap-3 rounded-lg px-3 py-2 text-start transition-colors hover:bg-ink-850 active:bg-ink-850"
                   >
                     <FoodImage src={food.image_url} alt="" className="size-9 rounded-md" />
                     <span className="min-w-0 flex-1">

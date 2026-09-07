@@ -171,7 +171,7 @@ export default async function AdminRequestsPage({
                 <div className="min-w-0">
                   <p className="truncate text-sm text-paper">
                     {request.full_name || request.email || "Unknown user"}
-                    <span className="ml-2 text-xs text-paper-mute">
+                    <span className="ms-2 text-xs text-paper-mute">
                       {request.status === "fulfilled"
                         ? request.plan_id
                           ? `got “${planNames.get(request.plan_id) ?? "a plan"}”`

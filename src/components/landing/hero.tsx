@@ -137,7 +137,7 @@ export function Hero() {
           <Magnetic strength={0.3}>
             <Link
               href="/signup"
-              className="group btn-press flex items-center gap-3 rounded-full bg-flame py-2.5 pl-6 pr-2.5 font-display text-sm font-bold uppercase tracking-wide text-flame-ink shadow-[0_12px_40px_-12px_var(--flame)] transition-colors hover:bg-flame-deep"
+              className="group btn-press flex items-center gap-3 rounded-full bg-flame py-2.5 ps-6 pe-2.5 font-display text-sm font-bold uppercase tracking-wide text-flame-ink shadow-[0_12px_40px_-12px_var(--flame)] transition-colors hover:bg-flame-deep"
             >
               Start counting free
               <span className="grid size-9 place-items-center rounded-full bg-flame-ink/10 transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:-translate-y-px group-hover:translate-x-0.5 group-hover:scale-105">

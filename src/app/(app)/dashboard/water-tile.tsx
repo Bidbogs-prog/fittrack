@@ -58,7 +58,7 @@ export function WaterTile({
           </p>
           <p className="mt-1 font-mono text-2xl font-semibold tracking-tight text-paper tabular">
             {litres(ml)}
-            <span className="ml-1.5 text-sm font-normal text-paper-mute">/ {litres(target)} L</span>
+            <span className="ms-1.5 text-sm font-normal text-paper-mute">/ {litres(target)} L</span>
           </p>
         </div>
         <div className="flex shrink-0 gap-1">

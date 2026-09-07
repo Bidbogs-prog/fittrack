@@ -79,13 +79,12 @@ export default async function AccountPage({
         <form action={setLocale} className="mt-4 flex flex-wrap items-center gap-3">
           <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={t("language")}>
             {LOCALES.map((code) => (
+              // The highlight follows the radio, not the saved locale: the
+              // input is sr-only, so without :has() a tap changes nothing you
+              // can see and the control reads as dead.
               <label
                 key={code}
-                className={`btn-press cursor-pointer rounded-full border px-4 py-2 text-xs font-semibold transition-colors ${
-                  locale === code
-                    ? "border-flame/60 bg-flame/10 text-flame"
-                    : "border-ink-700 text-paper-dim hover:text-paper"
-                }`}
+                className="btn-press cursor-pointer rounded-full border border-ink-700 px-4 py-2 text-xs font-semibold text-paper-dim transition-colors hover:text-paper has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-flame/50 has-[:checked]:border-flame/60 has-[:checked]:bg-flame/10 has-[:checked]:text-flame"
               >
                 <input
                   type="radio"
@@ -145,11 +144,7 @@ export default async function AccountPage({
             ).map(([value, label]) => (
               <label
                 key={value}
-                className={`btn-press cursor-pointer rounded-full border px-4 py-2 text-xs font-semibold transition-colors ${
-                  profile.units === value
-                    ? "border-flame/60 bg-flame/10 text-flame"
-                    : "border-ink-700 text-paper-dim hover:text-paper"
-                }`}
+                className="btn-press cursor-pointer rounded-full border border-ink-700 px-4 py-2 text-xs font-semibold text-paper-dim transition-colors hover:text-paper has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-flame/50 has-[:checked]:border-flame/60 has-[:checked]:bg-flame/10 has-[:checked]:text-flame"
               >
                 <input
                   type="radio"

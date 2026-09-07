@@ -17,7 +17,7 @@ function Strip({ hidden }: { hidden?: boolean }) {
       {FACTS.map(([name, kcal]) => (
         <span
           key={name}
-          className="flex items-center gap-6 pr-6 font-mono text-xs uppercase tracking-[0.18em] text-paper-mute"
+          className="flex items-center gap-6 pe-6 font-mono text-xs uppercase tracking-[0.18em] text-paper-mute"
         >
           <span className="whitespace-nowrap">
             {name} <span className="text-paper-dim">{kcal} kcal</span>

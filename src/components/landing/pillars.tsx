@@ -85,7 +85,7 @@ export function Pillars() {
                   <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-ink-700">
                     <DrawnBar pct={pct} delay={i * 0.12} className={color} />
                   </div>
-                  <span className="w-14 text-right font-mono text-[11px] text-paper-dim tabular">
+                  <span className="w-14 text-end font-mono text-[11px] text-paper-dim tabular">
                     {grams} g
                   </span>
                 </div>

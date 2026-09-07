@@ -22,7 +22,7 @@ function PlanCard({ plan, badge }: { plan: MealPlan; badge?: string }) {
         <h2 className="font-display text-base font-semibold tracking-tight text-paper">
           {plan.name}
           {badge && (
-            <span className="ml-2 align-middle rounded-full bg-flame/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-flame ring-1 ring-inset ring-flame/25">
+            <span className="ms-2 align-middle rounded-full bg-flame/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-flame ring-1 ring-inset ring-flame/25">
               {badge}
             </span>
           )}

@@ -31,6 +31,8 @@ Next.js 16 (App Router, `src/`, `proxy.ts` not `middleware.ts`, `params`/`search
 - Food facts are stored per 100 g; diary entries store `grams` only — macros are always derived via `src/lib/nutrition.ts`, never stored.
 - Micronutrient columns (`MICRO_KEYS` in `src/lib/types.ts`) are nullable: null = unknown, never zero. Labels/units/daily values live in `MICRONUTRIENTS` in `src/lib/nutrition.ts`.
 - Icons: `@phosphor-icons/react` only. No emojis in UI.
+- Arabic renders the whole document RTL, so directional utilities must be logical: `ps-`/`pe-`, `ms-`/`me-`, `start-`/`end-`, `text-start`/`text-end`, `border-s`/`border-e`, `rounded-ss/se/es/ee`. Physical `pl-`/`left-`/`text-right` is only for decoration that shouldn't mirror; where no logical utility exists (`origin-*`, gradients) pair it with an `rtl:` variant.
+- A control's selected state must be driven by the input (`has-[:checked]`, or client state), never by the server-rendered value it will have *after* saving — with an `sr-only` input the latter makes the control look dead.
 - Design tokens live in `src/app/globals.css` (Tailwind v4 `@theme`). Fonts: Outfit (display), Geist (body), Geist Mono (numerals). Fire accent ramp (`flame-glow` gold → `flame` orange → `flame-deep` red-orange) on warm ember-dark ink — calories are energy, the palette reads as heat.
 
 ## Skills

@@ -261,27 +261,27 @@ export default async function HistoryPage() {
       <section className="rounded-2xl border border-ink-800 bg-ink-900/60 p-5 lg:p-6">
         <h2 className="font-display text-base font-semibold text-paper">Weekly summary</h2>
         <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[28rem] text-left text-sm">
+          <table className="w-full min-w-[28rem] text-start text-sm">
             <thead>
               <tr className="border-b border-ink-800 text-[11px] font-semibold uppercase tracking-[0.12em] text-paper-mute">
-                <th className="py-2 pr-4 font-semibold">Week</th>
-                <th className="py-2 pr-4 font-semibold">Logged</th>
-                <th className="py-2 pr-4 font-semibold">Avg kcal</th>
-                <th className="py-2 pr-4 font-semibold">Avg protein</th>
+                <th className="py-2 pe-4 font-semibold">Week</th>
+                <th className="py-2 pe-4 font-semibold">Logged</th>
+                <th className="py-2 pe-4 font-semibold">Avg kcal</th>
+                <th className="py-2 pe-4 font-semibold">Avg protein</th>
                 <th className="py-2 font-semibold">Adherence</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-ink-800/70">
               {weeks.map((week) => (
                 <tr key={week.label}>
-                  <td className="py-2.5 pr-4 text-paper">{week.label}</td>
-                  <td className="py-2.5 pr-4 font-mono text-paper-dim tabular">
+                  <td className="py-2.5 pe-4 text-paper">{week.label}</td>
+                  <td className="py-2.5 pe-4 font-mono text-paper-dim tabular">
                     {week.daysLogged}/{week.daysTotal}
                   </td>
-                  <td className="py-2.5 pr-4 font-mono text-paper-dim tabular">
+                  <td className="py-2.5 pe-4 font-mono text-paper-dim tabular">
                     {week.avgKcal ?? "—"}
                   </td>
-                  <td className="py-2.5 pr-4 font-mono text-paper-dim tabular">
+                  <td className="py-2.5 pe-4 font-mono text-paper-dim tabular">
                     {week.avgProtein != null ? `${week.avgProtein} g` : "—"}
                   </td>
                   <td className="py-2.5 font-mono text-paper-dim tabular">

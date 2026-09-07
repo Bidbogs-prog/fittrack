@@ -442,21 +442,21 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
               <dt className="text-xs text-paper-mute">BMR — resting burn</dt>
               <dd className="mt-1 font-mono text-3xl font-semibold tracking-tight text-paper tabular">
                 {preview ? preview.bmr.toLocaleString() : "—"}
-                <span className="ml-1 text-sm text-paper-mute">kcal</span>
+                <span className="ms-1 text-sm text-paper-mute">kcal</span>
               </dd>
             </div>
             <div>
               <dt className="text-xs text-paper-mute">TDEE — daily burn with training</dt>
               <dd className="mt-1 font-mono text-3xl font-semibold tracking-tight text-paper tabular">
                 {preview?.tdee ? preview.tdee.toLocaleString() : "—"}
-                <span className="ml-1 text-sm text-paper-mute">kcal</span>
+                <span className="ms-1 text-sm text-paper-mute">kcal</span>
               </dd>
             </div>
             <div className="rounded-xl bg-flame/[0.08] px-4 py-3.5 ring-1 ring-inset ring-flame/25">
               <dt className="text-xs font-medium text-flame">Daily target</dt>
               <dd className="mt-1 font-mono text-3xl font-semibold tracking-tight text-flame tabular">
                 {preview?.target ? preview.target.toLocaleString() : "—"}
-                <span className="ml-1 text-sm opacity-70">kcal</span>
+                <span className="ms-1 text-sm opacity-70">kcal</span>
               </dd>
             </div>
             {preview?.targets && (
@@ -477,7 +477,7 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
                       </p>
                       <p className="mt-0.5 font-mono text-base font-semibold text-paper tabular">
                         {grams}
-                        <span className="ml-0.5 text-xs text-paper-mute">g</span>
+                        <span className="ms-0.5 text-xs text-paper-mute">g</span>
                       </p>
                     </div>
                   ))}

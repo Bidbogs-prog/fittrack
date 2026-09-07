@@ -147,7 +147,8 @@ This is a living document. Check items off as they ship, add notes/links to PRs,
 - [x] Infrastructure: next-intl (cookie locale, no URL restructure), `messages/{en,fr,ar}.json`, language switcher on `/account`, `html lang` + `dir=rtl` for Arabic
 - [x] First translated surfaces: nav, login, forgot-password, account
 - [ ] Remaining surfaces: signup/reset, dashboard, add-food dialog, foods, plans, history, onboarding (extract strings into the existing namespaces — pattern established)
-- [ ] RTL layout audit (physical `pl-*`/`left-*` utilities need logical or `rtl:` variants once Arabic content is real)
+- [x] RTL layout audit: directional utilities across the app and landing converted to logical ones (`ps/pe`, `ms/me`, `start/end`, `text-start/end`, `border-e`, `rounded-ee/es`); the progress bar has no logical `origin-*` so it uses `rtl:origin-right`. Purely decorative absolute positions (landing blur blobs, hero float cards, marquee edge fades) stay physical on purpose — they are composition, not reading order
+- [x] Language switcher reflects the tapped radio via `has-[:checked]`, not the saved cookie — the `sr-only` input previously made selection invisible until save, so the control read as dead (this is what "can't switch back from Arabic" was)
 
 ### 2.4 Exercise & integrations
 - [x] Manual workout logging (`exercise_logs`, activity card on the dashboard); burned kcal raises the day's target for formula targets only — adaptive TDEE already measures total burn, so no double credit. Exercise is also fed to the AI coach prompt

@@ -18,7 +18,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     // content column is capped and centered (see <main> below).
     <div className="flex min-h-[100dvh] w-full flex-col md:flex-row">
       {/* sidebar */}
-      <aside className="flex flex-col gap-8 border-ink-800 px-5 py-6 max-md:border-b md:sticky md:top-0 md:h-[100dvh] md:w-60 md:shrink-0 md:border-r">
+      <aside className="flex flex-col gap-8 border-ink-800 px-5 py-6 max-md:border-b md:sticky md:top-0 md:h-[100dvh] md:w-60 md:shrink-0 md:border-e">
         <Logo href="/dashboard" />
         <div className="max-md:hidden md:flex md:flex-1 md:flex-col md:justify-between">
           <AppNav />

@@ -114,10 +114,12 @@ export function DrawnBar({
     { dependencies: [pct], revertOnUpdate: true },
   );
 
+  // No logical `origin-*` utility exists: the bar must grow from the inline
+  // start, which is the right edge under RTL.
   return (
     <div
       ref={ref}
-      className={`h-full origin-left rounded-full ${className ?? ""}`}
+      className={`h-full origin-left rounded-full rtl:origin-right ${className ?? ""}`}
       style={{ width: `${Math.min(Math.max(pct, 0), 100)}%` }}
     />
   );

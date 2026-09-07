@@ -39,7 +39,7 @@ export function Habits({
         </p>
         <p className="mt-1 font-mono text-2xl font-semibold tracking-tight text-paper tabular">
           {streaks.current}
-          <span className="ml-1.5 text-sm font-normal text-paper-mute">
+          <span className="ms-1.5 text-sm font-normal text-paper-mute">
             day{streaks.current === 1 ? "" : "s"}
           </span>
         </p>
@@ -55,7 +55,7 @@ export function Habits({
         </p>
         <p className="mt-1 font-mono text-2xl font-semibold tracking-tight text-paper tabular">
           {streaks.consistency30}
-          <span className="ml-0.5 text-sm font-normal text-paper-mute">%</span>
+          <span className="ms-0.5 text-sm font-normal text-paper-mute">%</span>
         </p>
         <p className="text-[11px] text-paper-mute">of the last 30 days logged</p>
       </div>

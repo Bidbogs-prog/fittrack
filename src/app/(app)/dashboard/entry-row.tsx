@@ -59,7 +59,7 @@ export function EntryRow({ entry }: { entry: DiaryEntry }) {
             setError(null);
             setOpen(true);
           }}
-          className="btn-press min-w-0 flex-1 rounded-md text-left"
+          className="btn-press min-w-0 flex-1 rounded-md text-start"
         >
           <p className="truncate text-sm font-medium text-paper">{entryName(entry)}</p>
           <p className="truncate text-[11px] text-paper-mute">

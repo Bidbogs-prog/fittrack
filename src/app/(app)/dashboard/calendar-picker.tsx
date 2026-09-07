@@ -118,7 +118,7 @@ export function CalendarPicker({ selected, today }: { selected: string; today: s
                   type="button"
                   onClick={() => setOpen(false)}
                   aria-label="Close"
-                  className="btn-press ml-1 rounded-md p-2 text-paper-mute hover:bg-ink-800 hover:text-paper"
+                  className="btn-press ms-1 rounded-md p-2 text-paper-mute hover:bg-ink-800 hover:text-paper"
                 >
                   <X weight="bold" className="size-4" />
                 </button>
