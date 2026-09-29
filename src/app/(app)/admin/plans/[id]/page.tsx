@@ -147,7 +147,7 @@ export default async function PlanBuilderPage({
           </div>
           <button
             type="submit"
-            className="btn-press rounded-xl bg-flame px-5 py-2.5 font-display text-sm font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep"
+            className="btn-press rounded-xl btn-flame px-5 py-2.5 text-sm font-semibold"
           >
             Add
           </button>
@@ -200,7 +200,7 @@ export default async function PlanBuilderPage({
             </div>
             <button
               type="submit"
-              className="btn-press rounded-xl bg-flame px-5 py-2.5 font-display text-sm font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep"
+              className="btn-press rounded-xl btn-flame px-5 py-2.5 text-sm font-semibold"
             >
               Add all
             </button>

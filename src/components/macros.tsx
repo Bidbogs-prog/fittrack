@@ -1,45 +1,6 @@
 import { getFormatter, getTranslations } from "next-intl/server";
 import type { Macros } from "@/lib/nutrition";
-import { CountUp } from "@/components/motion/count-up";
-import { DrawnBar, DrawnRing } from "@/components/motion/progress";
-import { Reveal } from "@/components/motion/reveal";
-
-/** Big calorie ring for the dashboard hero — GSAP-drawn with counted center. */
-export async function CalorieRing({
-  eaten,
-  target,
-}: {
-  eaten: number;
-  target: number;
-}) {
-  const t = await getTranslations("common");
-  const format = await getFormatter();
-  const pct = target > 0 ? Math.min(eaten / target, 1) : 0;
-  const over = eaten > target;
-
-  return (
-    <div className="relative size-40 shrink-0">
-      <DrawnRing
-        pct={pct}
-        radius={64}
-        stroke={10}
-        color={over ? "var(--danger)" : "var(--flame)"}
-        className="size-full"
-        delay={0.15}
-      />
-      <div className="absolute inset-0 grid place-items-center">
-        <div className="text-center">
-          <p className="font-mono text-2xl font-semibold tracking-tight text-paper tabular">
-            <CountUp value={Math.round(eaten)} />
-          </p>
-          <p className="text-[11px] text-paper-mute">
-            {t("ofTargetKcal", { target: format.number(target) })}
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}
+import { DrawnBar } from "@/components/motion/progress";
 
 const MACRO_META = [
   ["protein", "bg-protein"],
@@ -48,34 +9,67 @@ const MACRO_META = [
   ["fibre", "bg-fibre"],
 ] as const;
 
-/** Four labelled progress bars: eaten vs target grams. */
+/** Right-rail macro bars: eaten vs target grams, fibre included. */
 export async function MacroBars({ eaten, targets }: { eaten: Macros; targets: Macros }) {
   const t = await getTranslations("macros");
   return (
-    <Reveal className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" stagger={0.09}>
+    <section aria-labelledby="macros-heading" className="flex flex-col gap-2.5">
+      <h2 id="macros-heading" className="text-[11px] font-semibold uppercase tracking-[0.14em] text-paper-mute">
+        {t("title")}
+      </h2>
       {MACRO_META.map(([key, color], i) => {
         const value = eaten[key];
         const target = targets[key];
         const pct = target > 0 ? Math.min((value / target) * 100, 100) : 0;
         return (
-          <div
-            key={key}
-            data-reveal
-            className="card-lift rounded-xl border border-ink-800 bg-ink-900/60 px-4 py-3.5"
-          >
-            <div className="flex items-baseline justify-between">
-              <p className="text-xs font-medium text-paper-dim">{t(key)}</p>
-              <p className="font-mono text-xs text-paper-mute tabular">
-                <CountUp value={Math.round(value)} /> / {Math.round(target)} {t("grams")}
-              </p>
+          <div key={key}>
+            <div className="flex items-baseline justify-between text-[13px]">
+              <span className="text-paper">{t(key)}</span>
+              <span className="font-mono text-paper-dim tabular">
+                {Math.round(value)} / {Math.round(target)} g
+              </span>
             </div>
-            <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-ink-700">
-              <DrawnBar pct={pct} delay={0.2 + i * 0.1} className={color} />
+            <div
+              role="progressbar"
+              aria-label={t(key)}
+              aria-valuenow={Math.round(value)}
+              aria-valuemin={0}
+              aria-valuemax={Math.round(target)}
+              className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-ink-800"
+            >
+              <DrawnBar pct={pct} delay={0.1 + i * 0.08} className={color} />
             </div>
           </div>
         );
       })}
-    </Reveal>
+    </section>
+  );
+}
+
+/** Three compact macro tiles under the dial on mobile. */
+export async function MacroTiles({ eaten, targets }: { eaten: Macros; targets: Macros }) {
+  const t = await getTranslations("macros");
+  return (
+    <dl className="grid grid-cols-3 gap-2">
+      {(
+        [
+          ["protein", "bg-protein"],
+          ["carbs", "bg-carbs"],
+          ["fat", "bg-fat"],
+        ] as const
+      ).map(([key, color]) => (
+        <div key={key} className="rounded-[14px] border border-ink-800 bg-ink-900 px-2.5 py-2">
+          <dt className="flex items-center gap-1.5 text-[11px] text-paper-mute">
+            <span className={`size-1.5 rounded-full ${color}`} />
+            {t(key)}
+          </dt>
+          <dd className="mt-0.5 font-mono text-sm font-medium text-paper tabular">
+            {Math.round(eaten[key])}
+            <span className="text-paper-mute">/{Math.round(targets[key])}</span>
+          </dd>
+        </div>
+      ))}
+    </dl>
   );
 }
 

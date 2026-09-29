@@ -159,6 +159,8 @@ export interface DiaryEntry {
   quick_carbs_g: number | null;
   quick_fat_g: number | null;
   quick_fibre_g: number | null;
+  /** When the row was logged; the orbit places meals by it (src/lib/day-time.ts). */
+  created_at?: string;
 }
 
 /**

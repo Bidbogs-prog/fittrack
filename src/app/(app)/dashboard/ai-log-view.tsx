@@ -185,9 +185,9 @@ export function AiLogView({
         />
         <div className="mt-3 flex items-center gap-2">
           {photo ? (
-            <span className="inline-flex max-w-full items-center gap-2 rounded-lg border border-ink-700 bg-ink-850 py-1.5 ps-3 pe-1.5 text-xs text-paper-dim">
+            <span className="inline-flex max-w-full items-center gap-2 rounded-lg border border-ink-700 bg-ink-850 py-1.5 pl-3 pr-1.5 text-xs text-paper-dim">
               <Camera weight="bold" className="size-3.5 shrink-0 text-flame" />
-              <span className="truncate">{t("photoAttached")}</span>
+              <span className="truncate">Photo attached</span>
               <button
                 type="button"
                 onClick={() => {
@@ -216,7 +216,7 @@ export function AiLogView({
           type="button"
           onClick={analyze}
           disabled={pending || (!description.trim() && !photo)}
-          className="btn-press mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-flame px-5 py-3 font-display text-sm font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep disabled:cursor-not-allowed disabled:opacity-40"
+          className="btn-press mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl btn-flame px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40"
         >
           <Sparkle weight="bold" className="size-4" />
           {pending ? t("readingMeal") : t("analyseMeal")}
@@ -319,7 +319,7 @@ export function AiLogView({
         type="button"
         onClick={log}
         disabled={pending || !allValid}
-        className="btn-press mt-4 w-full rounded-xl bg-flame px-5 py-3 font-display text-sm font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep disabled:cursor-not-allowed disabled:opacity-40"
+        className="btn-press mt-4 w-full rounded-xl btn-flame px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40"
       >
         {pending
           ? tCommon("logging")

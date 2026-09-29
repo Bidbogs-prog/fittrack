@@ -1,512 +1,464 @@
 "use client";
 
 import { useState } from "react";
-import { GenderFemale, GenderMale } from "@phosphor-icons/react";
 import { useFormatter, useTranslations } from "next-intl";
+import { Minus, Plus } from "@phosphor-icons/react";
+import { Logo } from "@/components/logo";
+import { Orbit } from "@/components/orbit/orbit";
 import {
   ACTIVITY_LEVELS,
   GOALS,
-  MACRO_PCT_MAX,
-  MACRO_PCT_MIN,
-  MACRO_PRESETS,
+  KCAL_FLOOR,
   ageFromBirthDate,
   calcBmr,
   calcTargets,
   calcTdee,
   macroSplitFromProfile,
-  type MacroSplit,
 } from "@/lib/nutrition";
-import { Reveal } from "@/components/motion/reveal";
-import type { ActivityLevel, Gender, Goal, Profile } from "@/lib/types";
+import { displayWeight, formatHeight } from "@/lib/units";
+import type { ActivityLevel, Gender, Goal, Profile, Units } from "@/lib/types";
 import { completeOnboarding } from "./actions";
 
 const LEVEL_KEYS = Object.keys(ACTIVITY_LEVELS) as ActivityLevel[];
 const GOAL_KEYS = Object.keys(GOALS) as Goal[];
+const STEPS = 6;
+const MIN_AGE = 14;
+const MAX_AGE = 80;
 
-type MacroMode = "auto" | (typeof MACRO_PRESETS)[number]["key"] | "custom";
+/** A birth date `years` ago, keeping the month/day of `base` when given. */
+function birthDateForAge(years: number, base: string | null): string {
+  const today = new Date();
+  const [, m, d] = (base ?? "").split("-").map(Number);
+  const month = m ? m - 1 : today.getMonth();
+  const day = d || today.getDate();
+  let y = today.getFullYear() - years;
+  // Birthday still to come this year: one year earlier keeps the age exact.
+  if (month > today.getMonth() || (month === today.getMonth() && day > today.getDate())) y -= 1;
+  return `${y}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
 
-const sameSplit = (a: MacroSplit, b: MacroSplit) =>
-  a.protein === b.protein && a.carbs === b.carbs && a.fat === b.fat;
+const selectCls = (on: boolean) =>
+  `btn-press cursor-pointer border transition-[border-color,background-color] duration-300 ease-[var(--ease-ui)] ${
+    on ? "border-flame bg-flame/[0.08]" : "border-ink-800 bg-ink-900 hover:border-ink-700"
+  }`;
 
+/**
+ * Six-step setup (sex, age, body, training, goal, ready) beside a live
+ * orbit that fills in as the numbers arrive. Every figure comes from
+ * nutrition.ts — calcBmr/calcTdee for the strip, calcTargets for the macros.
+ */
 export function OnboardingForm({ profile }: { profile?: Profile | null }) {
   const t = useTranslations("onboarding");
-  const tMacro = useTranslations("macros");
-  const tActivity = useTranslations("activity");
-  const tGoal = useTranslations("goal");
-  const tPreset = useTranslations("macroPreset");
   const format = useFormatter();
+  const [step, setStep] = useState(0);
   const [gender, setGender] = useState<Gender | null>(profile?.gender ?? null);
-  const [birthDate, setBirthDate] = useState(profile?.birth_date ?? "");
-  const [height, setHeight] = useState(profile?.height_cm ? String(profile.height_cm) : "");
-  const [weight, setWeight] = useState(profile?.weight_kg ? String(profile.weight_kg) : "");
-  const [activity, setActivity] = useState<ActivityLevel | null>(profile?.activity_level ?? null);
-  const [goal, setGoal] = useState<Goal | null>(profile?.goal ?? null);
+  const [birthDate, setBirthDate] = useState(profile?.birth_date ?? birthDateForAge(30, null));
+  const [height, setHeight] = useState(profile?.height_cm ?? 172);
+  const [weight, setWeight] = useState(profile?.weight_kg ?? 72);
+  const [units, setUnits] = useState<Units>(profile?.units ?? "metric");
+  const [activity, setActivity] = useState<ActivityLevel>(profile?.activity_level ?? "moderate");
+  const [goal, setGoal] = useState<Goal>(profile?.goal ?? "maintain");
+  const hadWindow = profile?.eating_window_start != null;
+  const [windowOn, setWindowOn] = useState(hadWindow);
   const [submitting, setSubmitting] = useState(false);
 
-  const savedSplit = profile ? macroSplitFromProfile(profile) : null;
-  const [macroMode, setMacroMode] = useState<MacroMode>(
-    savedSplit
-      ? (MACRO_PRESETS.find((p) => sameSplit(p.split, savedSplit))?.key ?? "custom")
-      : "auto"
-  );
-  const [custom, setCustom] = useState<MacroSplit>(
-    savedSplit ?? { protein: 30, carbs: 40, fat: 30 }
-  );
+  const age = ageFromBirthDate(birthDate);
+  const split = profile ? macroSplitFromProfile(profile) : null;
 
-  const activeSplit: MacroSplit | null =
-    macroMode === "auto"
-      ? null
-      : macroMode === "custom"
-        ? custom
-        : MACRO_PRESETS.find((p) => p.key === macroMode)!.split;
+  const bmr = gender ? calcBmr(gender, weight, height, age) : null;
+  const tdee = bmr != null ? calcTdee(bmr, activity) : null;
+  const targets = gender
+    ? calcTargets({
+        id: "",
+        email: null,
+        full_name: null,
+        gender,
+        birth_date: birthDate,
+        height_cm: height,
+        weight_kg: weight,
+        activity_level: activity,
+        goal,
+        protein_pct: split?.protein ?? null,
+        carbs_pct: split?.carbs ?? null,
+        fat_pct: split?.fat ?? null,
+        eating_window_start: null,
+        eating_window_end: null,
+        units: "metric",
+        onboarded: true,
+      })
+    : null;
 
-  const customSum = custom.protein + custom.carbs + custom.fat;
-  const customValid =
-    customSum === 100 &&
-    [custom.protein, custom.carbs, custom.fat].every(
-      (v) => Number.isInteger(v) && v >= MACRO_PCT_MIN && v <= MACRO_PCT_MAX
-    );
+  // The orbit fills as the steps advance.
+  const k = step >= STEPS - 1 ? 1 : step / (STEPS - 1);
+  const rings: [number, number, number] = targets
+    ? [
+        (k * targets.protein * 4) / targets.kcal,
+        (k * targets.carbs * 4) / targets.kcal,
+        (k * targets.fat * 9) / targets.kcal,
+      ]
+    : [0, 0, 0];
+  const fmt = (n: number) => format.number(n);
 
-  // Cheap enough to derive on every render; keeps the macro math in one place.
-  const preview = (() => {
-    const h = Number(height);
-    const w = Number(weight);
-    if (!gender || !birthDate || !(h > 0) || !(w > 0)) return null;
-    const age = ageFromBirthDate(birthDate);
-    if (age < 13 || age > 100) return null;
-    const bmr = calcBmr(gender, w, h, age);
-    const tdee = activity ? calcTdee(bmr, activity) : null;
-    const target =
-      tdee !== null && goal ? Math.max(1200, tdee + GOALS[goal].kcalDelta) : null;
-    // Full targets (incl. macro grams) via the single source of truth.
-    const targets =
-      activity && goal && (macroMode !== "custom" || customValid)
-        ? calcTargets({
-            id: "",
-            email: null,
-            full_name: null,
-            gender,
-            birth_date: birthDate,
-            height_cm: h,
-            weight_kg: w,
-            activity_level: activity,
-            goal,
-            protein_pct: activeSplit?.protein ?? null,
-            carbs_pct: activeSplit?.carbs ?? null,
-            fat_pct: activeSplit?.fat ?? null,
-            eating_window_start: null,
-            eating_window_end: null,
-            units: "metric",
-            onboarded: true,
-          })
-        : null;
-    return { bmr, tdee, target, targets };
-  })();
+  const canContinue = step !== 0 || gender != null;
 
-  const complete =
-    Boolean(gender && birthDate && height && weight && activity && goal) &&
-    preview !== null &&
-    (macroMode !== "custom" || customValid);
+  const w = displayWeight(weight, units);
 
   return (
-    <form action={completeOnboarding} onSubmit={() => setSubmitting(true)}>
-      <Reveal
-        onScroll={false}
-        delay={0.25}
-        stagger={0.12}
-        className="mt-10 grid gap-8 md:grid-cols-[1fr_300px] lg:grid-cols-[1fr_320px] lg:gap-10"
-      >
-      <div className="space-y-10">
-        {/* 01 — body */}
-        <section data-reveal>
-          <h2 className="flex items-baseline gap-3 font-display text-lg font-semibold text-paper">
-            <span className="font-mono text-xs text-flame">01</span> {t("sectionBody")}
-          </h2>
-          <div className="mt-5 grid gap-5 sm:grid-cols-2">
-            <fieldset className="sm:col-span-2">
-              <legend className="field-label mb-2">{t("sex")}</legend>
-              <div className="grid grid-cols-2 gap-3">
+    <form
+      action={completeOnboarding}
+      onSubmit={(e) => {
+        // Only the final step submits; Enter in a field elsewhere must not.
+        if (step < STEPS - 1) {
+          e.preventDefault();
+          return;
+        }
+        setSubmitting(true);
+      }}
+      className="contents"
+    >
+      <input type="hidden" name="gender" value={gender ?? ""} />
+      <input type="hidden" name="birth_date" value={birthDate} />
+      <input type="hidden" name="height_cm" value={height} />
+      <input type="hidden" name="weight_kg" value={weight} />
+      <input type="hidden" name="activity_level" value={activity} />
+      <input type="hidden" name="goal" value={goal} />
+      {/* Keep a saved custom split through an edit. */}
+      <input type="hidden" name="macro_mode" value={split ? "custom" : "auto"} />
+      {split && (
+        <>
+          <input type="hidden" name="protein_pct" value={split.protein} />
+          <input type="hidden" name="carbs_pct" value={split.carbs} />
+          <input type="hidden" name="fat_pct" value={split.fat} />
+        </>
+      )}
+      {windowOn !== hadWindow && <input type="hidden" name="window_mode" value={windowOn ? "on" : "off"} />}
+
+      {/* logo + progress */}
+      <header className="mx-auto flex w-full max-w-[1160px] items-center gap-5 px-6 py-[18px]">
+        <Logo href={profile ? "/dashboard" : "/"} />
+        <div className="ms-auto flex max-w-[420px] flex-1 gap-1.5" aria-hidden>
+          {Array.from({ length: STEPS }, (_, i) => (
+            <span
+              key={i}
+              className="h-1 flex-1 rounded-full transition-[background] duration-500"
+              style={{ background: i <= step ? "linear-gradient(90deg,#ffc94d,#f2701f)" : "var(--ink-800)" }}
+            />
+          ))}
+        </div>
+        <span className="font-mono text-xs font-medium whitespace-nowrap text-paper-mute" aria-live="polite">
+          {t("stepOf", { step: step + 1, total: STEPS })}
+        </span>
+      </header>
+
+      <div className="mx-auto grid w-full max-w-[1160px] flex-1 grid-cols-[repeat(auto-fit,minmax(min(100%,420px),1fr))] items-center gap-12 px-6 pt-6 pb-12">
+        <div className="flex min-w-0 flex-col gap-[22px]">
+          <div key={step} className="rise-in flex flex-col gap-[18px]">
+            <p className="eyebrow">{t(`eyebrow.${step}`)}</p>
+            <h1 className="font-display text-[clamp(36px,5vw,56px)] leading-none font-bold tracking-[-0.045em] text-balance text-paper">
+              {step === 5 ? t("readyTitle", { kcal: targets ? fmt(targets.kcal) : "—" }) : t(`title.${step}`)}
+            </h1>
+
+            {step === 0 && (
+              <>
+                <p className="text-[15px] leading-relaxed text-paper-dim">{t("sexHint")}</p>
+                <div className="grid grid-cols-2 gap-3" role="radiogroup" aria-label={t("title.0")}>
+                  {(
+                    [
+                      ["male", "+5"],
+                      ["female", "−161"],
+                    ] as const
+                  ).map(([value, term]) => (
+                    <button
+                      key={value}
+                      type="button"
+                      role="radio"
+                      aria-checked={gender === value}
+                      onClick={() => setGender(value)}
+                      className={`${selectCls(gender === value)} rounded-[20px] p-[22px] text-start`}
+                    >
+                      <span className="block font-display text-xl font-semibold text-paper">{t(value)}</span>
+                      <span className="mt-1.5 block font-mono text-xs text-paper-mute">BMR {term}</span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {step === 1 && (
+              <>
+                <div className="flex items-center gap-[18px]">
+                  <button
+                    type="button"
+                    onClick={() => setBirthDate(birthDateForAge(Math.max(MIN_AGE, age - 1), birthDate))}
+                    aria-label={t("younger")}
+                    className="btn-press grid size-[52px] place-items-center rounded-2xl border border-ink-700 text-paper-dim hover:text-paper"
+                  >
+                    <Minus weight="bold" className="size-5" />
+                  </button>
+                  <output className="min-w-[140px] text-center font-mono text-[84px] leading-none font-semibold tracking-[-0.06em] text-paper tabular">
+                    {age}
+                  </output>
+                  <button
+                    type="button"
+                    onClick={() => setBirthDate(birthDateForAge(Math.min(MAX_AGE, age + 1), birthDate))}
+                    aria-label={t("older")}
+                    className="btn-press grid size-[52px] place-items-center rounded-2xl border border-ink-700 text-paper-dim hover:text-paper"
+                  >
+                    <Plus weight="bold" className="size-5" />
+                  </button>
+                </div>
+                <input
+                  type="range"
+                  min={MIN_AGE}
+                  max={MAX_AGE}
+                  value={Math.min(MAX_AGE, Math.max(MIN_AGE, age))}
+                  onChange={(e) => setBirthDate(birthDateForAge(Number(e.target.value), birthDate))}
+                  aria-label={t("title.1")}
+                  className="h-11 w-full"
+                />
+                <label className="flex flex-wrap items-center gap-3 text-[13px] text-paper-mute">
+                  {t("dob")}
+                  <input
+                    type="date"
+                    value={birthDate}
+                    max={birthDateForAge(MIN_AGE, null)}
+                    onChange={(e) => e.target.value && setBirthDate(e.target.value)}
+                    className="field w-auto py-2 tabular"
+                  />
+                </label>
+                <p className="text-[13px] leading-relaxed text-paper-mute">
+                  {age < 18 ? t("under18") : t("ageHint")}
+                </p>
+              </>
+            )}
+
+            {step === 2 && (
+              <>
                 {(
                   [
-                    ["male", t("male"), GenderMale],
-                    ["female", t("female"), GenderFemale],
+                    [t("height"), formatHeight(height, units), height, 140, 210, 1, setHeight, ""],
+                    [t("weight"), String(w), weight, 40, 160, 0.5, setWeight, units === "imperial" ? "lb" : "kg"],
                   ] as const
-                ).map(([value, label, Icon]) => (
-                  <label
-                    key={value}
-                    className={`btn-press flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3.5 transition-colors ${
-                      gender === value
-                        ? "border-flame/60 bg-flame/[0.08] text-paper"
-                        : "border-ink-700 bg-ink-900 text-paper-dim hover:border-ink-600"
-                    }`}
-                  >
+                ).map(([label, shown, value, min, max, stepSize, set, unit]) => (
+                  <div key={label} className="flex flex-col gap-2.5 rounded-[22px] border border-ink-800 bg-ink-900 p-5">
+                    <div className="flex items-baseline justify-between">
+                      <span className="text-sm text-paper-dim">{label}</span>
+                      <span className="font-mono text-[34px] font-semibold tracking-[-0.04em] text-paper tabular">
+                        {shown}
+                        {unit && <span className="text-sm text-paper-mute"> {unit}</span>}
+                      </span>
+                    </div>
                     <input
-                      type="radio"
-                      name="gender"
+                      type="range"
+                      min={min}
+                      max={max}
+                      step={stepSize}
                       value={value}
-                      required
-                      checked={gender === value}
-                      onChange={() => setGender(value)}
-                      className="sr-only"
-                    />
-                    <Icon weight="bold" className={`size-5 ${gender === value ? "text-flame" : ""}`} />
-                    <span className="text-sm font-medium">{label}</span>
-                  </label>
-                ))}
-              </div>
-            </fieldset>
-
-            <div className="space-y-2">
-              <label htmlFor="birth_date" className="field-label">{t("birthDate")}</label>
-              <input
-                id="birth_date"
-                name="birth_date"
-                type="date"
-                required
-                value={birthDate}
-                onChange={(e) => setBirthDate(e.target.value)}
-                className="field [color-scheme:dark]"
-              />
-              <p className="text-xs text-paper-mute">{t("birthDateHint")}</p>
-            </div>
-            <div className="grid gap-4 min-[400px]:grid-cols-2">
-              <div className="space-y-2">
-                <label htmlFor="height_cm" className="field-label">{t("height")}</label>
-                <input
-                  id="height_cm"
-                  name="height_cm"
-                  type="number"
-                  inputMode="decimal"
-                  min={90}
-                  max={260}
-                  step="0.1"
-                  required
-                  value={height}
-                  onChange={(e) => setHeight(e.target.value)}
-                  placeholder="178"
-                  className="field tabular"
-                />
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="weight_kg" className="field-label">{t("weight")}</label>
-                <input
-                  id="weight_kg"
-                  name="weight_kg"
-                  type="number"
-                  inputMode="decimal"
-                  min={25}
-                  max={400}
-                  step="0.1"
-                  required
-                  value={weight}
-                  onChange={(e) => setWeight(e.target.value)}
-                  placeholder="80"
-                  className="field tabular"
-                />
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* 02 — training */}
-        <section data-reveal>
-          <h2 className="flex items-baseline gap-3 font-display text-lg font-semibold text-paper">
-            <span className="font-mono text-xs text-flame">02</span> {t("sectionTraining")}
-          </h2>
-          <p className="mt-1 text-xs text-paper-mute">{t("sectionTrainingHint")}</p>
-          <div className="mt-5 grid gap-3">
-            {LEVEL_KEYS.map((key) => {
-              const { multiplier } = ACTIVITY_LEVELS[key];
-              const selected = activity === key;
-              return (
-                <label
-                  key={key}
-                  className={`btn-press flex cursor-pointer items-center justify-between gap-4 rounded-xl border px-4 py-3.5 transition-colors ${
-                    selected
-                      ? "border-flame/60 bg-flame/[0.08]"
-                      : "border-ink-700 bg-ink-900 hover:border-ink-600"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="activity_level"
-                    value={key}
-                    required
-                    checked={selected}
-                    onChange={() => setActivity(key)}
-                    className="sr-only"
-                  />
-                  <span className="min-w-0">
-                    <span className={`block text-sm font-medium ${selected ? "text-paper" : "text-paper-dim"}`}>
-                      {tActivity(key)}
-                    </span>
-                    <span className="mt-0.5 block text-xs text-paper-mute">
-                      {tActivity(`${key}Detail`)}
-                    </span>
-                  </span>
-                  <span
-                    className={`shrink-0 rounded-md px-2 py-1 font-mono text-xs tabular ${
-                      selected ? "bg-flame text-flame-ink" : "bg-ink-800 text-paper-mute"
-                    }`}
-                  >
-                    ×{multiplier}
-                  </span>
-                </label>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* 03 — goal */}
-        <section data-reveal>
-          <h2 className="flex items-baseline gap-3 font-display text-lg font-semibold text-paper">
-            <span className="font-mono text-xs text-flame">03</span> {t("sectionGoal")}
-          </h2>
-          <div className="mt-5 grid gap-3 sm:grid-cols-3">
-            {GOAL_KEYS.map((key) => {
-              const selected = goal === key;
-              return (
-                <label
-                  key={key}
-                  className={`btn-press cursor-pointer rounded-xl border px-4 py-4 transition-colors ${
-                    selected
-                      ? "border-flame/60 bg-flame/[0.08]"
-                      : "border-ink-700 bg-ink-900 hover:border-ink-600"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="goal"
-                    value={key}
-                    required
-                    checked={selected}
-                    onChange={() => setGoal(key)}
-                    className="sr-only"
-                  />
-                  <span className={`block font-display text-sm font-semibold ${selected ? "text-flame" : "text-paper"}`}>
-                    {tGoal(key)}
-                  </span>
-                  <span className="mt-1 block text-xs leading-relaxed text-paper-mute">
-                    {tGoal(`${key}Detail`)}
-                  </span>
-                </label>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* 04 — macro split */}
-        <section data-reveal>
-          <h2 className="flex items-baseline gap-3 font-display text-lg font-semibold text-paper">
-            <span className="font-mono text-xs text-flame">04</span> {t("sectionMacros")}
-          </h2>
-          <p className="mt-1 text-xs text-paper-mute">
-            {t("sectionMacrosHint")}
-          </p>
-
-          <input type="hidden" name="macro_mode" value={macroMode === "auto" ? "auto" : "custom"} />
-          {macroMode !== "auto" && macroMode !== "custom" && activeSplit && (
-            <>
-              <input type="hidden" name="protein_pct" value={activeSplit.protein} />
-              <input type="hidden" name="carbs_pct" value={activeSplit.carbs} />
-              <input type="hidden" name="fat_pct" value={activeSplit.fat} />
-            </>
-          )}
-
-          <div className="mt-5 grid gap-3 sm:grid-cols-2">
-            <label
-              className={`btn-press cursor-pointer rounded-xl border px-4 py-4 transition-colors sm:col-span-2 ${
-                macroMode === "auto"
-                  ? "border-flame/60 bg-flame/[0.08]"
-                  : "border-ink-700 bg-ink-900 hover:border-ink-600"
-              }`}
-            >
-              <input
-                type="radio"
-                name="macro_mode_choice"
-                checked={macroMode === "auto"}
-                onChange={() => setMacroMode("auto")}
-                className="sr-only"
-              />
-              <span className={`block font-display text-sm font-semibold ${macroMode === "auto" ? "text-flame" : "text-paper"}`}>
-                {t("coachFormula")}
-              </span>
-              <span className="mt-1 block text-xs leading-relaxed text-paper-mute">
-                {t("coachFormulaHint", {
-                  proteinPerKg: goal ? GOALS[goal].proteinPerKg : "1.8–2.2",
-                })}
-              </span>
-            </label>
-
-            {MACRO_PRESETS.map(({ key, split }) => {
-              const selected = macroMode === key;
-              return (
-                <label
-                  key={key}
-                  className={`btn-press cursor-pointer rounded-xl border px-4 py-4 transition-colors ${
-                    selected
-                      ? "border-flame/60 bg-flame/[0.08]"
-                      : "border-ink-700 bg-ink-900 hover:border-ink-600"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="macro_mode_choice"
-                    checked={selected}
-                    onChange={() => setMacroMode(key)}
-                    className="sr-only"
-                  />
-                  <span className="flex items-center justify-between gap-2">
-                    <span className={`font-display text-sm font-semibold ${selected ? "text-flame" : "text-paper"}`}>
-                      {tPreset(key)}
-                    </span>
-                    <span className={`rounded-md px-2 py-1 font-mono text-[11px] tabular ${selected ? "bg-flame text-flame-ink" : "bg-ink-800 text-paper-mute"}`}>
-                      {split.protein}·{split.carbs}·{split.fat}
-                    </span>
-                  </span>
-                  <span className="mt-1 block text-xs leading-relaxed text-paper-mute">{tPreset(`${key}Detail`)}</span>
-                </label>
-              );
-            })}
-
-            <label
-              className={`btn-press cursor-pointer rounded-xl border px-4 py-4 transition-colors ${
-                macroMode === "custom"
-                  ? "border-flame/60 bg-flame/[0.08]"
-                  : "border-ink-700 bg-ink-900 hover:border-ink-600"
-              }`}
-            >
-              <input
-                type="radio"
-                name="macro_mode_choice"
-                checked={macroMode === "custom"}
-                onChange={() => setMacroMode("custom")}
-                className="sr-only"
-              />
-              <span className={`block font-display text-sm font-semibold ${macroMode === "custom" ? "text-flame" : "text-paper"}`}>
-                {t("customSplit")}
-              </span>
-              <span className="mt-1 block text-xs leading-relaxed text-paper-mute">
-                {t("customSplitHint")}
-              </span>
-            </label>
-          </div>
-
-          {macroMode === "custom" && (
-            <div className="mt-4 rounded-xl border border-ink-700 bg-ink-900 p-4">
-              <div className="grid grid-cols-3 gap-3">
-                {(
-                  [
-                    ["protein_pct", "protein", "bg-protein"],
-                    ["carbs_pct", "carbs", "bg-carbs"],
-                    ["fat_pct", "fat", "bg-fat"],
-                  ] as const
-                ).map(([name, key, dot]) => (
-                  <div key={key} className="space-y-2">
-                    <label htmlFor={name} className="field-label flex items-center gap-1.5">
-                      <span className={`size-2 rounded-full ${dot}`} aria-hidden />
-                      {t("macroPercent", { macro: tMacro(key) })}
-                    </label>
-                    <input
-                      id={name}
-                      name={name}
-                      type="number"
-                      inputMode="numeric"
-                      min={MACRO_PCT_MIN}
-                      max={MACRO_PCT_MAX}
-                      step={1}
-                      required
-                      value={custom[key]}
-                      onChange={(e) =>
-                        setCustom((c) => ({ ...c, [key]: Math.round(Number(e.target.value)) }))
-                      }
-                      className="field tabular"
+                      onChange={(e) => set(Number(e.target.value))}
+                      aria-label={label}
+                      className="h-11 w-full"
                     />
                   </div>
                 ))}
-              </div>
-              <p
-                className={`mt-3 font-mono text-xs tabular ${
-                  customValid ? "text-flame" : "text-danger"
-                }`}
-                role={customValid ? undefined : "alert"}
-              >
-                {customValid
-                  ? t("splitValid")
-                  : t("splitInvalid", { sum: customSum, min: MACRO_PCT_MIN, max: MACRO_PCT_MAX })}
-              </p>
-            </div>
-          )}
-        </section>
-      </div>
-
-      {/* live preview panel */}
-      <aside data-reveal className="md:sticky md:top-8 md:self-start">
-        <div className="rounded-2xl border border-ink-700 bg-ink-900/80 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-paper-mute">
-            {t("yourNumbers")}
-          </p>
-          <dl className="mt-5 space-y-5">
-            <div>
-              <dt className="text-xs text-paper-mute">{t("bmr")}</dt>
-              <dd className="mt-1 font-mono text-3xl font-semibold tracking-tight text-paper tabular">
-                {preview ? format.number(preview.bmr) : "—"}
-                <span className="ms-1 text-sm text-paper-mute">{tMacro("kcal")}</span>
-              </dd>
-            </div>
-            <div>
-              <dt className="text-xs text-paper-mute">{t("tdee")}</dt>
-              <dd className="mt-1 font-mono text-3xl font-semibold tracking-tight text-paper tabular">
-                {preview?.tdee ? format.number(preview.tdee) : "—"}
-                <span className="ms-1 text-sm text-paper-mute">{tMacro("kcal")}</span>
-              </dd>
-            </div>
-            <div className="rounded-xl bg-flame/[0.08] px-4 py-3.5 ring-1 ring-inset ring-flame/25">
-              <dt className="text-xs font-medium text-flame">{t("dailyTarget")}</dt>
-              <dd className="mt-1 font-mono text-3xl font-semibold tracking-tight text-flame tabular">
-                {preview?.target ? format.number(preview.target) : "—"}
-                <span className="ms-1 text-sm opacity-70">{tMacro("kcal")}</span>
-              </dd>
-            </div>
-            {preview?.targets && (
-              <div>
-                <dt className="text-xs text-paper-mute">{t("dailyMacros")}</dt>
-                <dd className="mt-2 grid grid-cols-3 divide-x divide-ink-700 border-y border-ink-700">
-                  {(
-                    [
-                      ["protein", preview.targets.protein, "bg-protein"],
-                      ["carbs", preview.targets.carbs, "bg-carbs"],
-                      ["fat", preview.targets.fat, "bg-fat"],
-                    ] as const
-                  ).map(([macro, grams, dot]) => (
-                    <div key={macro} className="px-3 py-2.5 first:ps-0">
-                      <p className="flex items-center gap-1.5 text-[11px] text-paper-mute">
-                        <span className={`size-1.5 rounded-full ${dot}`} aria-hidden />
-                        {tMacro(macro)}
-                      </p>
-                      <p className="mt-0.5 font-mono text-base font-semibold text-paper tabular">
-                        {format.number(grams)}
-                        <span className="ms-0.5 text-xs text-paper-mute">{tMacro("grams")}</span>
-                      </p>
-                    </div>
+                <div className="flex flex-wrap items-center gap-1.5 text-[13px]" role="radiogroup" aria-label={t("units")}>
+                  {(["metric", "imperial"] as const).map((u) => (
+                    <button
+                      key={u}
+                      type="button"
+                      role="radio"
+                      aria-checked={units === u}
+                      onClick={() => setUnits(u)}
+                      className={`min-h-9 rounded-full px-3 ${
+                        units === u ? "bg-ink-800 text-paper" : "border border-ink-700 text-paper-mute hover:text-paper"
+                      }`}
+                    >
+                      {t(u)}
+                    </button>
                   ))}
-                </dd>
+                  <span className="px-1 text-paper-mute">{t("unitsHint")}</span>
+                </div>
+              </>
+            )}
+
+            {step === 3 && (
+              <div className="flex flex-col gap-2" role="radiogroup" aria-label={t("title.3")}>
+                {LEVEL_KEYS.map((key) => (
+                  <button
+                    key={key}
+                    type="button"
+                    role="radio"
+                    aria-checked={activity === key}
+                    onClick={() => setActivity(key)}
+                    className={`${selectCls(activity === key)} flex min-h-14 items-center justify-between rounded-2xl px-[18px] py-3.5 text-start`}
+                  >
+                    <span>
+                      <span className="block font-display text-base font-semibold text-paper">{t(`level.${key}.label`)}</span>
+                      <span className="block text-xs text-paper-mute">{t(`level.${key}.detail`)}</span>
+                    </span>
+                    <span className={`font-mono text-[13px] font-medium ${activity === key ? "text-flame" : "text-paper-mute"}`}>
+                      × {ACTIVITY_LEVELS[key].multiplier}
+                    </span>
+                  </button>
+                ))}
               </div>
             )}
+
+            {step === 4 && (
+              <div className="grid gap-2.5 sm:grid-cols-3" role="radiogroup" aria-label={t("title.4")}>
+                {GOAL_KEYS.map((key) => {
+                  const delta = GOALS[key].kcalDelta;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      role="radio"
+                      aria-checked={goal === key}
+                      onClick={() => setGoal(key)}
+                      className={`${selectCls(goal === key)} flex flex-col gap-1.5 rounded-[20px] p-[18px] text-start`}
+                    >
+                      <span className="font-display text-lg font-semibold text-paper">{t(`goal.${key}.label`)}</span>
+                      <span className={`font-mono text-[13px] font-medium ${goal === key ? "text-flame" : "text-paper-mute"}`}>
+                        {delta > 0 ? `+${delta}` : delta < 0 ? `−${Math.abs(delta)}` : "± 0"} kcal
+                      </span>
+                      <span className="text-xs leading-snug text-paper-mute">{t(`goal.${key}.detail`)}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {step === 5 && (
+              <>
+                <p className="max-w-[46ch] text-[15px] leading-relaxed text-paper-dim">{t("readyBody")}</p>
+                <dl className="grid grid-cols-3 gap-2.5">
+                  {(
+                    [
+                      [t("protein"), targets?.protein, "text-protein"],
+                      [t("carbs"), targets?.carbs, "text-carbs"],
+                      [t("fat"), targets?.fat, "text-fat"],
+                    ] as const
+                  ).map(([label, value, color]) => (
+                    <div key={label} className="rounded-2xl border border-ink-800 bg-ink-900 p-3.5">
+                      <dt className="text-xs text-paper-mute">{label}</dt>
+                      <dd className={`font-mono text-[22px] font-medium tabular ${color}`}>{value ?? "—"} g</dd>
+                    </div>
+                  ))}
+                </dl>
+                {targets && age < 18 && <p className="text-[13px] text-paper-mute">{t("under18")}</p>}
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={windowOn}
+                  onClick={() => setWindowOn((v) => !v)}
+                  className="flex min-h-14 items-center justify-between rounded-2xl border border-ink-800 bg-ink-900 px-[18px] py-3.5 text-start"
+                >
+                  <span>
+                    <span className="block font-display text-[15px] font-semibold text-paper">
+                      {t("window")} <span className="font-sans text-xs font-normal text-paper-mute">{t("optional")}</span>
+                    </span>
+                    <span className="block text-xs text-paper-mute">
+                      {windowOn ? (hadWindow ? t("windowKeep") : t("windowOn")) : t("windowOff")}
+                    </span>
+                  </span>
+                  <span
+                    aria-hidden
+                    className={`relative h-[22px] w-10 shrink-0 rounded-full transition-colors ${windowOn ? "bg-flame" : "bg-ink-700"}`}
+                  >
+                    <span
+                      className={`absolute top-[3px] size-4 rounded-full bg-paper transition-[inset-inline-start] duration-300 ease-[var(--ease-ui)] ${
+                        windowOn ? "start-[21px]" : "start-[3px]"
+                      }`}
+                    />
+                  </span>
+                </button>
+              </>
+            )}
+          </div>
+
+          <div className="mt-1.5 flex gap-2.5">
+            {step > 0 && (
+              <button
+                type="button"
+                onClick={() => setStep((s) => s - 1)}
+                className="btn-press min-h-12 rounded-[14px] border border-ink-700 px-[22px] text-paper-dim hover:text-paper"
+              >
+                {t("back")}
+              </button>
+            )}
+            {step < STEPS - 1 ? (
+              <button
+                type="button"
+                onClick={() => canContinue && setStep((s) => s + 1)}
+                disabled={!canContinue}
+                className="btn-press min-h-12 max-w-[280px] flex-1 rounded-[14px] bg-paper px-[22px] font-semibold text-ink-950 disabled:opacity-40"
+              >
+                {t("continue")}
+              </button>
+            ) : (
+              <button
+                type="submit"
+                disabled={submitting || !targets}
+                className="btn-flame btn-press glow-flame min-h-12 max-w-[320px] flex-1 rounded-[14px] px-[22px] disabled:opacity-40"
+              >
+                {submitting ? t("saving") : t("lockIn")} <span aria-hidden className="rtl:-scale-x-100">→</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* live panel */}
+        <div className="flex w-full max-w-[460px] flex-col items-center gap-[18px] justify-self-center">
+          <div className="relative aspect-square w-full max-w-[380px]">
+            <div
+              aria-hidden
+              className="absolute -inset-[8%] rounded-full transition-[background] duration-700"
+              style={{ background: `radial-gradient(circle,rgba(255,157,59,${(0.05 + k * 0.12).toFixed(2)}),transparent 62%)` }}
+            />
+            <Orbit
+              key={targets ? "ready" : "empty"}
+              rings={rings}
+              window={{ startMin: 0, endMin: Math.max(0.04, k) * 1439 }}
+              labels={false}
+              summary={
+                targets ? t("orbitSummary", { kcal: targets.kcal }) : t("orbitEmpty")
+              }
+              className="size-full"
+            >
+              <div className="absolute inset-[32%] flex flex-col items-center justify-center rounded-full bg-ink-900 shadow-[inset_0_0_0_1px_var(--ink-700)]">
+                <span className="font-mono text-[clamp(26px,4vw,38px)] leading-none font-semibold tracking-[-0.04em] text-paper tabular">
+                  {targets ? fmt(targets.kcal) : "—"}
+                </span>
+                <span className="mt-1 text-[10px] tracking-[0.12em] text-paper-mute uppercase">{t("kcalDay")}</span>
+              </div>
+            </Orbit>
+          </div>
+          <dl className="grid w-full grid-cols-3 border-y border-ink-700">
+            {(
+              [
+                ["BMR", bmr != null ? fmt(bmr) : "—", t("restingBurn"), false],
+                ["TDEE", tdee != null ? fmt(tdee) : "—", `× ${ACTIVITY_LEVELS[activity].multiplier}`, false],
+                [
+                  t("target"),
+                  targets ? fmt(targets.kcal) : "—",
+                  targets && tdee != null && tdee + GOALS[goal].kcalDelta < KCAL_FLOOR
+                    ? t("floor", { kcal: KCAL_FLOOR })
+                    : t(`goal.${goal}.short`),
+                  true,
+                ],
+              ] as const
+            ).map(([label, value, sub, accent], i) => (
+              <div key={label} className={`py-3 ${i === 0 ? "pe-3" : i === 1 ? "px-3" : "ps-3"} ${i < 2 ? "border-e border-ink-700" : ""}`}>
+                <dt className="text-[10px] font-semibold tracking-[0.14em] text-paper-mute uppercase">{label}</dt>
+                <dd className={`font-mono text-xl font-medium tabular ${accent ? "text-flame" : "text-paper"}`}>{value}</dd>
+                <dd className="text-[11px] text-paper-mute">{sub}</dd>
+              </div>
+            ))}
           </dl>
-          <button
-            type="submit"
-            disabled={!complete || submitting}
-            className="btn-press mt-6 w-full rounded-xl bg-flame px-5 py-3 font-display text-sm font-bold uppercase tracking-wide text-flame-ink transition-opacity hover:bg-flame-deep disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            {submitting ? t("saving") : t("submit")}
-          </button>
-          <p className="mt-3 text-center text-xs text-paper-mute">
-            {complete ? t("changeLater") : t("completeToUnlock")}
+          <p dir="ltr" className="text-center font-mono text-xs leading-relaxed text-paper-mute">
+            10×{weight} + 6.25×{height} − 5×{age} {gender === "female" ? "− 161" : gender === "male" ? "+ 5" : "± s"}
           </p>
         </div>
-      </aside>
-      </Reveal>
+      </div>
     </form>
   );
 }

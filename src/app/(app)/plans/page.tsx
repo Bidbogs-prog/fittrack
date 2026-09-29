@@ -1,60 +1,68 @@
-import { ArrowRight, ChalkboardTeacher, PaperPlaneTilt } from "@phosphor-icons/react/dist/ssr";
+import { CaretRight } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
-import { Reveal } from "@/components/motion/reveal";
+import { getFormatter, getTranslations } from "next-intl/server";
+import { MiniDial } from "@/components/orbit/orbit";
+import { getActiveTargets } from "@/lib/adaptive";
 import { getProfile } from "@/lib/auth";
 import { GOALS, macrosForPortion, sumMacros } from "@/lib/nutrition";
 import type { Goal, MealPlan } from "@/lib/types";
-import { cancelPlanRequest, requestPlan } from "./actions";
-import { GeneratePlan } from "./generate-plan";
+import { PlanTools } from "./plan-tools";
 
 export const metadata = { title: "Meal plans" };
 
 const GOAL_KEYS = Object.keys(GOALS) as Goal[];
 
-function PlanCard({ plan, badge }: { plan: MealPlan; badge?: string }) {
+type Kind = "assigned" | "ai" | "library";
+
+async function PlanCard({
+  plan,
+  kind,
+  targetKcal,
+  tag,
+}: {
+  plan: MealPlan;
+  kind: Kind;
+  targetKcal: number | null;
+  tag: string;
+}) {
+  const format = await getFormatter();
   const total = sumMacros(plan.items.map((it) => macrosForPortion(it.food, it.grams)));
+  const pct = targetKcal ? Math.round((total.kcal / targetKcal) * 100) : null;
+  const kcal = format.number(Math.round(total.kcal));
+  const surface =
+    kind === "assigned"
+      ? "border-flame/45 bg-[linear-gradient(160deg,rgba(255,157,59,0.1),var(--ink-900)_60%)]"
+      : kind === "ai"
+        ? "border-dashed border-ink-600 bg-ink-900"
+        : "border-ink-800 bg-ink-900";
   return (
     <Link
       href={`/plans/${plan.id}`}
-      className="btn-press card-lift group block rounded-2xl border border-ink-800 bg-ink-900/60 p-5 hover:border-ink-600"
+      className={`btn-press card-lift group flex items-center gap-3.5 rounded-[20px] border p-3 lg:flex-col lg:items-stretch lg:gap-3 lg:rounded-[22px] lg:p-[18px] ${surface}`}
     >
-      <div className="flex items-start justify-between gap-3">
-        <h2 className="font-display text-base font-semibold tracking-tight text-paper">
+      <span className="lg:hidden">
+        <MiniDial fraction={pct != null ? pct / 100 : null} size={64} stroke={3.5}>
+          <span className="font-mono text-[11px] font-medium text-paper tabular">{kcal}</span>
+        </MiniDial>
+      </span>
+      <span className="self-center max-lg:hidden">
+        <MiniDial fraction={pct != null ? pct / 100 : null} size={140} stroke={2.5}>
+          <span className="flex flex-col items-center font-mono text-[22px] font-semibold tracking-[-0.03em] text-paper tabular">
+            {kcal}
+            <span className="font-sans text-[10px] font-normal tracking-[0.1em] text-paper-mute">KCAL</span>
+          </span>
+        </MiniDial>
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block font-mono text-[10px] font-medium tracking-[0.1em] text-flame uppercase">{tag}</span>
+        <span className="mt-0.5 block truncate font-display text-base font-semibold text-paper lg:text-lg">
           {plan.name}
-          {badge && (
-            <span className="ms-2 align-middle rounded-full bg-flame/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-flame ring-1 ring-inset ring-flame/25">
-              {badge}
-            </span>
-          )}
-        </h2>
-        <ArrowRight
-          weight="bold"
-          className="mt-1 size-4 shrink-0 text-paper-mute transition-transform group-hover:translate-x-0.5 group-hover:text-flame"
-        />
-      </div>
-      {plan.description && (
-        <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-paper-mute">
-          {plan.description}
-        </p>
-      )}
-      <dl className="mt-4 grid grid-cols-5 gap-px overflow-hidden rounded-lg bg-ink-800">
-        {(
-          [
-            ["kcal", Math.round(total.kcal)],
-            ["P", Math.round(total.protein)],
-            ["C", Math.round(total.carbs)],
-            ["F", Math.round(total.fat)],
-            ["Fb", Math.round(total.fibre)],
-          ] as const
-        ).map(([label, value]) => (
-          <div key={label} className="bg-ink-900 px-1 py-2 text-center sm:px-2">
-            <dt className="text-[10px] uppercase tracking-wide text-paper-mute">{label}</dt>
-            <dd className="mt-0.5 font-mono text-[13px] font-medium text-paper tabular sm:text-sm">
-              {value.toLocaleString()}
-            </dd>
-          </div>
-        ))}
-      </dl>
+        </span>
+        <span className="mt-0.5 block font-mono text-xs text-paper-mute tabular">
+          {Math.round(total.protein)} g P{pct != null ? ` · ${pct}%` : ""}
+        </span>
+      </span>
+      <CaretRight weight="bold" className="size-4 shrink-0 text-paper-mute lg:hidden rtl:-scale-x-100" />
     </Link>
   );
 }
@@ -64,11 +72,15 @@ export default async function PlansPage({
 }: {
   searchParams: Promise<{ g?: string }>;
 }) {
-  const [{ supabase, userId, profile }, { g }] = await Promise.all([getProfile(), searchParams]);
+  const [{ supabase, userId, profile }, { g }, t] = await Promise.all([
+    getProfile(),
+    searchParams,
+    getTranslations("plans"),
+  ]);
 
   const goal: Goal = GOAL_KEYS.find((k) => k === g) ?? profile.goal ?? "maintain";
 
-  const [{ data }, { data: assignedData }, { data: requestData }] = await Promise.all([
+  const [{ data }, { data: assignedData }, { data: requestData }, active] = await Promise.all([
     // The general shelf: global catalogue + own AI plans, never assigned ones.
     supabase
       .from("meal_plans")
@@ -82,138 +94,85 @@ export default async function PlansPage({
       .select("*, items:meal_plan_items(*, food:foods(*))")
       .eq("assigned_to", userId)
       .order("created_at", { ascending: false }),
-    supabase
-      .from("plan_requests")
-      .select("id")
-      .eq("user_id", userId)
-      .eq("status", "pending")
-      .limit(1),
+    supabase.from("plan_requests").select("id").eq("user_id", userId).eq("status", "pending").limit(1),
+    getActiveTargets(supabase, userId, profile),
   ]);
   const plans = (data ?? []) as MealPlan[];
   const assigned = (assignedData ?? []) as MealPlan[];
-  const pendingRequest = requestData?.[0] ?? null;
+  const pendingRequestId = (requestData?.[0]?.id as string | undefined) ?? null;
+  const targetKcal = active?.targets.kcal ?? null;
+  const format = await getFormatter();
+
+  const all: { plan: MealPlan; kind: Kind }[] = [
+    ...assigned.map((plan) => ({ plan, kind: "assigned" as const })),
+    ...plans.map((plan) => ({ plan, kind: (plan.owner_id != null ? "ai" : "library") as Kind })),
+  ];
 
   return (
-    <div className="space-y-7">
-      <header>
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-flame">
-          Coach-built days
-        </p>
-        <h1 className="mt-1.5 font-display text-3xl font-bold tracking-tighter text-paper md:text-4xl">
-          Meal plans
-        </h1>
-        <p className="mt-2 max-w-[60ch] text-sm text-paper-dim">
-          Full days of eating assembled from the food library.
-          {profile.goal && goal === profile.goal && " Showing plans for your current goal."}
-        </p>
+    <div className="flex flex-col gap-3 lg:gap-[18px]">
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="eyebrow max-lg:hidden">{t("eyebrow")}</p>
+          <h1 className="font-display text-[26px] font-bold tracking-[-0.03em] text-paper lg:mt-1 lg:text-[40px] lg:leading-[1.05] lg:tracking-[-0.035em]">
+            {t("title")}
+          </h1>
+        </div>
+        <div className="max-lg:hidden">
+          <PlanTools pendingRequestId={pendingRequestId} />
+        </div>
       </header>
 
-      <GeneratePlan />
-
-      {/* Ask the coach for a custom plan (fulfilled from the admin panel). */}
-      <section className="rounded-2xl border border-ink-800 bg-ink-900/60 p-5">
-        {pendingRequest ? (
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-start gap-3">
-              <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-flame/10 ring-1 ring-inset ring-flame/25">
-                <PaperPlaneTilt weight="fill" className="size-4.5 text-flame" />
-              </span>
-              <div>
-                <h2 className="font-display text-sm font-semibold text-paper">
-                  Plan request sent
-                </h2>
-                <p className="mt-0.5 text-xs text-paper-mute">
-                  Your coach has it — the plan will appear here once it&apos;s ready.
-                </p>
-              </div>
-            </div>
-            <form action={cancelPlanRequest}>
-              <input type="hidden" name="id" value={pendingRequest.id} />
-              <button
-                type="submit"
-                className="btn-press rounded-lg border border-ink-700 px-3.5 py-2 text-xs font-semibold text-paper-dim transition-colors hover:border-danger/50 hover:text-danger"
-              >
-                Cancel request
-              </button>
-            </form>
-          </div>
-        ) : (
-          <form action={requestPlan} className="space-y-3">
-            <div className="flex items-start gap-3">
-              <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-flame/10 ring-1 ring-inset ring-flame/25">
-                <ChalkboardTeacher weight="fill" className="size-4.5 text-flame" />
-              </span>
-              <div>
-                <h2 className="font-display text-sm font-semibold text-paper">
-                  Want a plan built for you?
-                </h2>
-                <p className="mt-0.5 text-xs text-paper-mute">
-                  Ask your coach for a custom day of eating — it lands here when it&apos;s done.
-                </p>
-              </div>
-            </div>
-            <textarea
-              name="note"
-              rows={2}
-              maxLength={500}
-              placeholder="Anything your coach should know — foods you love or avoid, schedule, budget…"
-              className="field resize-none"
-            />
-            <button
-              type="submit"
-              className="btn-press rounded-xl bg-flame px-5 py-2.5 font-display text-xs font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep"
-            >
-              Request a plan
-            </button>
-          </form>
-        )}
-      </section>
-
-      {assigned.length > 0 && (
-        <section className="space-y-4">
-          <h2 className="font-display text-lg font-semibold tracking-tight text-paper">
-            From your coach
-          </h2>
-          <ul className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            {assigned.map((plan) => (
-              <li key={plan.id}>
-                <PlanCard plan={plan} badge="Coach" />
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      <nav className="flex flex-wrap gap-2" aria-label="Filter by goal">
+      <nav className="flex flex-wrap items-center gap-1.5 lg:gap-2" aria-label={t("filter")}>
         {GOAL_KEYS.map((key) => (
           <Link
             key={key}
             href={`/plans?g=${key}`}
-            className={`rounded-full px-3.5 py-2 text-xs font-semibold transition-colors pointer-fine:py-1.5 ${
+            aria-current={goal === key ? "page" : undefined}
+            className={`inline-flex min-h-9 items-center rounded-full px-3 text-xs lg:px-3.5 lg:text-[13px] ${
               goal === key
-                ? "bg-flame text-flame-ink"
+                ? "bg-flame font-semibold text-flame-ink"
                 : "border border-ink-700 text-paper-dim hover:text-paper"
             }`}
           >
-            {GOALS[key].label}
-            {profile.goal === key && " · yours"}
+            {t(`goalChip.${key}`)}
+            {profile.goal === key && goal !== key ? ` · ${t("yours")}` : ""}
           </Link>
         ))}
+        {targetKcal && (
+          <span className="ms-1.5 text-xs text-paper-mute max-lg:hidden">
+            {t("pctHint", { kcal: format.number(targetKcal) })}
+          </span>
+        )}
       </nav>
 
-      {plans.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-ink-700 px-6 py-16 text-center text-sm text-paper-mute">
-          No {GOALS[goal].label.toLowerCase()} plans yet — your coach is cooking.
+      {all.length === 0 ? (
+        <p className="rounded-[20px] border border-dashed border-ink-700 px-6 py-14 text-center text-sm text-paper-mute">
+          {t("empty")}
         </p>
       ) : (
-        <Reveal as="ul" className="grid grid-cols-1 gap-4 lg:grid-cols-2" stagger={0.08} start="top 92%">
-          {plans.map((plan) => (
-            <li key={plan.id} data-reveal>
-              <PlanCard plan={plan} badge={plan.owner_id != null ? "Yours" : undefined} />
+        <ul className="grid grid-cols-1 gap-2.5 lg:grid-cols-3 lg:gap-4">
+          {all.map(({ plan, kind }) => (
+            <li key={plan.id}>
+              <PlanCard
+                plan={plan}
+                kind={kind}
+                targetKcal={targetKcal}
+                tag={
+                  kind === "assigned"
+                    ? t("tagAssigned")
+                    : kind === "ai"
+                      ? t("tagAi")
+                      : t(`goalChip.${plan.goal}`)
+                }
+              />
             </li>
           ))}
-        </Reveal>
+        </ul>
       )}
+
+      <div className="lg:hidden">
+        <PlanTools pendingRequestId={pendingRequestId} layout="grid" />
+      </div>
     </div>
   );
 }

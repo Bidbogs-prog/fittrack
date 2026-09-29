@@ -3,11 +3,10 @@
     "today": "Aujourd'hui",
     "history": "Historique",
     "coach": "Coach",
-    "foodLibrary": "Bibliothèque d'aliments",
     "foods": "Aliments",
-    "plans": "Plans repas",
-    "plansShort": "Plans",
-    "account": "Compte"
+    "plans": "Plans",
+    "label": "Principal",
+    "me": "Moi"
   },
   "auth": {
     "welcomeBack": "Bon retour",
@@ -110,9 +109,7 @@
     "mealNameRequired": "Donnez un nom au repas."
   },
   "onboarding": {
-    "eyebrow": "Étape 1 sur 1 — votre moteur",
     "eyebrowEditing": "Mettre à jour vos données",
-    "title": "Parlez-nous de votre corps. On fait les calculs.",
     "titleEditing": "Le corps a changé ? Les objectifs aussi.",
     "intro": "Ces chiffres alimentent l'équation de Mifflin-St Jeor pour votre métabolisme de base, puis votre fréquence d'entraînement fixe le multiplicateur du TDEE. Vos objectifs quotidiens se mettent à jour en direct.",
     "sectionBody": "Votre corps",
@@ -121,8 +118,8 @@
     "female": "Femme",
     "birthDate": "Date de naissance",
     "birthDateHint": "L'âge fait partie de l'équation du métabolisme de base.",
-    "height": "Taille (cm)",
-    "weight": "Poids (kg)",
+    "height": "Taille",
+    "weight": "Poids",
     "sectionTraining": "Fréquence d'entraînement",
     "sectionTrainingHint": "Définit le multiplicateur du TDEE.",
     "sectionGoal": "Votre objectif",
@@ -143,7 +140,91 @@
     "saving": "Enregistrement…",
     "submit": "Valider mes objectifs",
     "changeLater": "Vous pourrez tout modifier plus tard.",
-    "completeToUnlock": "Complétez les trois sections pour déverrouiller."
+    "completeToUnlock": "Complétez les trois sections pour déverrouiller.",
+    "stepOf": "{step} / {total}",
+    "eyebrow": {
+      "0": "À propos de vous",
+      "1": "À propos de vous",
+      "2": "Votre corps",
+      "3": "Votre entraînement",
+      "4": "Votre objectif",
+      "5": "Votre orbite est prête"
+    },
+    "title": {
+      "0": "Quel est votre sexe ?",
+      "1": "Quel âge avez-vous ?",
+      "2": "Taille et poids",
+      "3": "À quelle fréquence vous entraînez-vous ?",
+      "4": "Quel est votre objectif ?"
+    },
+    "readyTitle": "{kcal} kcal par jour.",
+    "sexHint": "Il sert uniquement à l'équation du métabolisme de base : Mifflin-St Jeor ajoute 5 pour un homme et retire 161 pour une femme.",
+    "younger": "Un an de moins",
+    "older": "Un an de plus",
+    "dob": "Date de naissance",
+    "under18": "Le suivi fonctionne pareil pour vous. Le coach IA est disponible à partir de 18 ans.",
+    "ageHint": "Votre âge vient de votre date de naissance, il reste donc juste au fil des années.",
+    "units": "Unités",
+    "metric": "Métrique",
+    "imperial": "Impérial",
+    "unitsHint": "Tout est stocké en métrique",
+    "level": {
+      "sedentary": {
+        "label": "Rarement",
+        "detail": "Travail de bureau, peu d'exercice"
+      },
+      "light": {
+        "label": "1–2× par semaine",
+        "detail": "Entraînement léger"
+      },
+      "moderate": {
+        "label": "3–5× par semaine",
+        "detail": "Entraînement régulier"
+      },
+      "active": {
+        "label": "6–7× par semaine",
+        "detail": "Entraînement quotidien"
+      },
+      "athlete": {
+        "label": "Deux fois par jour",
+        "detail": "Volume d'athlète ou travail physique"
+      }
+    },
+    "goal": {
+      "lose": {
+        "label": "Perdre du gras",
+        "detail": "Un déficit régulier, riche en protéines pour garder le muscle",
+        "short": "perte de gras"
+      },
+      "maintain": {
+        "label": "Maintenir",
+        "detail": "Garder votre poids et recomposer doucement",
+        "short": "maintien"
+      },
+      "gain": {
+        "label": "Construire",
+        "detail": "Un léger surplus pour prendre du muscle",
+        "short": "prise de masse"
+      }
+    },
+    "readyBody": "Vos objectifs sont fixés. Après quelques semaines de pesées, la DEJ adaptative les affine. Vous pourrez tout changer plus tard dans Moi.",
+    "protein": "Protéines",
+    "carbs": "Glucides",
+    "fat": "Lipides",
+    "window": "Fenêtre alimentaire",
+    "optional": "optionnel",
+    "windowOn": "12:00–20:00 · ajustez l'arc plus tard dans Moi",
+    "windowKeep": "Votre fenêtre actuelle est conservée",
+    "windowOff": "Désactivée · activez-la pour le jeûne intermittent",
+    "back": "Retour",
+    "continue": "Continuer",
+    "lockIn": "Valider mon orbite",
+    "kcalDay": "kcal / jour",
+    "restingBurn": "dépense au repos",
+    "target": "Objectif",
+    "floor": "plancher {kcal}",
+    "orbitSummary": "Votre orbite : {kcal} kcal par jour.",
+    "orbitEmpty": "Votre orbite se remplit au fil de vos réponses."
   },
   "macros": {
     "protein": "Protéines",
@@ -159,7 +240,8 @@
     "proteinGrams": "Protéines (g)",
     "carbsGrams": "Glucides (g)",
     "fatGrams": "Lipides (g)",
-    "fibreGrams": "Fibres (g)"
+    "fibreGrams": "Fibres (g)",
+    "title": "Macros"
   },
   "activity": {
     "sedentary": "Sédentaire",
@@ -294,7 +376,10 @@
     "weekdayThu": "Je",
     "weekdayFri": "Ve",
     "weekdaySat": "Sa",
-    "weekdaySun": "Di"
+    "weekdaySun": "Di",
+    "logTodayWeight": "+ Enregistrer mon poids du jour",
+    "logWeightFor": "+ Enregistrer le poids du {date}",
+    "loggedWeightEdit": "Enregistré {value} {unit} · modifier"
   },
   "common": {
     "close": "Fermer",
@@ -394,8 +479,414 @@
     "analyseDay": "Analyser cette journée"
   },
   "micros": {
-    "title": "Micronutriments",
+    "title": "Micros",
     "subtitle": "% de l'apport journalier adulte, à partir des aliments au profil complet",
-    "noData": "aucune donnée"
+    "noData": "Pas encore de données de micronutriments",
+    "all": "les {count}",
+    "hint": "% de la valeur quotidienne adulte, d'après les aliments au profil complet. Sous 35 % en rouge.",
+    "unknown": "pas de données"
+  },
+  "shell": {
+    "athlete": "champion",
+    "updateStats": "Mettre à jour mes mesures",
+    "settings": "Réglages",
+    "signOut": "Se déconnecter",
+    "me": "Votre compte"
+  },
+  "goals": {
+    "lose": "Perte de gras",
+    "maintain": "Maintien",
+    "gain": "Prise de masse"
+  },
+  "log": {
+    "confirmTitle": "Confirmez ce que vous avez mangé",
+    "meal": "Repas",
+    "tapGrams": "Touchez les grammes pour modifier",
+    "fromPhoto": "D'après votre photo",
+    "dataSource": "Source des données pour {name}",
+    "aiEstimate": "Estimation IA",
+    "gramsOf": "Grammes de {name}",
+    "remove": "Retirer {name}",
+    "allRemoved": "Tout a été retiré. Annulez et redites-le.",
+    "cancel": "Annuler",
+    "logging": "Enregistrement…",
+    "logToOrbit": "Ajouter à l'orbite",
+    "offlineParse": "Vous êtes hors ligne, le coach ne peut pas lire cela maintenant. Cherchez dans la bibliothèque ou réessayez une fois reconnecté.",
+    "photoUnreadable": "Impossible de lire cette photo. Essayez une autre prise ou décrivez le repas en mots.",
+    "voiceUnsupported": "La voix n'est pas disponible dans ce navigateur. Tapez plutôt ce que vous avez mangé.",
+    "voiceError": "Je n'ai pas entendu. Vérifiez l'accès au micro et réessayez.",
+    "queuedOffline": "Vous êtes hors ligne. Enregistré sur cet appareil ; la synchronisation se fera à la reconnexion."
+  },
+  "composer": {
+    "placeholder": "Vous avez mangé, ou une question ? Dites-le…",
+    "coachPlaceholder": "Demandez à votre coach…",
+    "listening": "J'écoute…",
+    "reading": "Lecture de votre repas…",
+    "attach": "Ajouter une photo, scanner ou chercher",
+    "photo": "Photo de votre repas",
+    "scan": "Scanner un code-barres",
+    "search": "Chercher un aliment",
+    "foods": "aliments",
+    "talk": "Parler pour enregistrer",
+    "stopListening": "Arrêter l'écoute",
+    "send": "Envoyer",
+    "dismiss": "Fermer",
+    "barcodeMiss": "Ce code-barres n'est pas encore dans la bibliothèque. Cherchez l'aliment ou ajoutez-le dans Aliments.",
+    "water": "+250 ml d'eau"
+  },
+  "orbit": {
+    "summary": "{left} kcal {over, select, over {au-dessus de l'objectif} other {restantes}}. Protéines {protein} %, glucides {carbs} %, lipides {fat} % de l'objectif. {meals, plural, =0 {Aucun repas enregistré} one {# repas enregistré} other {# repas enregistrés}}.",
+    "holdToTalk": "Maintenez pour parler à votre coach",
+    "stopTalking": "Arrêter l'écoute",
+    "listening": "J'écoute",
+    "kcalLeft": "kcal restantes",
+    "kcalOver": "kcal en trop",
+    "hint": "Maintenez le centre pour parler à votre coach",
+    "listeningHint": "J'écoute… relâchez ou touchez à nouveau pour terminer"
+  },
+  "thread": {
+    "label": "Repas du jour et notes du coach",
+    "coach": "COACH",
+    "emptyTitle": "Rien sur cette journée pour l'instant",
+    "emptyBody": "Dites ce que vous avez mangé ci-dessous, prenez une photo ou cherchez dans la bibliothèque.",
+    "proteinReached": "Objectif de protéines atteint.",
+    "headroom": "Il reste {kcal} kcal de marge.",
+    "overBy": "{kcal} kcal au-dessus de l'objectif.",
+    "addToMeal": "Ajouter un aliment"
+  },
+  "today": {
+    "athlete": "champion",
+    "today": "Aujourd'hui",
+    "greeting": {
+      "neutral": "Salut, {name}",
+      "morning": "Bonjour, {name}",
+      "afternoon": "Bon après-midi, {name}",
+      "evening": "Bonsoir, {name}",
+      "night": "Tard ce soir, {name}"
+    },
+    "dayNav": "Changer de jour",
+    "prevDay": "Jour précédent",
+    "nextDay": "Jour suivant",
+    "backToToday": "Aujourd'hui",
+    "bmr": "MB",
+    "tdee": "DEJ",
+    "target": "Objectif",
+    "burnedNote": "L'objectif inclut +{kcal} kcal d'entraînement aujourd'hui.",
+    "hintDesktop": "Maintenez le centre pour parler à votre coach · ou appuyez sur",
+    "railLabel": "Détails du jour",
+    "adaptiveNote": "DEJ adaptative : sur {days} jours, vous avez mangé en moyenne {intake} kcal et votre poids tendance a {dir, select, down {baissé} other {augmenté}} de {delta} {unit} ; votre dépense mesurée est donc de {tdee} kcal. Recalculée chaque lundi.",
+    "nudgeEmpty": "Rien sur l'orbite pour l'instant. <b>Maintenez le centre</b> et dites-moi ce que vous avez mangé.",
+    "nudgeProteinWindow": "Votre fenêtre se ferme à {end}, et il vous manque <b>{gap} g de protéines</b>.",
+    "nudgeProtein": "Il vous manque <b>{gap} g de protéines</b> et il reste {kcal} kcal aujourd'hui.",
+    "nudgeOver": "Vous êtes <b>{kcal} kcal au-dessus</b> de l'objectif du jour. Une journée ne change pas la tendance ; restez régulier demain.",
+    "nudgeOnTarget": "<b>Pile dans l'objectif</b> aujourd'hui. Bravo.",
+    "seeIdeas": "Voir des idées de repas",
+    "talkItThrough": "En parler",
+    "ideasQuestion": "Des idées de repas ? Il me faut environ {protein} g de protéines et il me reste {kcal} kcal.",
+    "overQuestion": "J'ai dépassé de {kcal} kcal aujourd'hui. Que faire demain ?",
+    "chipIdeas": "Idées de repas",
+    "chipYesterday": "Comme hier",
+    "chipCoach": "Demander au coach"
+  },
+  "habits": {
+    "label": "Habitudes",
+    "streak": "Série",
+    "daysShort": " j",
+    "consistency": "{pct} % des 30 derniers jours enregistrés",
+    "consistencyShort": "{pct} % · 30 j",
+    "water": "Eau",
+    "waterAdd": "Ajouter un verre de 250 ml",
+    "waterRemove": "Retirer un verre de 250 ml",
+    "steps": "Pas",
+    "stepsHint": "via Activité"
+  },
+  "coach": {
+    "title": "Coach",
+    "backToOrbit": "Retour à l'orbite du jour",
+    "kcalLeft": "kcal restantes",
+    "kcalOver": "kcal en trop",
+    "tapRing": "Touchez l'anneau pour agrandir l'orbite",
+    "chats": "Discussions",
+    "newChat": "Nouvelle discussion",
+    "untitled": "Sans titre",
+    "daySummary": "Aujourd'hui : {eaten} sur {target} kcal.",
+    "adultsTitle": "Le coach est réservé aux adultes",
+    "adultsBody": "Le coach IA est disponible à partir de 18 ans. Tout le reste de So3ra (enregistrement, objectifs, historique) fonctionne exactement pareil pour vous. À votre âge, un parent, un médecin ou un diététicien est la bonne personne pour parler de nutrition.",
+    "emptyTitle": "Posez des questions sur vos vrais chiffres",
+    "emptyBody": "Le coach voit vos objectifs, vos deux dernières semaines, votre tendance de poids et votre entraînement : posez une question précise.",
+    "starter1": "Comment se passe ma semaine ?",
+    "starter2": "Que changer pour atteindre mes protéines ?",
+    "starter3": "Ma tendance de poids suit-elle mon objectif ?",
+    "reading": "Lecture de vos données…",
+    "sources": "Sources",
+    "offline": "Vous êtes hors ligne. Le message n'a pas été envoyé ; réessayez à la reconnexion.",
+    "disclaimer": "Le coach est une IA, pas un médecin. Rien ici n'est un avis médical, et il peut se tromper : vérifiez les chiffres dans votre journal. Pour tout souci de santé, consultez un professionnel. Le coach est réservé aux adultes (18+)."
+  },
+  "history": {
+    "title": "Historique",
+    "range": "Période",
+    "ranges": {
+      "week": "Semaine",
+      "month": "Mois",
+      "90d": "90 j"
+    },
+    "heading": {
+      "week": "Une semaine d'orbites",
+      "month": "Un mois d'orbites",
+      "90d": "90 jours d'orbites"
+    },
+    "daysLabel": "Vos journées en orbites",
+    "onTarget": "Dans l'objectif",
+    "over": "Au-dessus",
+    "under": "En dessous",
+    "notLogged": "Non enregistré",
+    "openDay": "Cliquez sur un jour pour ouvrir son orbite",
+    "calories": "Calories vs objectif · {days} jours",
+    "macros": "Macros dans le temps",
+    "nothingLogged": "Rien d'enregistré sur cette période.",
+    "weight": "Tendance du poids",
+    "weightEmpty": "Enregistrez au moins deux pesées dans Aujourd'hui pour voir votre tendance.",
+    "logWeight": "+ Enregistrer mon poids du jour",
+    "avgKcal": "Kcal moy.",
+    "adherence": "Régularité",
+    "avgProtein": "Protéines moy.",
+    "export": "Export",
+    "adherenceHint": "{days} jours enregistrés sur {total}. Régularité = jours enregistrés à ±10 % de {target} kcal."
+  },
+  "plans": {
+    "eyebrow": "Construits avec la même bibliothèque que votre journal",
+    "title": "Plans repas",
+    "filter": "Filtrer par objectif",
+    "goalChip": {
+      "lose": "Sèche",
+      "maintain": "Maintien",
+      "gain": "Masse"
+    },
+    "yours": "le vôtre",
+    "pctHint": "Pourcentages par rapport à votre objectif de {kcal} kcal",
+    "empty": "Pas encore de plan pour cet objectif. Demandez-en un à l'IA, ou une journée préparée par un coach.",
+    "tagAssigned": "Assigné par votre coach",
+    "tagAi": "Généré par l'IA",
+    "askAi": "Demander un plan à l'IA",
+    "requestCoach": "Demander un coach humain",
+    "requestSent": "Demande envoyée au coach",
+    "aiHint": "Une journée complète avec de vrais aliments de la bibliothèque, calée sur vos calories et macros.",
+    "aiPlaceholder": "Des contraintes ? ex. sans porc, œufs au petit-déj, produits pas chers",
+    "composing": "Composition de votre journée…",
+    "generate": "Générer le plan",
+    "requestPending": "Votre coach a reçu la demande. Le plan arrivera ici une fois prêt.",
+    "cancelRequest": "Annuler la demande",
+    "requestHint": "Demandez à votre coach une journée sur mesure. Elle arrivera ici une fois prête.",
+    "requestPlaceholder": "Aliments aimés ou évités, horaires, budget…",
+    "sendRequest": "Demander un plan",
+    "back": "Plans",
+    "dialSummary": "Orbite du plan : {kcal} kcal sur {meals, plural, one {# repas} other {# repas}}.",
+    "ghostHint": "L'anneau intérieur en pointillé est le fantôme de votre orbite du jour, pour comparer. Les repas sont placés à leurs heures habituelles.",
+    "ofTarget": "De l'objectif",
+    "protein": "Protéines",
+    "carbs": "Glucides",
+    "fat": "Lipides",
+    "apply": "Appliquer à l'orbite du jour",
+    "applying": "Application…",
+    "adapt": "Demander au coach de l'adapter",
+    "adaptQuestion": "Peux-tu adapter le plan « {name} » ({kcal} kcal, {protein} g de protéines) à mes objectifs et mon emploi du temps ?",
+    "delete": "Supprimer le plan",
+    "confirmDelete": "Touchez encore pour supprimer"
+  },
+  "foods": {
+    "title": "Aliments",
+    "myFood": "Mon aliment",
+    "collections": "Collections",
+    "library": "Bibliothèque",
+    "mine": "Mes aliments",
+    "recipes": "Recettes",
+    "category": "Catégorie",
+    "all": "Tout",
+    "source": "Source",
+    "cat": {
+      "protein": "Protéines",
+      "carbs": "Féculents",
+      "dairy": "Laitiers",
+      "fruit": "Fruits",
+      "vegetables": "Légumes",
+      "fats-nuts": "Gras et noix",
+      "snacks": "Snacks",
+      "drinks": "Boissons",
+      "other": "Autre"
+    },
+    "searchPlaceholder": "Chercher parmi {count} aliments",
+    "scan": "Scanner un code-barres",
+    "scanShort": "SCAN",
+    "close": "Fermer",
+    "scanMiss": "Le code-barres {code} n'est pas encore dans la bibliothèque.",
+    "createFood": "Le créer comme votre aliment",
+    "noMatch": "Aucun résultat pour « {q} ».",
+    "noneMine": "Vous n'avez pas encore créé d'aliment.",
+    "noneCategory": "Aucun aliment dans cette catégorie.",
+    "attribution": "Inclut des données d’<off>Open Food Facts</off>, disponibles sous <odbl>Open Database License</odbl>.",
+    "offRow": "Valeurs nutritionnelles d’<off>Open Food Facts</off> (ODbL).",
+    "edit": "Modifier votre aliment",
+    "portion": "Portion",
+    "serving": "portion",
+    "gramsLabel": "Portion en grammes",
+    "arrowHint": "↑ ↓ modifie de 5 g",
+    "protein": "Protéines",
+    "carbs": "Glucides",
+    "fat": "Lipides",
+    "meal": "Repas",
+    "adding": "Ajout…",
+    "addToOrbit": "Ajouter à l'orbite",
+    "micros": "Micronutriments",
+    "microsHint": "Dans cette portion, en % de votre valeur quotidienne",
+    "noMicros": "Pas de micronutriments pour cet aliment.",
+    "showAll": "Voir les {count}",
+    "showFewer": "Voir moins"
+  },
+  "me": {
+    "title": "Moi",
+    "athlete": "champion",
+    "body": "Corps",
+    "weight": "Poids",
+    "height": "Taille",
+    "age": "Âge",
+    "training": "Entraînement",
+    "updateBody": "Mettre à jour, ce qui recalcule vos objectifs",
+    "eatingWindow": "Fenêtre alimentaire",
+    "windowLabel": "Cadran de la fenêtre alimentaire",
+    "firstMeal": "Premier repas",
+    "lastMeal": "Dernier repas",
+    "windowOff": "Désactivée",
+    "windowHint": "{hours} h · faites glisser les poignées pour la modifier",
+    "windowOffHint": "Activez-la pour le jeûne intermittent",
+    "setWindow": "Définir une fenêtre",
+    "save": "Enregistrer",
+    "turnOff": "Désactiver",
+    "targets": "Objectifs",
+    "adaptive": "DEJ adaptative",
+    "dividerPC": "Séparateur protéines / glucides",
+    "dividerCF": "Séparateur glucides / lipides",
+    "preset": {
+      "balanced": "Équilibré",
+      "highcarb": "Plus de glucides",
+      "lowcarb": "Pauvre en glucides"
+    },
+    "saveSplit": "Enregistrer la répartition",
+    "resetSplit": "Revenir à la formule du coach",
+    "splitHint": "Formule du coach · faites glisser entre les barres pour répartir",
+    "preferences": "Préférences",
+    "metric": "Métrique",
+    "imperial": "Impérial",
+    "account": "Compte",
+    "coachChats": "Mémoire et discussions du coach",
+    "export": "Exporter (CSV)"
+  },
+  "landing": {
+    "nav": {
+      "sections": "Sections",
+      "how": "Comment ça marche",
+      "system": "Le système",
+      "coach": "Coach",
+      "faq": "FAQ",
+      "login": "Se connecter",
+      "start": "Commencer"
+    },
+    "hero": {
+      "badge": "سعرة veut dire « calorie »",
+      "title": "Votre journée, en <grad>une orbite.</grad>",
+      "lede": "Dites ce que vous avez mangé et regardez-le se poser sur un cadran de 24 heures. Des macros au gramme près, des objectifs Mifflin-St Jeor, et un coach qui voit toute la journée, pas seulement le dernier repas.",
+      "cta": "Lancer mon orbite",
+      "demo": "Voir comment ça marche",
+      "statFoods": "aliments vérifiés",
+      "statPrecision": "de précision, jamais « une portion »",
+      "statLanguages": "langues, RTL inclus",
+      "orbitSummary": "Une journée type : 742 kcal restantes, deux repas enregistrés, anneaux de protéines, glucides et lipides bien remplis.",
+      "kcalLeft": "kcal restantes",
+      "breakfast": "PETIT-DÉJ",
+      "breakfastItems": "Flocons d'avoine, œufs, banane",
+      "coachChip": "Il vous manque <b>54 g</b> de protéines. Un tajine de poulet comblerait l'écart.",
+      "voiceChip": "« 200 g de poulet, une tasse de riz… »"
+    },
+    "how": {
+      "eyebrow": "Comment ça marche",
+      "title": "Dites-le. Regardez-le se poser. Comblez l'écart.",
+      "oneExample": "« deux œufs et un msemen au miel »",
+      "oneTitle": "Dites-le, photographiez-le ou scannez-le",
+      "oneBody": "La voix, une photo, un code-barres ou du texte. Le coach associe chaque élément à la bibliothèque vérifiée et vous montre les grammes avant tout enregistrement.",
+      "twoTitle": "Il se pose sur votre orbite",
+      "twoBody": "Chaque repas devient un point à l'heure où vous l'avez mangé. Les anneaux de protéines, glucides et lipides se remplissent, et l'arc lumineux montre votre fenêtre alimentaire.",
+      "threeExample": "Votre fenêtre se ferme à 20:00, et il vous manque <b>54 g</b>. Voici deux dîners qui conviennent.",
+      "threeTitle": "Le coach comble l'écart",
+      "threeBody": "Parce qu'il voit toute la journée, ses conseils sont précis : quoi manger ensuite, combien, et quand."
+    },
+    "system": {
+      "eyebrow": "Le système",
+      "title": "Des chiffres sur lesquels s'entraîner.",
+      "lede": "Pas d'estimations au hasard. Une équation, une bibliothèque vérifiée, et des plans construits avec les mêmes calculs que votre journal.",
+      "targetsTitle": "Des objectifs fondés sur la science",
+      "targetsBody": "Le métabolisme de base Mifflin-St Jeor, ajusté à votre fréquence d'entraînement réelle. La DEJ adaptative apprend ensuite de votre vraie tendance de poids.",
+      "restingBurn": "dépense au repos",
+      "training": "× 1,55 entraînement",
+      "target": "Objectif",
+      "leanBulk": "prise de masse",
+      "gramTitle": "Précision au gramme",
+      "gramBody": "Chaque aliment est stocké pour 100 g. Enregistrez 137 g de riz et le calcul est exact.",
+      "rice": "Riz basmati",
+      "plansTitle": "Plans repas construits par un coach",
+      "plansBody": "Sèche, maintien ou masse. Appliquez une journée entière à votre orbite en un geste, ou demandez à l'IA de l'adapter au Ramadan, aux jours d'entraînement ou à un petit budget.",
+      "planCut": "Sèche riche en protéines",
+      "planMaintain": "Maintien stable",
+      "planBuild": "Journée prise de masse"
+    },
+    "coach": {
+      "eyebrow": "Le coach",
+      "title": "À vos côtés, appuyé sur des preuves.",
+      "lede": "Il lit vos objectifs, votre tendance et l'orbite du jour, et cite ses sources. Il ne donne pas d'avis médical et il est réservé aux adultes.",
+      "tagReport": "Bilan hebdo",
+      "tagTdee": "DEJ adaptative",
+      "tagPlans": "Générateur de plans",
+      "tagSources": "Sources citées",
+      "question": "Pourquoi ai-je toujours faim à 16 h ?",
+      "answer": "Vos déjeuners n'apportent en moyenne que <b>22 g de protéines</b>, et il y a 5 heures avant le dîner. Essayez d'ajouter 30 g de protéines au déjeuner : un yaourt grec ou du thon suffisent.",
+      "source": "Source : fiche de preuves sur la répartition des protéines"
+    },
+    "faq": {
+      "title": "Questions",
+      "targets": {
+        "q": "Comment mes objectifs sont-ils calculés ?",
+        "a": "Le métabolisme de base vient de l'équation de Mifflin-St Jeor, multiplié par votre niveau d'entraînement pour obtenir la DEJ. Votre objectif fixe ensuite les calories : −500 pour perdre, +350 pour prendre, avec un plancher de 1 200. Dès que vous enregistrez votre poids, la DEJ adaptative l'affine d'après votre vraie tendance."
+      },
+      "moroccan": {
+        "q": "Connaît-il la cuisine marocaine ?",
+        "a": "Oui. La bibliothèque inclut msemen, harira, baghrir, tajines et plus, à côté de milliers d'entrées USDA et Open Food Facts. Vous pouvez aussi ajouter vos propres aliments et recettes."
+      },
+      "safe": {
+        "q": "Le coach IA est-il sûr ?",
+        "a": "Il est réservé aux adultes, s'appuie sur des preuves citées et ne donne pas d'avis médical. Rien de ce qu'il propose n'est enregistré sans votre confirmation."
+      },
+      "offline": {
+        "q": "Fonctionne-t-il hors ligne ?",
+        "a": "Les enregistrements sont mis en file d'attente hors ligne et synchronisés à la reconnexion. Il s'installe comme une application sur iOS et Android."
+      },
+      "name": {
+        "q": "Que veut dire « So3ra » ?",
+        "a": "So3ra, c'est سعرة, « calorie » en arabe. Le 3 est l'arabizi pour la lettre ع, comme on l'écrit tous les jours au Maroc."
+      },
+      "languages": {
+        "q": "Est-il disponible en arabe ?",
+        "a": "Anglais, français et arabe, avec une vraie mise en page de droite à gauche."
+      }
+    },
+    "cta": {
+      "title": "Lancez votre première orbite ce soir.",
+      "body": "Deux minutes de réglage. Gratuit pour commencer. Sans carte bancaire.",
+      "button": "Lancer mon orbite"
+    },
+    "footer": {
+      "formerly": "anciennement FitTrack",
+      "label": "Pied de page",
+      "login": "Se connecter",
+      "signup": "Créer un compte",
+      "foodData": "Données alimentaires :"
+    }
   }
 }

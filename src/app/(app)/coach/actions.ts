@@ -22,6 +22,8 @@ export interface CoachReply {
   conversationId: string;
   restricted: boolean;
   flags: SafetyFlag[];
+  /** Titles of the cited evidence briefs the reply was grounded in. */
+  sources: string[];
 }
 
 export async function sendCoachMessage(
@@ -183,7 +185,13 @@ export async function sendCoachMessage(
 
   revalidatePath("/coach");
   return {
-    data: { reply, conversationId, restricted: safety.restricted, flags: safety.flags },
+    data: {
+      reply,
+      conversationId,
+      restricted: safety.restricted,
+      flags: safety.flags,
+      sources: briefs.map((b) => b.title),
+    },
     error: null,
   };
 }

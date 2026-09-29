@@ -65,14 +65,14 @@ export function ActivityCard({
   }
 
   return (
-    <section className="rounded-2xl border border-ink-800 bg-ink-900/60">
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-ink-800 px-5 py-4">
+    <section className="@container rounded-[18px] border border-ink-800 bg-ink-900">
+      <header className="flex flex-wrap items-center justify-between gap-3 px-3.5 pt-3.5">
         <div className="flex items-center gap-3">
-          <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-flame/10 ring-1 ring-inset ring-flame/25">
-            <Barbell weight="fill" className="size-4.5 text-flame" />
-          </span>
           <div>
-            <h2 className="font-display text-base font-semibold text-paper">{t("activity")}</h2>
+            <h2 className="flex items-center gap-1.5 text-[13px] font-medium text-paper">
+              <Barbell weight="fill" className="size-3.5 text-flame" />
+              {t("activity")}
+            </h2>
             <p className="text-[11px] text-paper-mute">
               {burned > 0
                 ? adaptive
@@ -88,14 +88,14 @@ export function ActivityCard({
             setShowForm((v) => !v);
             setError(null);
           }}
-          className="btn-press inline-flex items-center gap-1.5 rounded-lg border border-ink-700 px-3 py-1.5 text-xs font-semibold text-paper-dim transition-colors hover:border-flame/50 hover:text-flame pointer-coarse:py-2.5"
+          className="btn-tint btn-press inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 text-xs font-medium"
         >
           <Plus weight="bold" className="size-3.5" />
           {t("addWorkout")}
         </button>
       </header>
 
-      <div className="px-5 py-4">
+      <div className="px-3.5 pt-2 pb-3.5">
         {exercises.length > 0 && (
           <ul className="divide-y divide-ink-800/70">
             {exercises.map((ex) => (
@@ -126,7 +126,7 @@ export function ActivityCard({
         )}
 
         {showForm && (
-          <form onSubmit={submitWorkout} className="mt-2 grid gap-3 sm:grid-cols-[1fr_auto_auto_auto]">
+          <form onSubmit={submitWorkout} className="mt-2 grid grid-cols-2 gap-2 @md:grid-cols-[1fr_auto_auto_auto]">
             <input
               name="name"
               required
@@ -134,7 +134,7 @@ export function ActivityCard({
               autoFocus
               placeholder={t("workoutNamePlaceholder")}
               aria-label={t("workoutName")}
-              className="field"
+              className="field col-span-2 @md:col-span-1"
             />
             <input
               name="minutes"
@@ -144,7 +144,7 @@ export function ActivityCard({
               max={1440}
               placeholder={t("minutesShort")}
               aria-label={t("minutesOptional")}
-              className="field w-full tabular sm:w-24"
+              className="field w-full tabular @md:w-24"
             />
             <input
               name="kcal"
@@ -155,12 +155,12 @@ export function ActivityCard({
               required
               placeholder={tMacro("kcal")}
               aria-label={t("caloriesBurned")}
-              className="field w-full tabular sm:w-28"
+              className="field w-full tabular @md:w-28"
             />
             <button
               type="submit"
               disabled={pending}
-              className="btn-press rounded-xl bg-flame px-4 py-2.5 font-display text-xs font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep disabled:opacity-40"
+              className="btn-flame btn-press col-span-2 rounded-xl px-4 py-2.5 text-sm @md:col-span-1 disabled:opacity-40"
             >
               {pending ? tCommon("saving") : tCommon("log")}
             </button>
@@ -169,7 +169,7 @@ export function ActivityCard({
 
         <form
           onSubmit={submitSteps}
-          className="mt-3 flex flex-wrap items-center gap-3 border-t border-ink-800 pt-3"
+          className="mt-3 flex flex-wrap items-center gap-2 border-t border-ink-800 pt-3"
         >
           <label className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-paper-mute">
             <Footprints weight="fill" className="size-4" />
@@ -185,7 +185,7 @@ export function ActivityCard({
             onChange={(e) => setSteps(e.target.value)}
             placeholder={t("stepsPlaceholder")}
             aria-label={t("stepsForDay")}
-            className="field w-32 py-2 tabular"
+            className="field w-28 min-w-0 flex-1 py-2 tabular"
           />
           <button
             type="submit"
@@ -194,7 +194,7 @@ export function ActivityCard({
           >
             {tCommon("save")}
           </button>
-          <span className="text-[11px] text-paper-mute">{t("stepsHint")}</span>
+          <span className="w-full text-[11px] text-paper-mute">{t("stepsHint")}</span>
         </form>
 
         {error && <p className="mt-3 text-sm text-danger">{error}</p>}

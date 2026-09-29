@@ -80,6 +80,28 @@ export const metadata: Metadata = {
   },
 };
 
+const CLIENT_NAMESPACES = [
+  "addFood",
+  "coach",
+  "common",
+  "composer",
+  "dashboard",
+  "foods",
+  "habits",
+  "insights",
+  "log",
+  "macros",
+  "me",
+  "meals",
+  "nav",
+  "onboarding",
+  "orbit",
+  "plans",
+  "status",
+  "thread",
+  "today",
+] as const;
+
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -88,7 +110,12 @@ export default async function RootLayout({
   // Locale comes from the cookie (src/i18n/request.ts); Arabic flips the
   // whole document to RTL.
   const locale = await getLocale();
-  const messages = await getMessages();
+  const all = await getMessages();
+  // Only the namespaces client components read (useTranslations); server
+  // components get the rest via getTranslations without shipping it.
+  const messages = Object.fromEntries(
+    CLIENT_NAMESPACES.filter((ns) => ns in all).map((ns) => [ns, all[ns]])
+  );
 
   return (
     <html

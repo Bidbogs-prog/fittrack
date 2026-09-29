@@ -175,7 +175,7 @@ export default async function RecipePage({
             </div>
             <button
               type="submit"
-              className="btn-press inline-flex items-center gap-1.5 rounded-xl bg-flame px-4 py-2.5 font-display text-xs font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep"
+              className="btn-press inline-flex items-center gap-1.5 rounded-xl btn-flame px-4 py-2.5 text-sm font-semibold"
             >
               <Plus weight="bold" className="size-4" />
               Add

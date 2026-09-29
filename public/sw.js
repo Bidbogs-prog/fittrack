@@ -12,7 +12,7 @@
  *
  * Bump VERSION to invalidate all caches on deploy of a new strategy.
  */
-const VERSION = "v3";
+const VERSION = "v4";
 const STATIC_CACHE = `so3ra-static-${VERSION}`;
 const PAGE_CACHE = `so3ra-pages-${VERSION}`;
 const OFFLINE_URL = "/offline.html";

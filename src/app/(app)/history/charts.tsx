@@ -202,9 +202,15 @@ export function CalorieChart({ days, target }: { days: DayStat[]; target: number
               y={Math.min(y, PAD.t + PLOT_H - 1)}
               width={barW}
               height={Math.max(1, PAD.t + PLOT_H - y)}
-              rx="2"
-              fill="var(--color-flame)"
-              opacity={idx == null || idx === i ? 0.9 : 0.45}
+              rx="3"
+              fill={
+                d.kcal > target * 1.05
+                  ? "var(--color-flame-deep)"
+                  : d.kcal < target * 0.9
+                    ? "var(--color-ink-600)"
+                    : "var(--color-flame)"
+              }
+              opacity={idx == null || idx === i ? 1 : 0.5}
             />
           );
         })}
@@ -213,8 +219,8 @@ export function CalorieChart({ days, target }: { days: DayStat[]; target: number
           x2={W - PAD.r}
           y1={yFor(target)}
           y2={yFor(target)}
-          stroke="var(--color-paper-mute)"
-          strokeWidth="1.5"
+          stroke="var(--color-flame)"
+          strokeWidth="1.25"
           strokeDasharray="5 4"
         />
         <text

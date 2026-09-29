@@ -182,7 +182,7 @@ export function CalendarPicker({ selected, today }: { selected: string; today: s
 
             <p className="mt-3 flex items-center gap-1.5 text-[11px] text-paper-mute">
               <span className="size-1.5 rounded-full bg-flame" />
-              {t("daysWithEntries")}
+              Days with logged entries
             </p>
           </div>
         </div>

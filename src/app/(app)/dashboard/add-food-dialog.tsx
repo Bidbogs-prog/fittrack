@@ -61,12 +61,39 @@ type View =
 export function AddFoodDialog({
   meal,
   entryDate,
+  open: openProp,
+  onOpenChange,
+  initialView,
+  triggerLabel = "Add food",
 }: {
   meal: MealType;
   entryDate: string;
+  /** Controlled mode (the composer / ⌘K opens it); no trigger is rendered. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  /** Where a controlled open lands: search (default) or the barcode scanner. */
+  initialView?: "browse" | "scan";
+  triggerLabel?: string;
 }) {
-  const [open, setOpen] = useState(false);
-  const [view, setView] = useState<View>({ kind: "browse" });
+  const [openState, setOpenState] = useState(false);
+  const controlled = openProp !== undefined;
+  const open = controlled ? openProp : openState;
+  const setOpen = (next: boolean) => {
+    if (!controlled) setOpenState(next);
+    onOpenChange?.(next);
+  };
+  // Latest closer for the Escape listener without re-binding it each render.
+  const closeRef = useRef(() => setOpen(false));
+  useEffect(() => {
+    closeRef.current = () => setOpen(false);
+  });
+  const [view, setView] = useState<View>({ kind: initialView ?? "browse" });
+  // A controlled open can ask for a different starting view each time.
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (prevOpen !== open) {
+    setPrevOpen(open);
+    if (open) setView({ kind: initialView ?? "browse" });
+  }
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Food[]>([]);
   const [searching, setSearching] = useState(false);
@@ -91,7 +118,7 @@ export function AddFoodDialog({
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
+      if (e.key === "Escape") closeRef.current();
     };
     document.addEventListener("keydown", onKeyDown);
     return () => {
@@ -285,14 +312,16 @@ export function AddFoodDialog({
 
   return (
     <>
+      {!controlled && (
       <button
         type="button"
         onClick={() => setOpen(true)}
         className="btn-press inline-flex items-center gap-1.5 rounded-lg border border-ink-700 px-3 py-1.5 text-xs font-semibold text-paper-dim transition-colors hover:border-flame/50 hover:text-flame pointer-coarse:py-2.5"
       >
         <Plus weight="bold" className="size-3.5" />
-        {t("addFood")}
+        {triggerLabel}
       </button>
+      )}
 
       {open && (
         <div
@@ -394,17 +423,16 @@ export function AddFoodDialog({
                         ) : searchFailed ? (
                           <span className="text-danger">{t("searchFailed")}</span>
                         ) : (
-                          t.rich("noMatches", {
-                            query,
-                            link: (chunks) => (
-                              <a
-                                href={`/foods/new?name=${encodeURIComponent(query)}`}
-                                className="font-medium text-paper underline underline-offset-4 hover:text-flame"
-                              >
-                                {chunks}
-                              </a>
-                            ),
-                          })
+                          <>
+                            Nothing matches “{query}”.{" "}
+                            <a
+                              href={`/foods/new?name=${encodeURIComponent(query)}`}
+                              className="font-medium text-paper underline underline-offset-4 hover:text-flame"
+                            >
+                              Create it as your own food
+                            </a>
+                            .
+                          </>
                         )}
                       </li>
                     )}
@@ -585,7 +613,7 @@ export function AddFoodDialog({
                   type="button"
                   onClick={() => submitRecipe(view.recipe)}
                   disabled={pending || !(Number(servings) > 0)}
-                  className="btn-press mt-4 w-full rounded-xl bg-flame px-5 py-3 font-display text-sm font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep disabled:cursor-not-allowed disabled:opacity-40"
+                  className="btn-press mt-4 w-full rounded-xl btn-flame px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   {pending ? tCommon("logging") : t("logRecipe")}
                 </button>
@@ -644,7 +672,7 @@ export function AddFoodDialog({
                   <p className="mt-3 flex flex-wrap items-center justify-center gap-3">
                     <a
                       href={`/foods/new?barcode=${encodeURIComponent(view.code)}`}
-                      className="btn-press rounded-lg bg-flame px-4 py-2 font-display text-xs font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep"
+                      className="btn-press rounded-lg btn-flame px-4 py-2 text-sm font-semibold"
                     >
                       {t("createThisFood")}
                     </a>
@@ -794,7 +822,7 @@ function SavedMealView({
         type="button"
         onClick={onSubmit}
         disabled={pending}
-        className="btn-press mt-4 w-full rounded-xl bg-flame px-5 py-3 font-display text-sm font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep disabled:cursor-not-allowed disabled:opacity-40"
+        className="btn-press mt-4 w-full rounded-xl btn-flame px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40"
       >
         {pending
           ? tCommon("logging")
@@ -973,7 +1001,7 @@ function FoodPortion({
         type="button"
         onClick={onSubmit}
         disabled={pending || !(Number(grams) > 0)}
-        className="btn-press mt-4 w-full rounded-xl bg-flame px-5 py-3 font-display text-sm font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep disabled:cursor-not-allowed disabled:opacity-40"
+        className="btn-press mt-4 w-full rounded-xl btn-flame px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40"
       >
         {pending ? tCommon("logging") : t("logGrams", { grams: Number(grams) || 0 })}
       </button>
@@ -1066,7 +1094,7 @@ function QuickAddForm({
       <button
         type="submit"
         disabled={pending}
-        className="btn-press mt-4 w-full rounded-xl bg-flame px-5 py-3 font-display text-sm font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep disabled:cursor-not-allowed disabled:opacity-40"
+        className="btn-press mt-4 w-full rounded-xl btn-flame px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40"
       >
         {pending ? tCommon("logging") : t("quickAdd")}
       </button>

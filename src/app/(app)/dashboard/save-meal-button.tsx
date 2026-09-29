@@ -65,8 +65,8 @@ export function SaveMealButton({
           setError(null);
           setOpen(true);
         }}
-        title={t("saveThisMeal", { meal: tMeal(meal) })}
-        aria-label={t("saveThisMeal", { meal: tMeal(meal) })}
+        title={`Save this ${meal} as a meal`}
+        aria-label={`Save this ${meal} as a meal`}
         className="btn-press rounded-lg border border-ink-700 p-2 text-paper-mute transition-colors hover:border-flame/50 hover:text-flame"
       >
         <BookmarkSimple weight="bold" className="size-3.5" />
@@ -121,7 +121,7 @@ export function SaveMealButton({
             <button
               type="submit"
               disabled={pending || !name.trim()}
-              className="btn-press mt-4 w-full rounded-xl bg-flame px-5 py-3 font-display text-sm font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep disabled:cursor-not-allowed disabled:opacity-40"
+              className="btn-press mt-4 w-full rounded-xl btn-flame px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40"
             >
               {pending ? tCommon("saving") : t("saveMeal")}
             </button>

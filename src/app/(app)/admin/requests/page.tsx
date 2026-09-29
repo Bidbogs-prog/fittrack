@@ -146,7 +146,7 @@ export default async function AdminRequestsPage({
                   <button
                     type="submit"
                     disabled={assignable.length === 0}
-                    className="btn-press rounded-xl bg-flame px-5 py-2.5 font-display text-xs font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep disabled:cursor-not-allowed disabled:opacity-40"
+                    className="btn-press rounded-xl btn-flame px-5 py-2.5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     Assign
                   </button>

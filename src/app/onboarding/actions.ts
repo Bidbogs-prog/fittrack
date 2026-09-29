@@ -57,9 +57,20 @@ export async function completeOnboarding(formData: FormData) {
     redirect(statusUrl("/onboarding", "error", "checkYourDetails"));
   }
 
+  // The last step's optional eating-window toggle: only sent when flipped,
+  // so an existing custom window survives an edit.
+  const windowMode = String(formData.get("window_mode") ?? "");
+  const eatingWindow =
+    windowMode === "on"
+      ? { eating_window_start: "12:00", eating_window_end: "20:00" }
+      : windowMode === "off"
+        ? { eating_window_start: null, eating_window_end: null }
+        : {};
+
   const { error } = await supabase
     .from("profiles")
     .update({
+      ...eatingWindow,
       gender,
       birth_date: birthDate,
       height_cm: heightCm,

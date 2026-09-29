@@ -73,7 +73,7 @@ export default async function AdminPlansPage({
           <div className="sm:col-span-2">
             <button
               type="submit"
-              className="btn-press rounded-xl bg-flame px-6 py-3 font-display text-sm font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep"
+              className="btn-press rounded-xl btn-flame px-6 py-3 text-sm font-semibold"
             >
               Create and build
             </button>

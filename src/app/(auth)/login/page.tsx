@@ -20,7 +20,7 @@ export default async function LoginPage({
 
   return (
     <Reveal className="w-full max-w-sm" onScroll={false} stagger={0.06} y={16}>
-      <h1 data-reveal className="font-display text-3xl font-bold tracking-tight text-paper">{t("welcomeBack")}</h1>
+      <h1 data-reveal className="font-display text-3xl font-bold tracking-[-0.03em] text-paper">{t("welcomeBack")}</h1>
       <p data-reveal className="mt-2 text-sm text-paper-mute">{t("loginSubtitle")}</p>
 
       <StatusMessage error={error} message={message} />
@@ -46,7 +46,7 @@ export default async function LoginPage({
         <button
           data-reveal
           type="submit"
-          className="btn-press w-full rounded-xl bg-flame px-5 py-3 font-display text-sm font-bold uppercase tracking-wide text-flame-ink transition-colors hover:bg-flame-deep"
+          className="btn-press w-full rounded-xl btn-flame px-5 py-3 text-sm font-semibold transition-colors"
         >
           {t("logIn")}
         </button>

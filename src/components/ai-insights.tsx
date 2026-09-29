@@ -129,7 +129,7 @@ export function AiInsights({
               <button
                 type="button"
                 onClick={run}
-                className="btn-press rounded-xl bg-flame px-5 py-2.5 font-display text-sm font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep"
+                className="btn-press rounded-xl btn-flame px-5 py-2.5 text-sm font-semibold"
               >
                 {error ? tCommon("retry") : t("analyseDay")}
               </button>

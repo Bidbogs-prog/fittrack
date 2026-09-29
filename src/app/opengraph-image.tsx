@@ -9,9 +9,7 @@ const INK = "#0b0907";
 const INK_LINE = "#2d251c";
 const PAPER = "#f4f1ea";
 const PAPER_DIM = "#c2b8a9";
-const FLAME_GLOW = "#ffc94d";
 const FLAME = "#ff9d3b";
-const FLAME_DEEP = "#f2701f";
 const FLAME_INK = "#201004";
 
 /** The "3" mark (Arabizi ع), set in Outfit Bold — same path as public/icons/icon.svg. */
@@ -25,7 +23,7 @@ function Mark({ tile }: { tile: number }) {
         alignItems: "center",
         justifyContent: "center",
         borderRadius: tile * 0.22,
-        backgroundImage: `linear-gradient(135deg, ${FLAME_GLOW}, ${FLAME} 55%, ${FLAME_DEEP})`,
+        background: FLAME,
       }}
     >
       <svg viewBox="0 0 100 100" width={tile} height={tile}>
@@ -78,9 +76,7 @@ export default function Image() {
             style={{
               fontSize: 104,
               fontWeight: 700,
-              backgroundImage: `linear-gradient(90deg, ${FLAME_GLOW}, ${FLAME} 45%, ${FLAME_DEEP})`,
-              backgroundClip: "text",
-              color: "transparent",
+              color: FLAME,
               letterSpacing: -4,
               lineHeight: 1.02,
             }}

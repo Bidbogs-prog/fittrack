@@ -1,18 +1,16 @@
 @import "tailwindcss";
 
 /* ============================================================
-   So3ra design system — ember-dark ink, fire accent ramp.
-   The accent burns through three hues: glow (gold) → flame
-   (orange) → deep (red-orange). Calories are energy; the
-   palette reads as heat.
+   So3ra design system — "ember dark": warm ink, one flame accent.
+   Orbit x Coach redesign (see Design README.md).
    ============================================================ */
 :root {
-  --ink-950: #0b0907;
-  --ink-900: #110d0a;
-  --ink-850: #17120e;
-  --ink-800: #1f1913;
-  --ink-700: #2d251c;
-  --ink-600: #443a2e;
+  --ink-950: #0b0907; /* page */
+  --ink-900: #110d0a; /* cards */
+  --ink-850: #17120e; /* composer, sheets */
+  --ink-800: #1f1913; /* borders, ring tracks */
+  --ink-700: #2d251c; /* control borders */
+  --ink-600: #443a2e; /* ticks, muted bars */
 
   --paper: #f4f1ea;
   --paper-dim: #c2b8a9;
@@ -28,6 +26,11 @@
   --fat: #ecd464;
   --fibre: #93a884;
   --danger: #e85454;
+
+  --grad-flame: linear-gradient(135deg, #ffc94d, #ff9d3b 50%, #f2701f);
+  --ease-ui: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-reveal: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.8, 0.5, 1);
 }
 
 @theme inline {
@@ -53,6 +56,10 @@
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-outfit), var(--font-geist-sans), sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  --ease-ui: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-reveal: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.8, 0.5, 1);
 }
 
 /* Reserve the scrollbar track on desktop so modals locking body scroll
@@ -307,7 +314,7 @@ body {
      iOS Safari force-zooms the page when a focused control is under 16px,
      and never zooms back out. Fine-pointer devices get the compact 14px. */
   .field {
-    @apply w-full rounded-lg border border-ink-700 bg-ink-900 px-3.5 py-2.5 text-base pointer-fine:text-sm text-paper placeholder:text-paper-mute outline-none transition-colors focus:border-flame/60 focus:ring-2 focus:ring-flame/15;
+    @apply w-full rounded-xl border border-ink-700 bg-ink-900 px-3.5 py-2.5 text-base pointer-fine:text-sm text-paper placeholder:text-paper-mute outline-none transition-colors focus:border-flame/60 focus:ring-2 focus:ring-flame/15;
   }
 }
 
@@ -335,4 +342,157 @@ input[type="date"].field::-webkit-date-and-time-value {
 
 .btn-press {
   @apply active:translate-y-px active:scale-[0.99] transition-transform;
+}
+
+/* ============================================================
+   Orbit x Coach primitives
+   ============================================================ */
+
+/* Primary CTA: the flame gradient with ink-dark text. */
+.btn-flame {
+  background: var(--grad-flame);
+  color: var(--flame-ink);
+  font-weight: 600;
+  transition:
+    transform 0.3s var(--ease-ui),
+    box-shadow 0.3s var(--ease-ui),
+    filter 0.3s var(--ease-ui);
+}
+@media (hover: hover) and (pointer: fine) {
+  .btn-flame:hover {
+    box-shadow: 0 14px 40px -12px rgba(255, 157, 59, 0.55);
+    filter: saturate(1.08);
+  }
+}
+.btn-flame:disabled {
+  box-shadow: none;
+}
+.glow-flame {
+  box-shadow: 0 14px 40px -12px rgba(255, 157, 59, 0.55);
+}
+
+/* Tinted flame button: quiet secondary action. */
+.btn-tint {
+  background: rgba(255, 157, 59, 0.12);
+  color: var(--flame);
+  transition: background 0.3s var(--ease-ui);
+}
+@media (hover: hover) and (pointer: fine) {
+  .btn-tint:hover {
+    background: rgba(255, 157, 59, 0.18);
+  }
+}
+
+/* Gradient numerals / headline accents. */
+.text-grad {
+  background: linear-gradient(135deg, #ffc94d, #ff9d3b 45%, #f2701f);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Coach nudge surface. */
+.nudge {
+  background: linear-gradient(135deg, rgba(255, 157, 59, 0.12), rgba(242, 112, 31, 0.03));
+  border: 1px solid rgba(255, 157, 59, 0.3);
+}
+
+/* Eyebrow label above headings. */
+.eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--flame);
+}
+
+.shadow-float {
+  box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.9);
+}
+
+/* Orbit: macro rings draw in; new meal dots spring in; listening halo. */
+.orbit-arc {
+  transition: stroke-dasharray 1.1s var(--ease-reveal);
+}
+.orbit-dot-new {
+  animation: dot-spring 0.7s var(--ease-spring) both;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+@keyframes dot-spring {
+  from {
+    transform: scale(0);
+  }
+}
+@keyframes halo {
+  0% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+.halo {
+  animation: halo 1.4s ease-out infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.spin-60 {
+  animation: spin 60s linear infinite;
+  transform-origin: 120px 120px;
+}
+
+/* Thread entry that just landed. */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+.rise-in {
+  animation: rise-in 0.6s var(--ease-reveal) both;
+}
+
+/* Accordion rows (FAQ, collapsibles): animate grid rows 0fr -> 1fr. */
+.collapse-rows {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.4s var(--ease-ui);
+}
+.collapse-rows[data-open="true"] {
+  grid-template-rows: 1fr;
+}
+.collapse-rows > * {
+  overflow: hidden;
+}
+
+/* Hide scrollbars on horizontal chip rails while keeping them scrollable. */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Range inputs in the flame accent. */
+input[type="range"] {
+  accent-color: var(--flame);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orbit-arc,
+  .collapse-rows {
+    transition: none;
+  }
+  .orbit-dot-new,
+  .halo,
+  .spin-60,
+  .rise-in {
+    animation: none;
+  }
 }

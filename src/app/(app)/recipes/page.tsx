@@ -34,7 +34,7 @@ export default async function RecipesPage() {
         </div>
         <Link
           href="/recipes/new"
-          className="btn-press inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-flame px-3.5 py-2.5 font-display text-xs font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep"
+          className="btn-press inline-flex shrink-0 items-center gap-1.5 rounded-lg btn-flame px-3.5 py-2.5 text-sm font-semibold"
         >
           <Plus weight="bold" className="size-4" />
           New recipe

@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { LOCALES, LOCALE_COOKIE } from "@/i18n/request";
+import { MACRO_PCT_MAX, MACRO_PCT_MIN } from "@/lib/nutrition";
 
 /** Switch the app language (roadmap 2.3) — cookie-based, per device. */
 export async function setLocale(formData: FormData) {
@@ -88,6 +89,49 @@ export async function saveFastingWindow(formData: FormData) {
   redirect(
     `/account?message=${encodeURIComponent(
       start ? `Eating window set: ${start} to ${end}.` : "Fasting window disabled."
+    )}`
+  );
+}
+
+/**
+ * Save the macro split from the Me page's draggable bar, or reset to the
+ * coach formula (mode "auto" = all three null). Same bounds as onboarding
+ * and the DB check: integers in [MACRO_PCT_MIN, MACRO_PCT_MAX] summing to 100.
+ */
+export async function saveMacroSplit(formData: FormData) {
+  const { supabase, userId } = await requireUser();
+
+  let split: { protein_pct: number | null; carbs_pct: number | null; fat_pct: number | null } = {
+    protein_pct: null,
+    carbs_pct: null,
+    fat_pct: null,
+  };
+  if (String(formData.get("mode") ?? "") !== "auto") {
+    const pct = (name: string) => {
+      const n = Number(formData.get(name));
+      return Number.isInteger(n) && n >= MACRO_PCT_MIN && n <= MACRO_PCT_MAX ? n : NaN;
+    };
+    const protein = pct("protein_pct");
+    const carbs = pct("carbs_pct");
+    const fat = pct("fat_pct");
+    if ([protein, carbs, fat].some(Number.isNaN) || protein + carbs + fat !== 100) {
+      redirect(`/account?error=${encodeURIComponent("Macro split must add up to 100%.")}`);
+    }
+    split = { protein_pct: protein, carbs_pct: carbs, fat_pct: fat };
+  }
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ ...split, updated_at: new Date().toISOString() })
+    .eq("id", userId);
+  if (error) redirect(`/account?error=${encodeURIComponent(error.message)}`);
+
+  revalidatePath("/", "layout");
+  redirect(
+    `/account?message=${encodeURIComponent(
+      split.protein_pct == null
+        ? "Macros back on the coach formula."
+        : `Macro split saved: P ${split.protein_pct}% · C ${split.carbs_pct}% · F ${split.fat_pct}%.`
     )}`
   );
 }

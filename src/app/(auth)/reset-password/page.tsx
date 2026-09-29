@@ -28,13 +28,13 @@ export default async function ResetPasswordPage({
   if (!data?.claims) {
     return (
       <div className="w-full max-w-sm">
-        <h1 className="font-display text-3xl font-bold tracking-tight text-paper">
-          {t("linkExpired")}
+        <h1 className="font-display text-3xl font-bold tracking-[-0.03em] text-paper">
+          Link expired
         </h1>
         <p className="mt-2 text-sm text-paper-mute">{t("linkExpiredHint")}</p>
         <Link
           href="/forgot-password"
-          className="btn-press mt-6 inline-block rounded-xl bg-flame px-5 py-3 font-display text-sm font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep"
+          className="btn-press mt-6 inline-block rounded-xl btn-flame px-5 py-3 text-sm font-semibold"
         >
           {t("requestNewLink")}
         </Link>
@@ -44,8 +44,8 @@ export default async function ResetPasswordPage({
 
   return (
     <Reveal className="w-full max-w-sm" onScroll={false} stagger={0.06} y={16}>
-      <h1 data-reveal className="font-display text-3xl font-bold tracking-tight text-paper">
-        {t("chooseNewPassword")}
+      <h1 data-reveal className="font-display text-3xl font-bold tracking-[-0.03em] text-paper">
+        Choose a new password
       </h1>
       <p data-reveal className="mt-2 text-sm text-paper-mute">{t("chooseNewPasswordHint")}</p>
 
@@ -68,7 +68,7 @@ export default async function ResetPasswordPage({
         <button
           data-reveal
           type="submit"
-          className="btn-press w-full rounded-xl bg-flame px-5 py-3 font-display text-sm font-bold uppercase tracking-wide text-flame-ink transition-colors hover:bg-flame-deep"
+          className="btn-press w-full rounded-xl btn-flame px-5 py-3 text-sm font-semibold transition-colors"
         >
           {t("setPassword")}
         </button>

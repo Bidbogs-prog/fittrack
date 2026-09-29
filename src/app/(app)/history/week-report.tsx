@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { ArrowClockwise, CaretLeft, CaretRight, Notebook } from "@phosphor-icons/react";
 import { Reveal } from "@/components/motion/reveal";
 import { generateWeekReport, type WeekReport } from "./report";
@@ -53,16 +54,16 @@ export function WeekReportCard({ weeks }: { weeks: WeekOption[] }) {
   };
 
   return (
-    <Reveal as="section" className="rounded-2xl border border-ink-800 bg-ink-900/60">
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-ink-800 px-5 py-4">
+    <Reveal as="section" className="nudge rounded-[22px]">
+      <header className="flex flex-wrap items-center justify-between gap-3 px-4 pt-4 lg:px-5">
         <div className="flex items-center gap-3">
-          <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-flame/10 ring-1 ring-inset ring-flame/25">
-            <Notebook weight="fill" className="size-4.5 text-flame" />
-          </span>
           <div>
-            <h2 className="font-display text-base font-semibold text-paper">Weekly report</h2>
-            <p className="text-[11px] text-paper-mute">
-              {week.label} · {week.loggedDays}/{week.daysTotal} days logged
+            <h2 className="font-mono text-[11px] font-medium tracking-[0.08em] text-flame uppercase">
+              <Notebook weight="fill" className="me-1.5 inline size-3.5 align-[-2px]" />
+              Week report · {week.label}
+            </h2>
+            <p className="mt-0.5 text-[11px] text-paper-mute">
+              {week.loggedDays}/{week.daysTotal} days logged
               {partial && " · in progress"}
             </p>
           </div>
@@ -100,7 +101,7 @@ export function WeekReportCard({ weeks }: { weeks: WeekOption[] }) {
         </div>
       </header>
 
-      <div className="px-5 py-4">
+      <div className="px-4 pt-2 pb-4 lg:px-5">
         {isPending ? (
           <div className="space-y-2.5 py-1" aria-live="polite" aria-busy="true">
             <p className="text-xs text-paper-mute">Reviewing your week…</p>
@@ -114,9 +115,13 @@ export function WeekReportCard({ weeks }: { weeks: WeekOption[] }) {
           </div>
         ) : report ? (
           <div className="space-y-4">
-            <p className="font-display text-lg font-semibold tracking-tight text-paper">
-              {report.summary}
-            </p>
+            <p className="text-[15px] leading-relaxed text-paper">{report.summary}</p>
+            <Link
+              href={`/coach?c=new&q=${encodeURIComponent(`Let's go through my week report for ${week.label}: ${report.summary}`)}`}
+              className="inline-flex min-h-8 items-center text-[13px] font-medium text-flame hover:text-flame-glow"
+            >
+              Discuss with your coach <span aria-hidden className="ms-1 rtl:-scale-x-100">→</span>
+            </Link>
             <ul className="space-y-3">
               {report.highlights.map((h, i) => (
                 <li key={i} className="flex items-start gap-3">
@@ -130,7 +135,7 @@ export function WeekReportCard({ weeks }: { weeks: WeekOption[] }) {
               ))}
             </ul>
             <p className="rounded-lg bg-ink-850 px-3.5 py-2.5 text-sm text-paper">
-              <span className="me-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-flame">
+              <span className="mr-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-flame">
                 {partial ? "Rest of week" : "Next week"}
               </span>
               {report.focus}
@@ -156,7 +161,7 @@ export function WeekReportCard({ weeks }: { weeks: WeekOption[] }) {
               <button
                 type="button"
                 onClick={run}
-                className="btn-press rounded-xl bg-flame px-5 py-2.5 font-display text-sm font-bold uppercase tracking-wide text-flame-ink hover:bg-flame-deep"
+                className="btn-press rounded-xl btn-flame px-5 py-2.5 text-sm font-semibold"
               >
                 {error ? "Try again" : "Review my week"}
               </button>

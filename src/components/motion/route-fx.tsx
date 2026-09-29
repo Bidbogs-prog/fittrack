@@ -6,7 +6,7 @@ import { DUR, EASE, NOT_REDUCED, gsap, useGSAP } from "./gsap";
 
 /**
  * Remounts its subtree on route change (keyed by pathname) and plays a
- * soft page-enter: opacity + rise. Keeps in-app navigation feeling sewn
+ * soft page-enter fade. Keeps in-app navigation feeling sewn
  * together without blocking interaction.
  */
 export function RouteFx({ children }: { children: React.ReactNode }) {
@@ -25,8 +25,10 @@ function PageEnter({ children }: { children: React.ReactNode }) {
       mm.add(NOT_REDUCED, () => {
         gsap.fromTo(
           el,
-          { opacity: 0, y: 10 },
-          { opacity: 1, y: 0, duration: DUR.panel, ease: EASE.out, clearProps: "transform" },
+          // Opacity only: a transform here would re-anchor the fixed
+          // composer and confirm sheet to this wrapper mid-animation.
+          { opacity: 0 },
+          { opacity: 1, duration: DUR.panel, ease: EASE.out },
         );
       });
     },

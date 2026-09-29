@@ -76,3 +76,11 @@ export async function rankFoods(
   const seen = new Set(prefix.map((f) => f.id));
   return [...prefix, ...contains.filter((f) => !seen.has(f.id))].slice(0, opts.limit);
 }
+
+/** Short provenance tag for food cards: USDA, OFF (Open Food Facts), So3ra, or Yours. */
+export function foodSourceLabel(food: Pick<Food, "source" | "owner_id">): string {
+  if (food.owner_id != null) return "Yours";
+  if (food.source === "usda") return "USDA";
+  if (food.source === "off") return "OFF";
+  return "So3ra";
+}

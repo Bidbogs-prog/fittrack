@@ -1,56 +1,45 @@
-import { Eyebrow } from "@/components/landing/shell";
-import { Reveal } from "@/components/motion/reveal";
+import { ArrowUp } from "@phosphor-icons/react/dist/ssr";
+import { getTranslations } from "next-intl/server";
+import { MiniDial } from "@/components/orbit/orbit";
 
-const STEPS: [string, string, string][] = [
-  [
-    "Tell us your stats",
-    "Sex, height, weight, and how often you train. Mifflin-St Jeor turns that into your BMR, TDEE and goal-shaped calorie and macro targets.",
-    "≈ 90 seconds",
-  ],
-  [
-    "Log the way you like",
-    "Weigh it in grams, scan a barcode, re-log a saved meal, or just describe the plate in a sentence and let the AI portion it.",
-    "≈ 10 seconds a meal",
-  ],
-  [
-    "Let the numbers adapt",
-    "Your logged weight trend recalibrates your real TDEE every week, and the Monday report tells you what to change.",
-    "automatic",
-  ],
-];
-
-export function HowItWorks() {
+/** Say it → it lands on your orbit → the coach closes the gap. */
+export async function HowItWorks() {
+  const t = await getTranslations("landing.how");
+  const card = "flex flex-col gap-3.5 rounded-3xl border border-ink-800 bg-ink-900 p-6";
   return (
-    <section
-      id="how-it-works"
-      className="relative scroll-mt-28 border-y border-ink-800 bg-ink-900/30"
-    >
-      <div className="mx-auto w-full max-w-[1200px] px-4 py-24 sm:px-6 md:py-32">
-        <Reveal className="max-w-2xl">
-          <Eyebrow>How it works</Eyebrow>
-          <h2 className="mt-5 font-display text-4xl font-bold tracking-tighter text-paper md:text-5xl" data-reveal>
-            Ninety seconds to your numbers.
-          </h2>
-        </Reveal>
-
-        <Reveal className="mt-14 grid gap-10 md:grid-cols-3 md:gap-8" stagger={0.12}>
-          {STEPS.map(([title, copy, time], i) => (
-            <div key={title} data-reveal className="relative border-t border-ink-700 pt-6">
-              <span
-                aria-hidden
-                className="absolute -top-px left-0 h-px w-16 bg-flame"
-              />
-              <p className="font-mono text-sm text-flame tabular">0{i + 1}</p>
-              <h3 className="mt-3 font-display text-xl font-semibold tracking-tight text-paper">
-                {title}
-              </h3>
-              <p className="mt-2 text-sm leading-relaxed text-paper-mute">{copy}</p>
-              <p className="mt-4 inline-flex rounded-full border border-ink-700 bg-ink-950/60 px-3 py-1 font-mono text-[11px] text-paper-dim">
-                {time}
-              </p>
-            </div>
-          ))}
-        </Reveal>
+    <section id="how" className="mx-auto max-w-[1200px] scroll-mt-20 px-6 pt-24 pb-10">
+      <p className="eyebrow">{t("eyebrow")}</p>
+      <h2 className="mt-3.5 mb-10 max-w-[18ch] font-display text-[clamp(34px,4.5vw,52px)] leading-[1.02] font-bold tracking-[-0.04em] text-paper">
+        {t("title")}
+      </h2>
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,300px),1fr))] gap-[18px]">
+        <div className={card}>
+          <p className="font-mono text-xs font-medium text-paper-mute">01</p>
+          <div className="flex items-center gap-2 rounded-2xl border border-ink-700 bg-ink-850 py-2 ps-3.5 pe-2 text-[13px] text-paper-mute">
+            <span className="flex-1">{t("oneExample")}</span>
+            <span className="grid size-[30px] place-items-center rounded-[10px] bg-[linear-gradient(135deg,#ffc94d,#f2701f)] text-flame-ink">
+              <ArrowUp weight="bold" className="size-4" />
+            </span>
+          </div>
+          <h3 className="font-display text-xl font-semibold text-paper">{t("oneTitle")}</h3>
+          <p className="text-sm leading-relaxed text-paper-dim">{t("oneBody")}</p>
+        </div>
+        <div className={card}>
+          <p className="font-mono text-xs font-medium text-paper-mute">02</p>
+          <div className="grid h-[78px] place-items-center">
+            <MiniDial fraction={0.67} size={78} stroke={4} />
+          </div>
+          <h3 className="font-display text-xl font-semibold text-paper">{t("twoTitle")}</h3>
+          <p className="text-sm leading-relaxed text-paper-dim">{t("twoBody")}</p>
+        </div>
+        <div className={card}>
+          <p className="font-mono text-xs font-medium text-paper-mute">03</p>
+          <p className="nudge rounded-2xl px-3.5 py-3 text-[13px] leading-snug text-paper">
+            {t.rich("threeExample", { b: (c) => <b className="font-semibold text-flame-glow">{c}</b> })}
+          </p>
+          <h3 className="font-display text-xl font-semibold text-paper">{t("threeTitle")}</h3>
+          <p className="text-sm leading-relaxed text-paper-dim">{t("threeBody")}</p>
+        </div>
       </div>
     </section>
   );

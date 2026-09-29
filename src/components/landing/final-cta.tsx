@@ -1,43 +1,19 @@
-"use client";
-
 import Link from "next/link";
-import { ArrowRight } from "@phosphor-icons/react";
-import { Magnetic } from "@/components/motion/magnetic";
-import { Reveal } from "@/components/motion/reveal";
+import { getTranslations } from "next-intl/server";
 
-export function FinalCta() {
+export async function FinalCta() {
+  const t = await getTranslations("landing.cta");
   return (
-    <section className="relative overflow-hidden border-t border-ink-800">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute left-1/2 top-full size-[720px] -translate-x-1/2 -translate-y-1/3 rounded-full bg-flame/[0.08] blur-[130px]"
-      />
-      <Reveal className="relative mx-auto w-full max-w-[1200px] px-6 py-28 text-center md:py-36">
-        <h2
-          className="mx-auto max-w-[16ch] font-display text-4xl font-bold leading-[0.98] tracking-tighter text-paper sm:text-5xl md:text-7xl"
-          data-reveal
-        >
-          Stop guessing. <span className="bg-gradient-to-r from-flame-glow via-flame to-flame-deep bg-clip-text text-transparent">Start counting.</span>
+    <section className="mx-auto max-w-[1200px] px-6 py-20">
+      <div className="flex flex-col items-start gap-5 rounded-[32px] border border-flame/25 bg-[radial-gradient(600px_300px_at_80%_20%,rgba(255,201,77,0.18),transparent_60%),linear-gradient(135deg,#2a1608,var(--ink-900)_60%)] p-[clamp(32px,6vw,72px)]">
+        <h2 className="max-w-[14ch] font-display text-[clamp(38px,5.5vw,68px)] leading-[0.98] font-bold tracking-[-0.05em] text-paper">
+          {t("title")}
         </h2>
-        <p className="mx-auto mt-6 max-w-[46ch] text-base leading-relaxed text-paper-dim" data-reveal>
-          Your targets take about ninety seconds to set up. The first logged
-          meal takes ten. Every سعرة after that is counted for you.
-        </p>
-        <div className="mt-10 flex justify-center" data-reveal>
-          <Magnetic strength={0.3}>
-            <Link
-              href="/signup"
-              className="group btn-press flex items-center gap-2 whitespace-nowrap rounded-full bg-flame py-3 ps-5 pe-2 font-display text-[13px] font-bold uppercase tracking-wide text-flame-ink shadow-[0_16px_48px_-12px_var(--flame)] transition-colors hover:bg-flame-deep sm:gap-3 sm:ps-7 sm:pe-3 sm:text-sm"
-            >
-              <span className="sm:hidden">Create free account</span>
-              <span className="hidden sm:inline">Create your free account</span>
-              <span className="grid size-9 place-items-center rounded-full bg-flame-ink/10 transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:-translate-y-px group-hover:translate-x-0.5 group-hover:scale-105">
-                <ArrowRight weight="bold" className="size-4" />
-              </span>
-            </Link>
-          </Magnetic>
-        </div>
-      </Reveal>
+        <p className="text-[17px] text-paper-dim">{t("body")}</p>
+        <Link href="/signup" className="btn-flame btn-press glow-flame inline-flex min-h-[52px] items-center rounded-[14px] px-[26px] text-base">
+          {t("button")} <span aria-hidden className="ms-1.5 rtl:-scale-x-100">→</span>
+        </Link>
+      </div>
     </section>
   );
 }

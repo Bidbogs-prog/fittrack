@@ -2,13 +2,13 @@
 
 import { useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
-import { Drop, Minus, Plus } from "@phosphor-icons/react";
+import { Minus, Plus } from "@phosphor-icons/react";
 import { logWater } from "./actions";
 
 /**
- * Water tile with optimistic taps: the count moves instantly, the server
- * settles it via the atomic log_water RPC, and a failed write rolls the
- * count back with a visible error instead of silently doing nothing.
+ * Compact water tile with optimistic taps: the count moves instantly, the
+ * server settles it via the atomic log_water RPC, and a failed write rolls
+ * the count back with a visible error instead of silently doing nothing.
  */
 export function WaterTile({
   ml: serverMl,
@@ -19,13 +19,13 @@ export function WaterTile({
   target: number;
   date: string;
 }) {
-  const t = useTranslations("dashboard");
+  const t = useTranslations("habits");
   const [ml, setMl] = useState(serverMl);
   const [error, setError] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
-  // Re-sync when the server value changes (day switch, revalidation) —
-  // state adjusted during render, per React's derived-state guidance.
+  // Re-sync when the server value changes (day switch, revalidation, the
+  // composer's "+250 ml" chip) — state adjusted during render.
   const [prevServerMl, setPrevServerMl] = useState(serverMl);
   if (prevServerMl !== serverMl) {
     setPrevServerMl(serverMl);
@@ -48,57 +48,41 @@ export function WaterTile({
   }
 
   const pct = Math.min(100, Math.round((ml / target) * 100));
-  const litres = (v: number) => (v / 1000).toFixed(v % 1000 === 0 ? 0 : 2);
 
   return (
-    <div className="col-span-2 rounded-2xl border border-ink-800 bg-ink-900/60 p-4 lg:col-span-1">
-      <div className="flex items-start justify-between gap-2">
-        <div>
-          <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-paper-mute">
-            <Drop weight="fill" className={`size-3.5 ${pct >= 100 ? "text-flame" : ""}`} />
-            {t("water")}
-          </p>
-          <p className="mt-1 font-mono text-2xl font-semibold tracking-tight text-paper tabular">
-            {litres(ml)}
-            <span className="ms-1.5 text-sm font-normal text-paper-mute">
-              {t("waterOfTarget", { litres: litres(target) })}
-            </span>
-          </p>
-        </div>
-        <div className="flex shrink-0 gap-1">
-          <button
-            type="button"
-            onClick={() => add(-250)}
-            disabled={ml <= 0}
-            aria-label={t("removeGlass")}
-            className="btn-press rounded-lg border border-ink-700 p-2 text-paper-mute transition-colors hover:text-paper disabled:opacity-30 pointer-coarse:p-3"
-          >
-            <Minus weight="bold" className="size-3.5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => add(250)}
-            aria-label={t("addGlass")}
-            className="btn-press rounded-lg border border-ink-700 p-2 text-paper-dim transition-colors hover:border-flame/50 hover:text-flame pointer-coarse:p-3"
-          >
-            <Plus weight="bold" className="size-3.5" />
-          </button>
-        </div>
+    <div className="relative rounded-[14px] border border-ink-800 bg-ink-900 p-2.5" title={error ?? undefined}>
+      <p className="text-[11px] text-paper-mute">{t("water")}</p>
+      <p className="font-mono text-base font-medium text-carbs tabular">{(ml / 1000).toFixed(1)}L</p>
+      <div className="mt-1 flex items-center gap-1">
+        <button
+          type="button"
+          onClick={() => add(-250)}
+          disabled={ml <= 0}
+          aria-label={t("waterRemove")}
+          className="btn-press grid size-7 place-items-center rounded-md border border-ink-700 text-paper-mute hover:text-paper disabled:opacity-30"
+        >
+          <Minus weight="bold" className="size-3" />
+        </button>
+        <button
+          type="button"
+          onClick={() => add(250)}
+          aria-label={t("waterAdd")}
+          className="btn-press grid size-7 place-items-center rounded-md border border-ink-700 text-carbs hover:border-carbs/50"
+        >
+          <Plus weight="bold" className="size-3" />
+        </button>
       </div>
       <div
         role="progressbar"
         aria-valuenow={ml}
         aria-valuemin={0}
         aria-valuemax={target}
-        aria-label={t("waterDrunk")}
-        className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-ink-800"
+        aria-label={t("water")}
+        className="absolute inset-x-2.5 bottom-1.5 h-0.5 overflow-hidden rounded-full bg-ink-800"
       >
-        <div
-          className="h-full rounded-full bg-flame transition-[width] duration-300"
-          style={{ width: `${pct}%` }}
-        />
+        <div className="h-full rounded-full bg-carbs transition-[width] duration-300" style={{ width: `${pct}%` }} />
       </div>
-      {error && <p className="mt-2 text-[11px] text-danger">{error}</p>}
+      {error && <p className="sr-only" role="alert">{error}</p>}
     </div>
   );
 }

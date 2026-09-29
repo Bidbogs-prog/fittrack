@@ -1,140 +1,95 @@
-import { ArrowRight, Barbell, ChartLineUp, ForkKnife, SealCheck } from "@phosphor-icons/react/dist/ssr";
-import { Eyebrow, Shell } from "@/components/landing/shell";
-import { CountUp } from "@/components/motion/count-up";
-import { DrawnBar } from "@/components/motion/progress";
-import { Reveal } from "@/components/motion/reveal";
+import { getTranslations } from "next-intl/server";
 
-/** Asymmetric bento — the three product pillars, each with a live visual. */
-export function Pillars() {
+/** "The system": a 7 + 5 + 12 bento — targets, per-gram precision, plans. */
+export async function Pillars() {
+  const t = await getTranslations("landing.system");
   return (
-    <section className="relative mx-auto w-full max-w-[1200px] px-4 py-24 sm:px-6 md:py-32">
-      <Reveal className="max-w-2xl">
-        <Eyebrow>The system</Eyebrow>
-        <h2 className="mt-5 font-display text-4xl font-bold tracking-tighter text-paper md:text-5xl" data-reveal>
-          Numbers you can train on.
-        </h2>
-        <p className="mt-4 text-base leading-relaxed text-paper-dim" data-reveal>
-          No estimates, no vibes. One equation, one verified food library, and
-          plans built from the same math your diary runs on.
-        </p>
-      </Reveal>
+    <section id="system" className="mx-auto max-w-[1200px] scroll-mt-20 px-6 pt-20 pb-10">
+      <p className="eyebrow">{t("eyebrow")}</p>
+      <h2 className="mt-3.5 mb-3 font-display text-[clamp(34px,4.5vw,52px)] leading-[1.02] font-bold tracking-[-0.04em] text-paper">
+        {t("title")}
+      </h2>
+      <p className="mb-10 max-w-[54ch] text-[17px] leading-relaxed text-paper-dim">{t("lede")}</p>
 
-      <Reveal className="mt-14 grid gap-5 md:grid-cols-12" stagger={0.12}>
-        {/* pillar 1 — the equation */}
-        <Shell className="md:col-span-7">
-          <ChartLineUp weight="duotone" className="size-7 text-flame" />
-          <h3 className="mt-4 font-display text-xl font-semibold tracking-tight text-paper">
-            Targets built on science
-          </h3>
-          <p className="mt-2 max-w-[52ch] text-sm leading-relaxed text-paper-mute">
-            Mifflin-St Jeor BMR, scaled by how often you actually train. Your
-            goal then shapes calories and macros — recomputed the moment your
-            body changes.
-          </p>
-          <div className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-4">
+      <div className="grid grid-cols-1 gap-[18px] md:grid-cols-12">
+        <div className="flex min-w-0 flex-col gap-4 rounded-3xl border border-ink-800 bg-ink-900 p-7 md:col-span-7">
+          <h3 className="font-display text-[22px] font-semibold text-paper">{t("targetsTitle")}</h3>
+          <p className="max-w-[52ch] text-sm leading-relaxed text-paper-dim">{t("targetsBody")}</p>
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-[22px] gap-y-[18px]" dir="ltr">
             {(
               [
-                ["BMR", 1742, "resting burn"],
-                ["TDEE", 2700, "× 1.55 training"],
-                ["Target", 2490, "lean bulk"],
+                ["BMR", "1,742", t("restingBurn"), false],
+                ["TDEE", "2,700", t("training"), false],
+                [t("target"), "2,490", t("leanBulk"), true],
               ] as const
-            ).map(([label, value, sub], i) => (
-              <div key={label} className="flex items-center gap-5">
-                {i > 0 && <ArrowRight weight="bold" className="size-4 text-paper-mute/60" />}
+            ).map(([label, value, sub, accent], i) => (
+              <div key={label} className="flex items-center gap-[22px]">
+                {i > 0 && <span aria-hidden className="text-ink-600">→</span>}
                 <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-paper-mute">
-                    {label}
-                  </p>
-                  <p className={`font-mono text-2xl font-semibold tracking-tight tabular lg:text-3xl ${label === "Target" ? "text-flame" : "text-paper"}`}>
-                    <CountUp value={value} />
+                  <p className="text-[10px] font-semibold tracking-[0.18em] text-paper-mute uppercase">{label}</p>
+                  <p className={`font-mono text-[32px] font-semibold tracking-[-0.03em] ${accent ? "text-flame" : "text-paper"}`}>
+                    {value}
                   </p>
                   <p className="text-[11px] text-paper-mute">{sub}</p>
                 </div>
               </div>
             ))}
           </div>
-        </Shell>
+        </div>
 
-        {/* pillar 2 — per-gram precision */}
-        <Shell className="md:col-span-5">
-          <ForkKnife weight="duotone" className="size-7 text-flame" />
-          <h3 className="mt-4 font-display text-xl font-semibold tracking-tight text-paper">
-            Per-gram precision
-          </h3>
-          <p className="mt-2 text-sm leading-relaxed text-paper-mute">
-            Every food is stored per 100 g. Log 137 g of rice and the math is
-            exact — never rounded to a “serving”.
-          </p>
-          <div className="mt-7 rounded-xl border border-ink-700 bg-ink-950/50 p-4">
-            <div className="flex items-baseline justify-between">
-              <p className="text-sm font-medium text-paper">Basmati rice</p>
-              <p className="font-mono text-lg font-semibold text-flame tabular">
-                <CountUp value={137} /> g
-              </p>
+        <div className="flex min-w-0 flex-col gap-3.5 rounded-3xl border border-ink-800 bg-ink-900 p-7 md:col-span-5">
+          <h3 className="font-display text-[22px] font-semibold text-paper">{t("gramTitle")}</h3>
+          <p className="text-sm leading-relaxed text-paper-dim">{t("gramBody")}</p>
+          <div className="flex flex-col gap-2.5 rounded-2xl border border-ink-700 bg-ink-950 p-3.5">
+            <div className="flex justify-between text-sm">
+              <span className="text-paper">{t("rice")}</span>
+              <span className="font-mono text-base font-semibold text-flame">137 g</span>
             </div>
-            <div className="mt-3 space-y-2.5">
+            <dl className="grid grid-cols-[14px_minmax(0,1fr)_54px] items-center gap-2.5 font-mono text-[11px] text-paper-mute" dir="ltr">
               {(
                 [
-                  ["P", 12.3, 34, "bg-protein"],
-                  ["C", 105.5, 86, "bg-carbs"],
-                  ["F", 1.4, 9, "bg-fat"],
+                  ["P", 34, "3.7 g", "bg-protein"],
+                  ["C", 86, "38.4 g", "bg-carbs"],
+                  ["F", 9, "0.4 g", "bg-fat"],
                 ] as const
-              ).map(([label, grams, pct, color], i) => (
-                <div key={label} className="flex items-center gap-3">
-                  <span className="w-3 font-mono text-[11px] text-paper-mute">{label}</span>
-                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-ink-700">
-                    <DrawnBar pct={pct} delay={i * 0.12} className={color} />
-                  </div>
-                  <span className="w-14 text-end font-mono text-[11px] text-paper-dim tabular">
-                    {grams} g
+              ).map(([k, w, v, color]) => (
+                <div key={k} className="contents">
+                  <dt>{k}</dt>
+                  <span className="h-[5px] rounded-full bg-ink-800">
+                    <span className={`block h-full rounded-full ${color}`} style={{ width: `${w}%` }} />
                   </span>
+                  <dd className="text-end text-paper-dim">{v}</dd>
                 </div>
               ))}
-            </div>
+            </dl>
           </div>
-        </Shell>
+        </div>
 
-        {/* pillar 3 — coach-built plans */}
-        <Shell className="md:col-span-12">
-          <div className="grid items-center gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-            <div>
-              <Barbell weight="duotone" className="size-7 text-flame" />
-              <h3 className="mt-4 font-display text-xl font-semibold tracking-tight text-paper">
-                Coach-built meal plans
-              </h3>
-              <p className="mt-2 max-w-[48ch] text-sm leading-relaxed text-paper-mute">
-                Cut, maintain or build — browse full days of eating assembled
-                from the same verified library your diary uses, totalled to the
-                calorie.
-              </p>
-              <p className="mt-5 inline-flex items-center gap-2 rounded-full border border-flame/25 bg-flame/[0.07] px-3.5 py-1.5 text-xs font-medium text-flame">
-                <SealCheck weight="fill" className="size-4" />
-                Every plan verified against the library
-              </p>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-3">
-              {(
-                [
-                  ["High-protein cut", 1980, 186],
-                  ["Steady maintain", 2510, 168],
-                  ["Lean bulk day", 2960, 197],
-                ] as const
-              ).map(([name, kcal, protein]) => (
-                <div
-                  key={name}
-                  className="rounded-xl border border-ink-700 bg-ink-950/50 p-4"
-                >
-                  <p className="text-sm font-medium text-paper">{name}</p>
-                  <p className="mt-2 font-mono text-2xl font-semibold tracking-tight text-paper tabular">
-                    <CountUp value={kcal} />
-                  </p>
-                  <p className="text-[11px] text-paper-mute">kcal · {protein} g protein</p>
-                </div>
-              ))}
-            </div>
+        <div className="grid min-w-0 grid-cols-[repeat(auto-fit,minmax(min(100%,300px),1fr))] items-center gap-7 rounded-3xl border border-ink-800 bg-[linear-gradient(120deg,rgba(255,157,59,0.08),var(--ink-900)_50%)] p-7 md:col-span-12">
+          <div>
+            <h3 className="font-display text-[22px] font-semibold text-paper">{t("plansTitle")}</h3>
+            <p className="mt-2.5 max-w-[46ch] text-sm leading-relaxed text-paper-dim">{t("plansBody")}</p>
           </div>
-        </Shell>
-      </Reveal>
+          <div className="grid grid-cols-3 gap-3">
+            {(
+              [
+                [t("planCut"), "1,980", "186", false],
+                [t("planMaintain"), "2,510", "168", false],
+                [t("planBuild"), "2,960", "197", true],
+              ] as const
+            ).map(([name, kcal, protein, accent]) => (
+              <div
+                key={name}
+                className={`rounded-2xl border bg-ink-950 p-3.5 ${accent ? "border-flame/40" : "border-ink-700"}`}
+              >
+                <p className="text-[13px] text-paper">{name}</p>
+                <p className={`mt-1.5 font-mono text-2xl font-semibold ${accent ? "text-flame" : "text-paper"}`}>{kcal}</p>
+                <p className="text-[11px] text-paper-mute">kcal · {protein} g P</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
     </section>
   );
 }

@@ -36,14 +36,14 @@ export default function GlobalError({
       >
         <div>
           <h1 style={{ fontSize: "1.4rem", margin: "0 0 0.5rem" }}>Something broke</h1>
-          <p style={{ color: "#9a9083", fontSize: "0.95rem", margin: "0 0 1.25rem" }}>
+          <p style={{ color: "#c2b8a9", fontSize: "0.95rem", margin: "0 0 1.25rem" }}>
             The error has been reported. Your logged data is safe.
           </p>
           <button
             onClick={reset}
             style={{
-              background: "#ff9d3b",
-              color: "#0b0907",
+              background: "linear-gradient(135deg,#ffc94d,#ff9d3b 50%,#f2701f)",
+              color: "#201004",
               fontWeight: 700,
               border: 0,
               padding: "10px 20px",

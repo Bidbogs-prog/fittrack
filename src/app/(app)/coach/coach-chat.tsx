@@ -1,232 +1,196 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ChatCircleText, PaperPlaneRight } from "@phosphor-icons/react";
+import { useTranslations } from "next-intl";
+import { Composer } from "@/components/orbit/composer";
 import { track } from "@/lib/analytics";
-import type { CoachMessage } from "@/lib/types";
 import { sendCoachMessage } from "./actions";
 
-interface LocalMessage {
+export interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
+  sources: string[];
 }
 
-const STARTERS = [
-  "How am I doing this week?",
-  "What should I change to hit my protein target?",
-  "Is my weight trend on track for my goal?",
-];
+/** Coach replies are plain text; **bold** spans get the flame emphasis. */
+function Rich({ text }: { text: string }) {
+  const parts = text.split(/\*\*(.+?)\*\*/g);
+  return (
+    <>
+      {parts.map((part, i) =>
+        i % 2 === 1 ? (
+          <b key={i} className="font-medium text-flame-glow">
+            {part}
+          </b>
+        ) : (
+          part
+        )
+      )}
+    </>
+  );
+}
 
 /**
- * The coach thread (roadmap 1.6 A). Server-rendered history seeds local
- * state; sends append optimistically and the reply lands via the server
- * action's return value. key={conversationId} on the parent resets state
- * when the user switches conversations.
+ * The coach thread (roadmap 1.6 A), merged into the orbit: user turns are
+ * paper bubbles, the coach answers in plain text, and the docked composer
+ * sends here instead of parsing meals. Server-rendered history seeds local
+ * state; key={conversationId} on the parent resets it per conversation.
+ * `initialPrompt` (from ?q=, e.g. Today's "See meal ideas") is sent once
+ * on mount.
  */
 export function CoachChat({
   conversationId,
   initialMessages,
+  initialPrompt,
 }: {
   conversationId: string | null;
-  initialMessages: CoachMessage[];
+  initialMessages: ChatMessage[];
+  initialPrompt: string | null;
 }) {
+  const t = useTranslations("coach");
   const router = useRouter();
-  const [messages, setMessages] = useState<LocalMessage[]>(
-    initialMessages.map((m) => ({ id: m.id, role: m.role, content: m.content }))
+  const [messages, setMessages] = useState<ChatMessage[]>(() =>
+    initialPrompt
+      ? [...initialMessages, { id: "local-0", role: "user", content: initialPrompt, sources: [] }]
+      : initialMessages
   );
-  const [input, setInput] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-  // The action may create the conversation on first send.
   const convoRef = useRef<string | null>(conversationId);
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const spacerRef = useRef<HTMLDivElement>(null);
-  // The just-sent user message: pinned to the top of the window so the reply
-  // unfolds beneath it and older turns stay above the fold.
-  const anchorRef = useRef<string | null>(null);
-  const localSeq = useRef(0);
+  const localSeq = useRef(1);
+  const anchorRef = useRef<string | null>(initialPrompt ? "local-0" : null);
+  const sentInitial = useRef(false);
 
-  // Open on the latest turn; history is reachable by scrolling up.
-  useLayoutEffect(() => {
-    const el = scrollRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
-  }, []);
-
-  useLayoutEffect(() => {
-    const container = scrollRef.current;
-    const spacer = spacerRef.current;
-    if (!container || !spacer) return;
-    const anchor = anchorRef.current
-      ? container.querySelector<HTMLElement>(`[data-msg="${anchorRef.current}"]`)
-      : null;
-    if (!anchor) {
-      spacer.style.height = "0px";
-      return;
-    }
-    // Size the spacer so the span from the anchor to the last bubble fills at
-    // least one window — that's what lets the anchor sit at the very top.
-    const rows = container.querySelectorAll<HTMLElement>("[data-msg]");
-    const last = rows[rows.length - 1];
-    const span = last.offsetTop + last.offsetHeight - anchor.offsetTop;
-    const styles = getComputedStyle(container);
-    const padTop = parseFloat(styles.paddingTop) || 0;
-    const padBottom = parseFloat(styles.paddingBottom) || 0;
-    spacer.style.height = `${Math.max(0, container.clientHeight - span - padTop - padBottom)}px`;
-    // Scroll only on the send itself; the reply landing later must not yank
-    // the view if the user has scrolled away in the meantime.
-    if (messages[messages.length - 1]?.id === anchorRef.current) {
-      container.scrollTop = anchor.offsetTop - padTop;
-    }
-  }, [messages]);
+  function request(message: string) {
+    startTransition(async () => {
+      const fd = new FormData();
+      fd.set("message", message);
+      if (convoRef.current) fd.set("conversation_id", convoRef.current);
+      let res: Awaited<ReturnType<typeof sendCoachMessage>>;
+      try {
+        res = await sendCoachMessage(fd);
+      } catch {
+        res = { data: null, error: t("offline") };
+      }
+      if (res.data == null) {
+        setError(res.error);
+        anchorRef.current = null;
+        setMessages((prev) => prev.slice(0, -1));
+        return;
+      }
+      const isNew = convoRef.current == null;
+      convoRef.current = res.data.conversationId;
+      const reply = res.data;
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `local-${++localSeq.current}`,
+          role: "assistant",
+          content: reply.reply,
+          sources: reply.sources,
+        },
+      ]);
+      track("coach_message_sent", { restricted: reply.restricted });
+      for (const flag of reply.flags) track("coach_guardrail_triggered", { flag });
+      if (isNew) router.replace(`/coach?c=${reply.conversationId}`, { scroll: false });
+    });
+  }
 
   function send(text: string) {
     const message = text.trim();
     if (!message || pending) return;
     setError(null);
-    setInput("");
     const id = `local-${++localSeq.current}`;
     anchorRef.current = id;
-    setMessages((prev) => [...prev, { id, role: "user", content: message }]);
-    startTransition(async () => {
-      const fd = new FormData();
-      fd.set("message", message);
-      if (convoRef.current) fd.set("conversation_id", convoRef.current);
-      const res = await sendCoachMessage(fd);
-      if (res.data == null) {
-        setError(res.error);
-        // Put the failed message back in the box so nothing is lost.
-        anchorRef.current = null;
-        setMessages((prev) => prev.slice(0, -1));
-        setInput(message);
-        return;
-      }
-      const isNew = convoRef.current == null;
-      convoRef.current = res.data.conversationId;
-      setMessages((prev) => [
-        ...prev,
-        { id: `local-${++localSeq.current}`, role: "assistant", content: res.data.reply },
-      ]);
-      track("coach_message_sent", { restricted: res.data.restricted });
-      for (const flag of res.data.flags) {
-        track("coach_guardrail_triggered", { flag });
-      }
-      // Reflect the new conversation in the URL + chip row without
-      // remounting the thread mid-conversation.
-      if (isNew) router.replace(`/coach?c=${res.data.conversationId}`, { scroll: false });
-    });
+    setMessages((prev) => [...prev, { id, role: "user", content: message, sources: [] }]);
+    request(message);
   }
 
+  // A prompt handed over from Today goes out once.
+  useEffect(() => {
+    if (!initialPrompt || sentInitial.current) return;
+    sentInitial.current = true;
+    request(initialPrompt);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Open on the latest turn; after a send, pin the new turn under the header.
+  useLayoutEffect(() => {
+    const anchor = anchorRef.current
+      ? document.querySelector<HTMLElement>(`[data-msg="${anchorRef.current}"]`)
+      : null;
+    if (anchor && messages[messages.length - 1]?.id === anchorRef.current) {
+      anchor.scrollIntoView({ block: "start" });
+    } else if (!anchorRef.current) {
+      window.scrollTo({ top: document.documentElement.scrollHeight });
+    }
+  }, [messages]);
+
+  const starters = [t("starter1"), t("starter2"), t("starter3")];
+
   return (
-    // Edge-to-edge on mobile (full-page chat); a framed card from md up.
-    <section className="flex min-h-0 flex-1 flex-col border-ink-800 bg-ink-900/60 max-md:border-t md:rounded-2xl md:border">
-      <div ref={scrollRef} className="relative flex-1 space-y-4 overflow-y-auto px-4 py-5 sm:px-6">
+    <>
+      <div className="flex flex-1 flex-col gap-3 px-[18px] pt-3.5 pb-4 lg:px-9">
         {messages.length === 0 && !pending ? (
-          <div className="flex h-full flex-col items-center justify-center gap-5 py-10 text-center">
-            <span className="grid size-12 place-items-center rounded-2xl bg-flame/10 ring-1 ring-inset ring-flame/25">
-              <ChatCircleText weight="fill" className="size-6 text-flame" />
-            </span>
-            <div>
-              <h2 className="font-display text-lg font-semibold text-paper">
-                Ask about your actual numbers
-              </h2>
-              <p className="mx-auto mt-1.5 max-w-sm text-sm leading-relaxed text-paper-dim">
-                The coach sees your targets, your last two weeks of logging, your weight trend
-                and your training — so ask something specific to you.
-              </p>
-            </div>
-            <div className="flex flex-wrap justify-center gap-2">
-              {STARTERS.map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => send(s)}
-                  className="btn-press rounded-lg border border-ink-700 px-3 py-2 text-xs font-medium text-paper-dim transition-colors hover:border-flame/50 hover:text-flame"
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
+          <div className="flex flex-col items-start gap-2 py-8">
+            <h2 className="font-display text-xl font-semibold tracking-tight text-paper">{t("emptyTitle")}</h2>
+            <p className="max-w-md text-sm leading-relaxed text-paper-dim">{t("emptyBody")}</p>
           </div>
         ) : (
-          messages.map((m) => (
-            <div
-              key={m.id}
-              data-msg={m.id}
-              className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
-            >
-              <div
-                className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-4 py-3 text-sm leading-relaxed sm:max-w-[75%] ${
-                  m.role === "user"
-                    ? "rounded-ee-md bg-flame/10 text-paper ring-1 ring-inset ring-flame/20"
-                    : "rounded-es-md bg-ink-800/80 text-paper-dim"
-                }`}
+          messages.map((m) =>
+            m.role === "user" ? (
+              <p
+                key={m.id}
+                data-msg={m.id}
+                dir="auto"
+                className="max-w-[80%] scroll-mt-24 self-end whitespace-pre-wrap rounded-[18px] rounded-ee-md bg-paper px-3.5 py-2.5 text-sm text-ink-950"
               >
                 {m.content}
+              </p>
+            ) : (
+              <div key={m.id} data-msg={m.id} className="max-w-[92%] lg:ms-0">
+                <p dir="auto" className="whitespace-pre-wrap text-sm leading-relaxed text-paper">
+                  <Rich text={m.content} />
+                </p>
+                {m.sources.length > 0 && (
+                  <p className="mt-1.5 text-[11px] text-paper-mute">
+                    {t("sources")}: {m.sources.join(" · ")}
+                  </p>
+                )}
               </div>
-            </div>
-          ))
+            )
+          )
         )}
         {pending && (
-          <div className="flex justify-start" aria-live="polite" aria-busy="true">
-            <div className="space-y-2 rounded-2xl rounded-es-md bg-ink-800/80 px-4 py-3">
-              <p className="text-xs text-paper-mute">Reading your data…</p>
-              {[120, 180, 90].map((w, i) => (
-                <div
-                  key={i}
-                  className="h-2.5 animate-pulse rounded bg-ink-700"
-                  style={{ width: w, animationDelay: `${i * 150}ms` }}
-                />
-              ))}
-            </div>
+          <div aria-live="polite" aria-busy="true" className="flex flex-col gap-2 py-1">
+            <p className="text-xs text-paper-mute">{t("reading")}</p>
+            {[180, 240, 120].map((w, i) => (
+              <span
+                key={i}
+                className="h-2.5 animate-pulse rounded bg-ink-800"
+                style={{ width: w, animationDelay: `${i * 150}ms` }}
+              />
+            ))}
           </div>
         )}
-        <div ref={spacerRef} aria-hidden className="shrink-0" />
+        {error && (
+          <p role="alert" className="rounded-xl border border-danger/30 bg-danger/[0.08] px-3 py-2 text-sm text-danger">
+            {error}
+          </p>
+        )}
+        <p className="mt-auto pt-4 text-[11px] leading-relaxed text-paper-mute">{t("disclaimer")}</p>
       </div>
 
-      {error && (
-        <p role="alert" className="border-t border-ink-800 px-5 py-2.5 text-sm text-danger">
-          {error}
-        </p>
-      )}
-
-      <form
-        className="flex items-end gap-2 border-t border-ink-800 p-3 sm:p-4"
-        onSubmit={(e) => {
-          e.preventDefault();
-          send(input);
-        }}
-      >
-        <textarea
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              send(input);
-            }
-          }}
-          rows={1}
-          maxLength={2000}
-          placeholder="Ask your coach…"
-          aria-label="Message the coach"
-          className="field max-h-40 min-h-11 flex-1 resize-none"
+      <div className="lg:px-9">
+        <Composer
+          mode="coach"
+          onSend={send}
+          sending={pending}
+          suggestions={messages.length === 0 ? starters : undefined}
         />
-        <button
-          type="submit"
-          disabled={pending || input.trim().length === 0}
-          aria-label="Send"
-          className="btn-press grid size-11 shrink-0 place-items-center rounded-xl bg-flame text-flame-ink hover:bg-flame-deep disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          <PaperPlaneRight weight="fill" className="size-4.5" />
-        </button>
-      </form>
-
-      <p className="border-t border-ink-800 px-5 py-2 text-center text-[11px] text-paper-mute">
-        The coach is an AI, not a doctor — nothing here is medical advice, and it can make
-        mistakes: check numbers against your diary. For health concerns, talk to a professional.
-      </p>
-    </section>
+      </div>
+    </>
   );
 }

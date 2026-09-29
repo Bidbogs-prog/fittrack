@@ -1,388 +1,243 @@
-import { CaretLeft, CaretRight, CopySimple } from "@phosphor-icons/react/dist/ssr";
+import { CaretLeft, CaretRight } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { getFormatter, getTranslations } from "next-intl/server";
 import { AiInsights } from "@/components/ai-insights";
-import type { DayInsights } from "./insights";
-import { CalorieRing, MacroBars, MacroInline } from "@/components/macros";
-import { MicroPanel } from "@/components/micros";
-import { CountUp } from "@/components/motion/count-up";
-import { Reveal } from "@/components/motion/reveal";
-import { getActiveTargets } from "@/lib/adaptive";
-import { getProfile } from "@/lib/auth";
-import { entryMacros, entryMicros } from "@/lib/diary";
-import { calcWaterTargetMl, sumMacros, sumMicros } from "@/lib/nutrition";
-import { calcStreaks } from "@/lib/streak";
-import { displayWeight, weightUnit } from "@/lib/units";
-import {
-  MEAL_TYPES,
-  type DiaryEntry,
-  type ExerciseLog,
-  type MealType,
-  type WeightLog,
-} from "@/lib/types";
-import { trendDelta, weightTrend } from "@/lib/weight";
-import { ActivityCard } from "./activity-card";
-import { AddFoodDialog } from "./add-food-dialog";
-import { CalendarPicker } from "./calendar-picker";
+import { MacroTiles } from "@/components/macros";
+import { ComposerChip, Composer } from "@/components/orbit/composer";
+import { Greeting } from "@/components/orbit/greeting";
+import { LogProvider } from "@/components/orbit/log-provider";
+import { Thread, type ThreadNudge } from "@/components/orbit/thread";
+import { TodayOrbit } from "@/components/orbit/today-orbit";
+import { WaterChip } from "@/components/orbit/water-chip";
 import { copyDiaryEntries } from "./actions";
-import { EntryRow } from "./entry-row";
-import { Habits } from "./habits";
+import { CalendarPicker } from "./calendar-picker";
+import { getDayData, parseDateParam, ringFractions, shiftDate, toDateString } from "./day-data";
+import { FastingStatus } from "./fasting-status";
 import { OfflineSync } from "./offline-sync";
-import { SaveMealButton } from "./save-meal-button";
-import { WeightCard } from "./weight-card";
+import { DayRail } from "./rail";
 
 export const metadata = { title: "Today" };
-
-function toDateString(d: Date): string {
-  return d.toLocaleDateString("en-CA");
-}
-
-function shiftDate(date: string, days: number): string {
-  const d = new Date(date + "T12:00:00");
-  d.setDate(d.getDate() + days);
-  return toDateString(d);
-}
 
 export default async function DashboardPage({
   searchParams,
 }: {
   searchParams: Promise<{ d?: string }>;
 }) {
-  const [{ supabase, userId, profile }, params] = await Promise.all([
-    getProfile(),
-    searchParams,
-  ]);
-
-  const active = await getActiveTargets(supabase, userId, profile);
-  if (!active) redirect("/onboarding");
-  const { targets, adaptive } = active;
-
-  const today = toDateString(new Date());
-  const date = params.d && /^\d{4}-\d{2}-\d{2}$/.test(params.d) ? params.d : today;
-
-  const yesterday = shiftDate(date, -1);
-  const [{ data: entriesData }, { data: weightData }, { data: yesterdayData }, { data: savedInsight }] =
-    await Promise.all([
-      supabase
-        .from("diary_entries")
-        .select("*, food:foods(*)")
-        .eq("user_id", userId)
-        .eq("entry_date", date)
-        .order("created_at"),
-      supabase
-        .from("weight_logs")
-        .select("*")
-        .eq("user_id", userId)
-        .gte("log_date", shiftDate(today, -120))
-        .order("log_date"),
-      supabase
-        .from("diary_entries")
-        .select("meal")
-        .eq("user_id", userId)
-        .eq("entry_date", yesterday),
-      supabase
-        .from("ai_insights")
-        .select("payload, updated_at")
-        .eq("user_id", userId)
-        .eq("scope", "day")
-        .eq("period_start", date)
-        .maybeSingle(),
-    ]);
-
-  const [{ data: streakData }, { data: waterData }, { data: exerciseData }, { data: stepData }] =
-    await Promise.all([
-      supabase
-        .from("diary_entries")
-        .select("entry_date")
-        .eq("user_id", userId)
-        .gte("entry_date", shiftDate(today, -219))
-        .lte("entry_date", today),
-      supabase
-        .from("water_logs")
-        .select("ml")
-        .eq("user_id", userId)
-        .eq("log_date", date)
-        .maybeSingle(),
-      supabase
-        .from("exercise_logs")
-        .select("*")
-        .eq("user_id", userId)
-        .eq("log_date", date)
-        .order("created_at"),
-      supabase
-        .from("step_logs")
-        .select("steps")
-        .eq("user_id", userId)
-        .eq("log_date", date)
-        .maybeSingle(),
-    ]);
-  const streaks = calcStreaks(
-    (streakData ?? []).map((r) => r.entry_date as string),
-    today
-  );
-
-  const entries = (entriesData ?? []) as DiaryEntry[];
-  const trendPoints = weightTrend((weightData ?? []) as WeightLog[]);
-  const yesterdayMeals = new Set((yesterdayData ?? []).map((r) => r.meal as MealType));
-
-  const eaten = sumMacros(entries.map(entryMacros));
-  const microTotals = sumMicros(entries.map(entryMicros));
-
-  // Exercise raises the day's calorie target — but only for formula
-  // targets. Adaptive TDEE already measures total burn, so crediting
-  // workouts on top would double-count them.
-  const exercises = (exerciseData ?? []) as ExerciseLog[];
-  const burned = exercises.reduce((sum, e) => sum + e.kcal, 0);
-  const kcalTarget = adaptive ? targets.kcal : targets.kcal + burned;
-  const remaining = Math.round(kcalTarget - eaten.kcal);
-  const isToday = date === today;
-  const [t, tMeal, tMacro, tGoal, format] = await Promise.all([
-    getTranslations("dashboard"),
-    getTranslations("meals"),
-    getTranslations("macros"),
-    getTranslations("goal"),
+  const params = await searchParams;
+  const date = parseDateParam(params.d, toDateString(new Date()));
+  const [data, t, tg, format] = await Promise.all([
+    getDayData(date),
+    getTranslations("today"),
+    getTranslations("goals"),
     getFormatter(),
   ]);
-  const noon = new Date(date + "T12:00:00");
-  const dateLabel = format.dateTime(noon, { weekday: "long", day: "numeric", month: "long" });
-  const firstName = profile.full_name?.split(" ")[0] ?? t("defaultName");
-  const weekday = format.dateTime(noon, { weekday: "long" });
+  const { profile, targets, eaten, entries, isToday, remaining, kcalTarget, burned, adaptive } = data;
 
-  return (
-    <div className="space-y-8">
-      {/* header */}
-      <Reveal as="header" className="flex flex-wrap items-end justify-between gap-4" onScroll={false}>
-        <div data-reveal>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-flame">
-            {tGoal(targets.goal)} · {isToday ? t("today") : dateLabel}
-          </p>
-          <h1 className="mt-1.5 font-display text-3xl font-bold tracking-tighter text-paper md:text-4xl">
-            {isToday ? t("greeting", { name: firstName }) : dateLabel}
-          </h1>
-        </div>
-        <nav data-reveal className="flex items-center gap-1 rounded-lg border border-ink-700 bg-ink-900 p-1">
-          <Link
-            href={`/dashboard?d=${shiftDate(date, -1)}`}
-            aria-label={t("previousDay")}
-            className="btn-press rounded-md p-2.5 text-paper-mute hover:bg-ink-800 hover:text-paper pointer-coarse:p-3"
-          >
-            <CaretLeft weight="bold" className="size-4" />
-          </Link>
-          <Link
-            href="/dashboard"
-            className={`rounded-md px-3 py-1.5 text-xs font-semibold pointer-coarse:py-2.5 ${
-              isToday ? "bg-flame text-flame-ink" : "text-paper-dim hover:text-paper"
-            }`}
-          >
-            {t("todayShort")}
-          </Link>
-          <Link
-            href={`/dashboard?d=${shiftDate(date, 1)}`}
-            aria-label={t("nextDay")}
-            className="btn-press rounded-md p-2.5 text-paper-mute hover:bg-ink-800 hover:text-paper pointer-coarse:p-3"
-          >
-            <CaretRight weight="bold" className="size-4" />
-          </Link>
-          <CalendarPicker selected={date} today={today} />
-        </nav>
-      </Reveal>
+  const day = new Date(date + "T12:00:00");
+  const dateLabel = format.dateTime(day, { weekday: "long", day: "numeric", month: "long" });
+  const weekdayShort = format.dateTime(day, { weekday: "short" });
+  const weekday = format.dateTime(day, { weekday: "long" });
+  const firstName = profile.full_name?.split(" ")[0] ?? t("athlete");
+  const rings = ringFractions(data);
+  const proteinGap = Math.round(targets.protein - eaten.protein);
+  const windowEnd = profile.eating_window_end?.slice(0, 5) ?? null;
 
-      <OfflineSync />
+  // Deterministic coach nudges — no model call; the coach page does the talking.
+  const nudges: ThreadNudge[] = [];
+  if (isToday) {
+    if (entries.length === 0) {
+      nudges.push({ key: "empty", minutes: null, body: t.rich("nudgeEmpty", { b: (c) => <b>{c}</b> }) });
+    } else if (proteinGap >= 15 && remaining > 0) {
+      const question = t("ideasQuestion", { protein: proteinGap, kcal: remaining });
+      nudges.push({
+        key: "protein",
+        minutes: null,
+        body: windowEnd
+          ? t.rich("nudgeProteinWindow", { end: windowEnd, gap: proteinGap, b: (c) => <b>{c}</b> })
+          : t.rich("nudgeProtein", { gap: proteinGap, kcal: remaining, b: (c) => <b>{c}</b> }),
+        cta: { label: t("seeIdeas"), href: `/coach?c=new&q=${encodeURIComponent(question)}` },
+      });
+    } else if (remaining < -150) {
+      nudges.push({
+        key: "over",
+        minutes: null,
+        body: t.rich("nudgeOver", { kcal: Math.abs(remaining), b: (c) => <b>{c}</b> }),
+        cta: {
+          label: t("talkItThrough"),
+          href: `/coach?c=new&q=${encodeURIComponent(t("overQuestion", { kcal: Math.abs(remaining) }))}`,
+        },
+      });
+    } else if (proteinGap < 15 && Math.abs(remaining) <= 150) {
+      nudges.push({ key: "ontarget", minutes: null, body: t.rich("nudgeOnTarget", { b: (c) => <b>{c}</b> }) });
+    }
+  }
 
-      {/* energy hero */}
-      <Reveal
-        as="section"
-        onScroll={false}
-        delay={0.1}
-        className="grid gap-6 rounded-2xl border border-ink-800 bg-ink-900/60 p-6 lg:grid-cols-[auto_1fr] lg:items-center lg:gap-10 lg:p-8"
-      >
-        <CalorieRing eaten={eaten.kcal} target={kcalTarget} />
-        <div>
-          <p className="font-display text-xl font-semibold tracking-tight text-paper">
-            {remaining >= 0 ? (
-              <>
-                <CountUp value={remaining} className="font-mono text-flame tabular" />{" "}
-                {isToday ? t("kcalLeftToday") : t("kcalLeftThatDay")}
-              </>
-            ) : (
-              <>
-                <CountUp value={Math.abs(remaining)} className="font-mono text-danger tabular" />{" "}
-                {t("kcalOverTarget")}
-              </>
-            )}
-          </p>
-          <dl className="mt-4 grid grid-cols-3 divide-x divide-ink-700 border-y border-ink-700">
-            {(
-              [
-                [t("bmr"), targets.bmr, t("restingBurn")],
-                [t("tdee"), targets.tdee, adaptive ? t("adaptiveBurn") : t("dailyBurn")],
-                [
-                  t("target"),
-                  kcalTarget,
-                  burned > 0 && !adaptive
-                    ? t("inclExercise", { kcal: burned })
-                    : tGoal(targets.goal),
-                ],
-              ] as const
-            ).map(([label, value, sub]) => (
-              <div key={label} className="px-3 py-3 first:ps-0 sm:px-4">
-                <dt className="text-[11px] font-semibold uppercase tracking-[0.14em] text-paper-mute">
-                  {label}
-                </dt>
-                <dd className="mt-0.5 font-mono text-lg font-semibold tracking-tight text-paper tabular sm:text-xl">
-                  <CountUp value={value} />
-                </dd>
-                <dd className="text-[11px] lowercase text-paper-mute">{sub}</dd>
-              </div>
-            ))}
-          </dl>
-          {adaptive && (
-            <p className="mt-3 text-[11px] leading-relaxed text-paper-mute">
-              {t.rich(
-                adaptive.weightDeltaKg <= 0 ? "adaptiveDropped" : "adaptiveRose",
-                {
-                  days: adaptive.spanDays,
-                  intake: adaptive.intakeAvg,
-                  weight: displayWeight(
-                    Math.abs(adaptive.weightDeltaKg),
-                    profile.units
-                  ).toFixed(1),
-                  unit: weightUnit(profile.units),
-                  burn: adaptive.tdee,
-                  n: (chunks) => (
-                    <span className="font-mono text-paper-dim tabular">{chunks}</span>
-                  ),
-                }
-              )}
-            </p>
-          )}
-        </div>
-      </Reveal>
+  const ideasQuestion = t("ideasQuestion", {
+    protein: Math.max(0, proteinGap),
+    kcal: Math.max(0, remaining),
+  });
 
-      <Habits
-        streaks={streaks}
-        waterMl={waterData?.ml ?? 0}
-        waterTarget={calcWaterTargetMl(profile.weight_kg)}
-        date={date}
-        isToday={isToday}
-        fastingStart={profile.eating_window_start}
-        fastingEnd={profile.eating_window_end}
-      />
-
-      <WeightCard
-        points={trendPoints}
-        delta={trendDelta(trendPoints)}
-        date={date}
-        isToday={isToday}
-        defaultWeight={profile.weight_kg}
-        units={profile.units}
-      />
-
-      <ActivityCard
-        date={date}
-        exercises={exercises}
-        steps={stepData?.steps ?? null}
-        adaptive={adaptive != null}
-      />
-
-      <AiInsights
-        key={date}
-        date={date}
-        hasEntries={entries.length > 0}
-        initial={(savedInsight?.payload as DayInsights | undefined) ?? null}
-        generatedAt={savedInsight?.updated_at ?? null}
-      />
-
-      <MacroBars eaten={eaten} targets={targets} />
-
-      <MicroPanel totals={microTotals} />
-
-      {/* meals */}
-      {entries.length === 0 && yesterdayMeals.size > 0 && (
-        <form action={copyDiaryEntries}>
-          <input type="hidden" name="from_date" value={yesterday} />
+  const chips = (
+    <>
+      <ComposerChip href={`/coach?c=new&q=${encodeURIComponent(ideasQuestion)}`}>{t("chipIdeas")}</ComposerChip>
+      {data.yesterdayHasEntries && (
+        <form action={copyDiaryEntries} className="contents">
+          <input type="hidden" name="from_date" value={data.yesterday} />
           <input type="hidden" name="to_date" value={date} />
-          <button
-            type="submit"
-            className="btn-press inline-flex items-center gap-2 rounded-lg border border-ink-700 px-4 py-2.5 text-xs font-semibold text-paper-dim transition-colors hover:border-flame/50 hover:text-flame"
-          >
-            <CopySimple weight="bold" className="size-4" />
-            {t("copyYesterdayAll")}
-          </button>
+          <ComposerChip type="submit">{t("chipYesterday")}</ComposerChip>
         </form>
       )}
-      {/* grid-cols-1 (not bare `grid`): the implicit auto track minimum is the
-          card's min-content, and a truncating food name makes that the full
-          nowrap line — minmax(0,1fr) keeps the track at container width. */}
-      <Reveal
-        as="section"
-        className="grid grid-cols-1 gap-5 xl:grid-cols-2"
-        stagger={0.1}
-        start="top 90%"
+      <WaterChip date={date} />
+      <ComposerChip href="/coach">{t("chipCoach")}</ComposerChip>
+    </>
+  );
+
+  const stats = [
+    [t("bmr"), targets.bmr, false],
+    [t("tdee"), targets.tdee, false],
+    [t("target"), kcalTarget, true],
+  ] as const;
+
+  const dayNav = (
+    <nav
+      aria-label={t("dayNav")}
+      className="flex shrink-0 items-center gap-0.5 rounded-[10px] border border-ink-700 bg-ink-900 p-[3px] text-[13px]"
+    >
+      <Link
+        href={`/dashboard?d=${shiftDate(date, -1)}`}
+        aria-label={t("prevDay")}
+        className="btn-press grid size-9 place-items-center rounded-[7px] text-paper-mute hover:text-paper lg:size-8"
       >
-        {MEAL_TYPES.map((meal) => {
-          const mealEntries = entries.filter((e) => e.meal === meal);
-          const mealTotal = sumMacros(mealEntries.map(entryMacros));
-          return (
-            <article
-              key={meal}
-              data-reveal
-              className="rounded-2xl border border-ink-800 bg-ink-900/60"
-            >
-              <header className="flex flex-wrap items-center justify-between gap-2 border-b border-ink-800 px-5 py-4">
+        <CaretLeft weight="bold" className="size-3.5 rtl:-scale-x-100" />
+      </Link>
+      <Link
+        href="/dashboard"
+        aria-current={isToday ? "date" : undefined}
+        className={`grid min-h-9 place-items-center rounded-[7px] px-2.5 font-semibold capitalize lg:min-h-8 ${
+          isToday ? "bg-flame text-flame-ink" : "text-paper-dim hover:text-paper"
+        }`}
+      >
+        {isToday ? weekdayShort : t("backToToday")}
+      </Link>
+      <Link
+        href={`/dashboard?d=${shiftDate(date, 1)}`}
+        aria-label={t("nextDay")}
+        className="btn-press grid size-9 place-items-center rounded-[7px] text-paper-mute hover:text-paper lg:size-8"
+      >
+        <CaretRight weight="bold" className="size-3.5 rtl:-scale-x-100" />
+      </Link>
+      <CalendarPicker selected={date} today={data.today} />
+    </nav>
+  );
+
+  const eyebrow = `${tg(targets.goal)} · ${isToday ? t("today") : dateLabel}`;
+  const heading = isToday ? (
+    <Greeting
+      name={firstName}
+      className="mt-1 font-display text-[26px] leading-[1.1] font-bold tracking-[-0.03em] text-paper lg:text-[40px] lg:leading-[1.05] lg:tracking-[-0.035em]"
+    />
+  ) : (
+    <h1 className="mt-1 font-display text-[26px] leading-[1.1] font-bold tracking-[-0.03em] text-paper capitalize lg:text-[40px] lg:tracking-[-0.035em]">
+      {weekday}
+    </h1>
+  );
+
+  return (
+    <LogProvider key={date} entryDate={date} isToday={isToday} entryIds={entries.map((e) => e.id)}>
+      <div className="max-lg:px-[18px] max-lg:pt-2 max-lg:pb-44 lg:grid lg:min-h-[100dvh] lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="flex min-w-0 flex-col">
+          {/* header: stacked on mobile, dial + text side by side on desktop */}
+          <section className="flex flex-col gap-3 lg:flex-row lg:items-center lg:gap-9 lg:border-b lg:border-ink-800 lg:bg-[radial-gradient(500px_300px_at_20%_50%,rgba(255,157,59,0.06),transparent_70%)] lg:px-9 lg:pt-7 lg:pb-6">
+            <div className="flex items-end justify-between gap-3 lg:hidden">
+              <div className="min-w-0">
+                <p className="eyebrow truncate">{eyebrow}</p>
+                {heading}
+              </div>
+              {dayNav}
+            </div>
+
+            <div className="self-center lg:order-first">
+              <TodayOrbit
+                entries={entries.map((e) => ({
+                  id: e.id,
+                  meal: e.meal,
+                  entry_date: e.entry_date,
+                  created_at: e.created_at ?? null,
+                }))}
+                rings={rings}
+                kcalLeft={remaining}
+                windowStart={profile.eating_window_start}
+                windowEnd={profile.eating_window_end}
+                showHint
+              />
+            </div>
+
+            <div className="flex min-w-0 flex-col gap-3 max-lg:hidden">
+              <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
-                  <h2 className="font-display text-base font-semibold text-paper">
-                    {tMeal(meal)}
-                  </h2>
-                  <MacroInline macros={mealTotal} />
+                  <p className="eyebrow">{`${tg(targets.goal)} · ${dateLabel}`}</p>
+                  {heading}
                 </div>
-                <div className="flex shrink-0 items-center gap-3">
-                  <span className="font-mono text-sm text-paper-dim tabular">
-                    {format.number(Math.round(mealTotal.kcal))} {tMacro("kcal")}
-                  </span>
-                  {mealEntries.length > 0 && (
-                    <SaveMealButton
-                      meal={meal}
-                      date={date}
-                      defaultName={`${weekday} ${tMeal(meal)}`}
-                    />
-                  )}
-                  {mealEntries.length === 0 && yesterdayMeals.has(meal) && (
-                    <form action={copyDiaryEntries}>
-                      <input type="hidden" name="from_date" value={yesterday} />
-                      <input type="hidden" name="to_date" value={date} />
-                      <input type="hidden" name="meal" value={meal} />
-                      <button
-                        type="submit"
-                        title={t("copyYesterdayMeal", { meal: tMeal(meal) })}
-                        aria-label={t("copyYesterdayMeal", { meal: tMeal(meal) })}
-                        className="btn-press rounded-lg border border-ink-700 p-2 text-paper-mute transition-colors hover:border-flame/50 hover:text-flame"
-                      >
-                        <CopySimple weight="bold" className="size-3.5" />
-                      </button>
-                    </form>
-                  )}
-                  <AddFoodDialog meal={meal} entryDate={date} />
-                </div>
-              </header>
-              {mealEntries.length === 0 ? (
-                <p className="px-5 py-7 text-center text-sm text-paper-mute">
-                  {t("nothingLogged")}
-                </p>
-              ) : (
-                <ul className="divide-y divide-ink-800/70">
-                  {mealEntries.map((entry) => (
-                    <li key={entry.id}>
-                      <EntryRow entry={entry} />
-                    </li>
-                  ))}
-                </ul>
+                {dayNav}
+              </div>
+              <dl className="grid w-max grid-cols-3 border-y border-ink-700">
+                {stats.map(([label, value, accent], i) => (
+                  <div
+                    key={label}
+                    className={`py-2.5 ${i === 0 ? "pe-5" : i === 1 ? "px-5" : "ps-5"} ${i < 2 ? "border-e border-ink-700" : ""}`}
+                  >
+                    <dt className="text-[10px] font-semibold tracking-[0.14em] text-paper-mute uppercase">{label}</dt>
+                    <dd className={`font-mono text-xl font-medium tabular ${accent ? "text-flame" : "text-paper"}`}>
+                      {format.number(value)}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+              {burned > 0 && !adaptive && (
+                <p className="text-xs text-paper-mute">{t("burnedNote", { kcal: burned })}</p>
               )}
-            </article>
-          );
-        })}
-      </Reveal>
-    </div>
+              <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-paper-mute">
+                {t("hintDesktop")}
+                <kbd className="rounded-[5px] border border-ink-700 px-1.5 py-px font-mono text-[11px] text-paper-dim">
+                  Space
+                </kbd>
+                {isToday && profile.eating_window_start && profile.eating_window_end && (
+                  <FastingStatus start={profile.eating_window_start} end={profile.eating_window_end} />
+                )}
+              </p>
+            </div>
+
+            <div className="lg:hidden">
+              <MacroTiles eaten={eaten} targets={targets} />
+            </div>
+          </section>
+
+          <OfflineSync />
+
+          <div className="mt-4 flex flex-1 flex-col gap-4 lg:mt-0 lg:px-9 lg:pt-5">
+            <Thread
+              entries={entries}
+              nudges={nudges}
+              proteinReached={eaten.protein >= targets.protein}
+              kcalLeft={remaining}
+              weekday={weekday}
+            />
+            <AiInsights
+              key={date}
+              date={date}
+              hasEntries={entries.length > 0}
+              initial={data.savedInsight?.payload ?? null}
+              generatedAt={data.savedInsight?.updatedAt ?? null}
+            />
+          </div>
+
+          <div className="lg:px-9">
+            <Composer chips={chips} />
+          </div>
+        </div>
+
+        <DayRail data={data} />
+      </div>
+    </LogProvider>
   );
 }
