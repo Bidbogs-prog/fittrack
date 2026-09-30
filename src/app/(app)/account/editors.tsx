@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { C, pointAt, windowArc } from "@/components/orbit/orbit";
+import { C, pointAt, windowArc } from "@/components/orbit/orbit-math";
 import { formatClock, parseClock } from "@/lib/day-time";
 import { MACRO_PCT_MAX, MACRO_PCT_MIN, MACRO_PRESETS, type MacroSplit } from "@/lib/nutrition";
 import { saveFastingWindow, saveMacroSplit } from "./actions";

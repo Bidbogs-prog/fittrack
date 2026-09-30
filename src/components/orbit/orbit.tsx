@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useId, useState } from "react";
+import { C, dash, pointAt, windowArc, type OrbitWindow } from "./orbit-math";
+
+export type { OrbitWindow };
 
 /**
  * The orbit: a 24-hour dial of the day (Design README, "<Orbit>").
@@ -16,28 +19,10 @@ import { useEffect, useId, useState } from "react";
  * in the centre disc. In RTL only the SVG mirrors; the centre stays put.
  */
 
-export const C = (r: number) => 2 * Math.PI * r;
-
-export function dash(fraction: number, r: number): string {
-  const f = Math.max(0, Math.min(fraction, 1));
-  return `${f * C(r)} ${C(r)}`;
-}
-
-/** Point on the dial for a minute-of-day, clockwise from 00 at the top. */
-export function pointAt(minutes: number, r: number): { x: number; y: number } {
-  const a = ((minutes / 1440) * 360 * Math.PI) / 180;
-  return { x: 120 + r * Math.sin(a), y: 120 - r * Math.cos(a) };
-}
-
 export interface OrbitDot {
   key: string;
   minutes: number;
   fresh?: boolean;
-}
-
-export interface OrbitWindow {
-  startMin: number;
-  endMin: number;
 }
 
 const RINGS = [
@@ -45,14 +30,6 @@ const RINGS = [
   { r: 77, color: "var(--carbs)" },
   { r: 64, color: "var(--fat)" },
 ] as const;
-
-export function windowArc(win: OrbitWindow): { length: number; rotate: number } {
-  const span = (((win.endMin - win.startMin) % 1440) + 1440) % 1440 || 1440;
-  return {
-    length: (span / 1440) * C(106),
-    rotate: (win.startMin / 1440) * 360 - 90,
-  };
-}
 
 export function Orbit({
   rings,
@@ -271,10 +248,3 @@ export function MiniDial({
   );
 }
 
-/** Colour for a logged day: flame on target, flame-deep over, muted under. */
-export function dayColor(ratio: number | null): string {
-  if (ratio == null) return "var(--ink-700)";
-  if (ratio > 1.05) return "var(--flame-deep)";
-  if (ratio < 0.9) return "var(--paper-mute)";
-  return "var(--flame)";
-}
