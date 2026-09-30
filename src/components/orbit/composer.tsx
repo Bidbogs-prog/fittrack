@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import {
@@ -18,6 +18,9 @@ import { mealForMinutes, minutesOfDate } from "@/lib/day-time";
 import type { Food, MealType } from "@/lib/types";
 import { ConfirmSheet } from "./confirm-sheet";
 import { useLog } from "./log-provider";
+
+/** Tallest the input grows (Tailwind max-h-32) before it scrolls. */
+const INPUT_MAX_PX = 128;
 
 /**
  * The docked composer: one box for "I ate…" and "coach, …". On mobile it
@@ -54,6 +57,17 @@ export function Composer({
   const menuRef = useRef<HTMLDivElement>(null);
 
   const busy = log.parsing || sending;
+
+  // Grow with the text up to the cap; only then scroll. Empty, the box is
+  // exactly one line and the placeholder is clipped instead of wrapping
+  // into a scrollable second line.
+  useLayoutEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    if (!value) return;
+    el.style.height = `${Math.min(el.scrollHeight, INPUT_MAX_PX)}px`;
+  }, [value]);
 
   function openSearch(view: "browse" | "scan") {
     setMeal(mealForMinutes(minutesOfDate(new Date())));
@@ -262,7 +276,9 @@ export function Composer({
             dir="auto"
             placeholder={placeholder}
             aria-label={mode === "coach" ? t("coachPlaceholder") : t("placeholder")}
-            className="max-h-32 min-h-9 min-w-0 flex-1 resize-none bg-transparent py-2 text-base text-paper outline-none placeholder:text-paper-mute pointer-fine:text-[15px]"
+            className={`max-h-32 min-h-9 min-w-0 flex-1 resize-none bg-transparent py-2 text-base leading-5 text-paper outline-none placeholder:text-paper-mute pointer-fine:text-[15px] ${
+              value ? "overflow-y-auto" : "overflow-hidden text-ellipsis whitespace-nowrap"
+            }`}
           />
 
           <button
