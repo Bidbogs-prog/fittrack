@@ -65,11 +65,11 @@ export function SaveMealButton({
           setError(null);
           setOpen(true);
         }}
-        title={`Save this ${meal} as a meal`}
-        aria-label={`Save this ${meal} as a meal`}
-        className="btn-press rounded-lg border border-ink-700 p-2 text-paper-mute transition-colors hover:border-flame/50 hover:text-flame"
+        title={t("saveMealTitle", { meal: tMeal(meal) })}
+        className="btn-press inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-ink-700 px-3 text-xs font-semibold text-paper-dim transition-colors hover:border-flame/50 hover:text-flame"
       >
         <BookmarkSimple weight="bold" className="size-3.5" />
+        {t("saveMealButton")}
       </button>
 
       {open && (

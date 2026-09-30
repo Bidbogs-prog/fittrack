@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import {
   ArrowUp,
   Barcode,
+  BookmarkSimple,
   Camera,
   MagnifyingGlass,
   Microphone,
@@ -49,7 +50,7 @@ export function Composer({
   const log = useLog();
   const [value, setValue] = useState("");
   const [menu, setMenu] = useState(false);
-  const [search, setSearch] = useState<null | "browse" | "scan">(null);
+  const [search, setSearch] = useState<null | "browse" | "scan" | "saved">(null);
   const [scanning, setScanning] = useState(false);
   const [meal, setMeal] = useState<MealType>("snack");
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -69,7 +70,7 @@ export function Composer({
     el.style.height = `${Math.min(el.scrollHeight, INPUT_MAX_PX)}px`;
   }, [value]);
 
-  function openSearch(view: "browse" | "scan") {
+  function openSearch(view: "browse" | "scan" | "saved") {
     setMeal(mealForMinutes(minutesOfDate(new Date())));
     setMenu(false);
     setSearch(view);
@@ -195,8 +196,14 @@ export function Composer({
           </p>
         )}
 
-        {(chips || suggestions) && (
+        {(chips || suggestions || mode === "today") && (
           <div className="no-scrollbar -mx-3.5 flex gap-1.5 overflow-x-auto px-3.5 lg:mx-0 lg:px-0">
+            {mode === "today" && (
+              <ComposerChip onClick={() => openSearch("saved")}>
+                <BookmarkSimple weight="fill" className="me-1 size-3.5 text-flame" />
+                {t("savedMeals")}
+              </ComposerChip>
+            )}
             {chips}
             {suggestions?.map((s) => (
               <ComposerChip key={s} disabled={busy} onClick={() => onSend?.(s)}>

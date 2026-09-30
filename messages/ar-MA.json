@@ -379,7 +379,9 @@
     "weekdaySun": "أح",
     "logTodayWeight": "+ سجّل وزن اليوم",
     "logWeightFor": "+ سجّل الوزن ليوم {date}",
-    "loggedWeightEdit": "مسجّل {value} {unit} · تعديل"
+    "loggedWeightEdit": "مسجّل {value} {unit} · تعديل",
+    "saveMealButton": "حفظ الوجبة",
+    "saveMealTitle": "احفظ هذه الوجبة ({meal}) لإعادة استخدامها"
   },
   "common": {
     "close": "إغلاق",
@@ -465,7 +467,10 @@
     "quickAddHelp": "سجّل السعرات دون اختيار طعام — الماكروز اختيارية، والمغذيات الدقيقة تبقى مجهولة.",
     "labelOptional": "التسمية (اختياري)",
     "labelPlaceholder": "مثلاً: عشاء في مطعم",
-    "caloriesKcal": "السعرات (سعرة)"
+    "caloriesKcal": "السعرات (سعرة)",
+    "mealPicker": "أي وجبة",
+    "noSavedMeals": "لا وجبات محفوظة بعد. في صفحة اليوم، افتح وجبة سجّلتها والمس «حفظ الوجبة».",
+    "showAllFoods": "عرض كل الأطعمة"
   },
   "insights": {
     "title": "المدرّب الذكي",
@@ -532,7 +537,8 @@
     "send": "إرسال",
     "dismiss": "إغلاق",
     "barcodeMiss": "هذا الباركود غير موجود في المكتبة بعد. ابحث عن الطعام أو أضفه من صفحة الأطعمة.",
-    "water": "+250 مل ماء"
+    "water": "+250 مل ماء",
+    "savedMeals": "الوجبات المحفوظة"
   },
   "orbit": {
     "summary": "{left} سعرة {over, select, over {فوق الهدف} other {متبقية}}. البروتين {protein}٪، الكربوهيدرات {carbs}٪، الدهون {fat}٪ من الهدف. {meals, plural, =0 {لا وجبات مسجّلة} one {وجبة واحدة مسجّلة} two {وجبتان مسجّلتان} few {# وجبات مسجّلة} many {# وجبة مسجّلة} other {# وجبة مسجّلة}}.",

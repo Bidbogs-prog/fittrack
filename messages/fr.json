@@ -379,7 +379,9 @@
     "weekdaySun": "Di",
     "logTodayWeight": "+ Enregistrer mon poids du jour",
     "logWeightFor": "+ Enregistrer le poids du {date}",
-    "loggedWeightEdit": "Enregistré {value} {unit} · modifier"
+    "loggedWeightEdit": "Enregistré {value} {unit} · modifier",
+    "saveMealButton": "Enregistrer le repas",
+    "saveMealTitle": "Enregistrer ce repas ({meal}) pour le réutiliser"
   },
   "common": {
     "close": "Fermer",
@@ -465,7 +467,10 @@
     "quickAddHelp": "Enregistrez des calories sans choisir d'aliment — les macros sont facultatives, les micronutriments restent inconnus.",
     "labelOptional": "Libellé (facultatif)",
     "labelPlaceholder": "ex. Dîner au restaurant",
-    "caloriesKcal": "Calories (kcal)"
+    "caloriesKcal": "Calories (kcal)",
+    "mealPicker": "Quel repas",
+    "noSavedMeals": "Aucun repas enregistré pour l’instant. Dans Aujourd’hui, ouvrez un repas déjà saisi et touchez Enregistrer le repas.",
+    "showAllFoods": "Voir tous les aliments"
   },
   "insights": {
     "title": "Coach IA",
@@ -532,7 +537,8 @@
     "send": "Envoyer",
     "dismiss": "Fermer",
     "barcodeMiss": "Ce code-barres n'est pas encore dans la bibliothèque. Cherchez l'aliment ou ajoutez-le dans Aliments.",
-    "water": "+250 ml d'eau"
+    "water": "+250 ml d'eau",
+    "savedMeals": "Repas enregistrés"
   },
   "orbit": {
     "summary": "{left} kcal {over, select, over {au-dessus de l'objectif} other {restantes}}. Protéines {protein} %, glucides {carbs} %, lipides {fat} % de l'objectif. {meals, plural, =0 {Aucun repas enregistré} one {# repas enregistré} other {# repas enregistrés}}.",

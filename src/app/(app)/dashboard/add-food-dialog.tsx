@@ -29,7 +29,7 @@ import {
   microsForPortion,
   percentDv,
 } from "@/lib/nutrition";
-import { MICRO_KEYS, type Food, type MealType } from "@/lib/types";
+import { MEAL_TYPES, MICRO_KEYS, type Food, type MealType } from "@/lib/types";
 import {
   addDiaryEntry,
   addQuickEntry,
@@ -59,7 +59,7 @@ type View =
   | { kind: "scanMiss"; code: string };
 
 export function AddFoodDialog({
-  meal,
+  meal: initialMeal,
   entryDate,
   open: openProp,
   onOpenChange,
@@ -71,8 +71,11 @@ export function AddFoodDialog({
   /** Controlled mode (the composer / ⌘K opens it); no trigger is rendered. */
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
-  /** Where a controlled open lands: search (default) or the barcode scanner. */
-  initialView?: "browse" | "scan";
+  /**
+   * Where a controlled open lands: search (default), the barcode scanner,
+   * or the saved-meals list on its own.
+   */
+  initialView?: "browse" | "scan" | "saved";
   triggerLabel?: string;
 }) {
   const [openState, setOpenState] = useState(false);
@@ -87,12 +90,22 @@ export function AddFoodDialog({
   useEffect(() => {
     closeRef.current = () => setOpen(false);
   });
-  const [view, setView] = useState<View>({ kind: initialView ?? "browse" });
-  // A controlled open can ask for a different starting view each time.
+  const startView = (): View => ({ kind: initialView === "scan" ? "scan" : "browse" });
+  const [view, setView] = useState<View>(startView);
+  // The meal the dialog logs into: seeded by the caller (the meal card, or
+  // the clock for the composer) and switchable in the header.
+  const [meal, setMeal] = useState<MealType>(initialMeal);
+  // Saved-meals-only listing (the composer's "Saved meals" chip).
+  const [savedOnly, setSavedOnly] = useState(initialView === "saved");
+  // Each open starts fresh from the caller's view and meal.
   const [prevOpen, setPrevOpen] = useState(open);
   if (prevOpen !== open) {
     setPrevOpen(open);
-    if (open) setView({ kind: initialView ?? "browse" });
+    if (open) {
+      setView(startView());
+      setMeal(initialMeal);
+      setSavedOnly(initialView === "saved");
+    }
   }
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Food[]>([]);
@@ -342,7 +355,9 @@ export function AddFoodDialog({
           >
             <div className="flex items-center justify-between">
               <h3 className="font-display text-base font-semibold text-paper">
-                {t("addToMeal", { meal: tMeal(meal) })}
+                {savedOnly && view.kind === "browse"
+                  ? t("savedMeals")
+                  : t("addToMeal", { meal: tMeal(meal) })}
               </h3>
               <button
                 type="button"
@@ -354,6 +369,27 @@ export function AddFoodDialog({
               </button>
             </div>
 
+            <div
+              role="radiogroup"
+              aria-label={t("mealPicker")}
+              className="mt-3 grid grid-cols-4 gap-1 rounded-[12px] border border-ink-800 bg-ink-950 p-1"
+            >
+              {MEAL_TYPES.map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  role="radio"
+                  aria-checked={meal === m}
+                  onClick={() => setMeal(m)}
+                  className={`min-h-9 rounded-[9px] px-1 text-xs font-medium transition-colors ${
+                    meal === m ? "bg-ink-800 text-paper" : "text-paper-mute hover:text-paper"
+                  }`}
+                >
+                  {tMeal(m)}
+                </button>
+              ))}
+            </div>
+
             {view.kind === "browse" && (
               <>
                 <div className="relative mt-4">
@@ -362,7 +398,10 @@ export function AddFoodDialog({
                     ref={searchRef}
                     autoFocus
                     value={query}
-                    onChange={(e) => setQuery(e.target.value)}
+                    onChange={(e) => {
+                      setQuery(e.target.value);
+                      if (e.target.value.trim()) setSavedOnly(false);
+                    }}
                     placeholder={t("searchPlaceholder")}
                     className="field ps-10"
                   />
@@ -478,7 +517,21 @@ export function AddFoodDialog({
                         </ul>
                       </section>
                     )}
-                    {suggestions && suggestions.recipes.length > 0 && (
+                    {savedOnly && suggestions && suggestions.savedMeals.length === 0 && (
+                      <p className="rounded-lg border border-dashed border-ink-700 px-4 py-8 text-center text-sm text-paper-mute">
+                        {t("noSavedMeals")}
+                      </p>
+                    )}
+                    {savedOnly && (
+                      <button
+                        type="button"
+                        onClick={() => setSavedOnly(false)}
+                        className="w-full rounded-lg px-3 py-2 text-center text-xs font-medium text-paper-mute hover:text-paper"
+                      >
+                        {t("showAllFoods")}
+                      </button>
+                    )}
+                    {!savedOnly && suggestions && suggestions.recipes.length > 0 && (
                       <section>
                         <h4 className="px-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-paper-mute">
                           {t("yourRecipes")}
@@ -514,7 +567,7 @@ export function AddFoodDialog({
                         </ul>
                       </section>
                     )}
-                    {suggestions && (
+                    {!savedOnly && suggestions && (
                       <>
                         <Shelf
                           title={t("favorites")}
@@ -543,7 +596,7 @@ export function AddFoodDialog({
                         />
                       </>
                     )}
-                    {!hasShelves && (
+                    {!savedOnly && !hasShelves && (
                       <p className="rounded-lg border border-dashed border-ink-700 px-4 py-8 text-center text-sm text-paper-mute">
                         {suggestions ? t("emptyShelves") : t("loadingFoods")}
                       </p>

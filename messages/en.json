@@ -379,7 +379,9 @@
     "weekdaySun": "Su",
     "logTodayWeight": "+ Log today's weight",
     "logWeightFor": "+ Log weight for {date}",
-    "loggedWeightEdit": "Logged {value} {unit} · edit"
+    "loggedWeightEdit": "Logged {value} {unit} · edit",
+    "saveMealButton": "Save meal",
+    "saveMealTitle": "Save this {meal} to reuse it"
   },
   "common": {
     "close": "Close",
@@ -465,7 +467,10 @@
     "quickAddHelp": "Log calories without picking a food — macros are optional, micronutrients stay unknown.",
     "labelOptional": "Label (optional)",
     "labelPlaceholder": "e.g. Restaurant dinner",
-    "caloriesKcal": "Calories (kcal)"
+    "caloriesKcal": "Calories (kcal)",
+    "mealPicker": "Which meal",
+    "noSavedMeals": "No saved meals yet. On Today, open a meal you have logged and tap Save meal.",
+    "showAllFoods": "Show all foods"
   },
   "insights": {
     "title": "AI coach",
@@ -532,7 +537,8 @@
     "send": "Send",
     "dismiss": "Dismiss",
     "barcodeMiss": "That barcode isn't in the library yet. Search for the food or add it under Foods.",
-    "water": "+250 ml water"
+    "water": "+250 ml water",
+    "savedMeals": "Saved meals"
   },
   "orbit": {
     "summary": "{left} kcal {over, select, over {over target} other {left}}. Protein {protein}%, carbs {carbs}%, fat {fat}% of target. {meals, plural, =0 {No meals logged} one {# meal logged} other {# meals logged}}.",
