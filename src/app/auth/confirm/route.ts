@@ -6,7 +6,12 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const token_hash = searchParams.get("token_hash");
   const type = searchParams.get("type") as EmailOtpType | null;
-  const next = searchParams.get("next") ?? "/onboarding";
+  // Resolve against our origin and reject anything that lands elsewhere: a prefix check misses
+  // `/\t/evil.com`, since the URL parser strips tabs/newlines and yields `//evil.com`.
+  const nextUrl = new URL(searchParams.get("next") ?? "/onboarding", request.url);
+  const next = nextUrl.origin === new URL(request.url).origin
+    ? nextUrl.pathname + nextUrl.search + nextUrl.hash
+    : "/onboarding";
 
   if (token_hash && type) {
     const supabase = await createClient();

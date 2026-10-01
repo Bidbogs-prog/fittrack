@@ -52,3 +52,5 @@ supabase/.temp/
 
 # coach red-team eval reports (npm run eval:coach)
 eval-results/
+.empryo
+designs/
