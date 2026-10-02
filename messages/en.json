@@ -520,6 +520,8 @@
     "photoUnreadable": "Couldn't read that photo. Try another shot, or describe the meal in words.",
     "voiceUnsupported": "Voice isn't available in this browser. Type what you ate instead.",
     "voiceError": "Couldn't hear that. Check microphone access and try again.",
+    "voiceDenied": "Microphone access is off for So3ra. Turn it on in your phone's settings (iPhone: Settings › Safari › Microphone; Android: Settings › Apps › Chrome › Permissions), then reopen the app.",
+    "voiceBlocked": "Voice input isn't available in the installed app on this phone. Use your keyboard's dictation mic, or type what you ate.",
     "queuedOffline": "You're offline. Saved on this device; it syncs when you reconnect."
   },
   "composer": {

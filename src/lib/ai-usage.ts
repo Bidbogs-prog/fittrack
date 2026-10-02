@@ -6,8 +6,13 @@ import type { LlmUsage } from "@/lib/llm";
  * per-user caps now and for pricing from real cost data later.
  *
  *   AI_COACH_DISABLED=1               global kill switch for the coach
- *   COACH_DAILY_MESSAGE_LIMIT         per-user replies per UTC day (default 50, 0 = unlimited)
- *   COACH_MONTHLY_MESSAGE_LIMIT       per-user replies per UTC month (unset = unlimited)
+ *   COACH_DAILY_MESSAGE_LIMIT           free: replies per UTC day (default 10, 0 = unlimited)
+ *   COACH_MONTHLY_MESSAGE_LIMIT         free: replies per UTC month (default 30, 0 = unlimited)
+ *   COACH_PREMIUM_DAILY_MESSAGE_LIMIT   premium: replies per UTC day (default 50, 0 = unlimited);
+ *                                       premium has no monthly cap
+ *
+ * Defaults are the free-tier allowance, so a deploy that forgets the env
+ * vars stays cheap rather than open-ended.
  */
 
 type Supabase = Awaited<ReturnType<typeof createClient>>;
@@ -46,9 +51,15 @@ export function coachDisabled(): boolean {
 }
 
 /** Null when within limits, otherwise a user-facing reason. */
-export async function coachQuotaError(supabase: Supabase, userId: string): Promise<string | null> {
-  const daily = limit("COACH_DAILY_MESSAGE_LIMIT", 50);
-  const monthly = limit("COACH_MONTHLY_MESSAGE_LIMIT", null);
+export async function coachQuotaError(
+  supabase: Supabase,
+  userId: string,
+  premium: boolean
+): Promise<string | null> {
+  const daily = premium
+    ? limit("COACH_PREMIUM_DAILY_MESSAGE_LIMIT", 50)
+    : limit("COACH_DAILY_MESSAGE_LIMIT", 10);
+  const monthly = premium ? null : limit("COACH_MONTHLY_MESSAGE_LIMIT", 30);
   if (daily == null && monthly == null) return null;
 
   const now = new Date();

@@ -520,6 +520,8 @@
     "photoUnreadable": "Impossible de lire cette photo. Essayez une autre prise ou décrivez le repas en mots.",
     "voiceUnsupported": "La voix n'est pas disponible dans ce navigateur. Tapez plutôt ce que vous avez mangé.",
     "voiceError": "Je n'ai pas entendu. Vérifiez l'accès au micro et réessayez.",
+    "voiceDenied": "L'accès au micro est désactivé pour So3ra. Activez-le dans les réglages du téléphone (iPhone : Réglages › Safari › Micro ; Android : Paramètres › Applications › Chrome › Autorisations), puis rouvrez l'app.",
+    "voiceBlocked": "La saisie vocale n'est pas disponible dans l'app installée sur ce téléphone. Utilisez la dictée du clavier ou tapez ce que vous avez mangé.",
     "queuedOffline": "Vous êtes hors ligne. Enregistré sur cet appareil ; la synchronisation se fera à la reconnexion."
   },
   "composer": {

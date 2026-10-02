@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getActiveTargets } from "@/lib/adaptive";
 import { coachDisabled, coachQuotaError, recordAiUsage } from "@/lib/ai-usage";
 import { getProfile } from "@/lib/auth";
+import { isPremium } from "@/lib/entitlements";
 import { buildCoachContext } from "@/lib/coach/context";
 import { briefsPromptBlock, selectBriefs } from "@/lib/coach/evidence";
 import { coachSystemPrompt } from "@/lib/coach/prompt";
@@ -66,7 +67,7 @@ export async function POST(request: NextRequest) {
     return fail(`Keep messages under ${MAX_MESSAGE_LEN} characters.`, 400);
   }
 
-  const quota = await coachQuotaError(supabase, userId);
+  const quota = await coachQuotaError(supabase, userId, await isPremium(supabase, userId));
   if (quota) return fail(quota, 429);
 
   const active = await getActiveTargets(supabase, userId, profile);

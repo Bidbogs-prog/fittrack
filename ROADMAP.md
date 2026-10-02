@@ -124,7 +124,7 @@ This is a living document. Check items off as they ship, add notes/links to PRs,
 - [ ] Later: migrate insights/photo-log/plan generation onto `llm.ts` so `gemini.ts` stops being a second code path
 
 **E. Premium wiring (with 3.1)**
-- [ ] Server-side entitlement check on every coach action (UI gating is not security — same rule as admin)
+- [x] Server-side entitlement check on every coach action (UI gating is not security — same rule as admin) — `entitlements` table (provider-agnostic: manual / paddle / youcanpay / apple / google) + `isPremium()`; premium lifts the monthly cap. Manual grants via SQL until a provider is live
 - [ ] Client-pays loop: Stripe payment → tops up LLM Gateway credits; price set from real `ai_usage` cost data per active user + margin buffer
 - [ ] Free taste: 10 coach messages/month on the free tier (assistant replies counted, monthly reset) — enough for 2–3 real exchanges at negligible token cost, and the reset creates a recurring upsell moment
 

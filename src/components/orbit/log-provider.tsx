@@ -329,7 +329,12 @@ export function LogProvider({
         setInterim(liveRef.current);
       };
       rec.onerror = (e) => {
-        if (e.error !== "aborted" && e.error !== "no-speech") setError(t("voiceError"));
+        if (e.error === "aborted" || e.error === "no-speech") return;
+        // not-allowed: the user (or OS) blocked the mic; service-not-allowed:
+        // the platform refuses speech here (e.g. some installed iOS web apps).
+        setError(
+          t(e.error === "not-allowed" ? "voiceDenied" : e.error === "service-not-allowed" ? "voiceBlocked" : "voiceError")
+        );
       };
       rec.onend = () => {
         recRef.current = null;

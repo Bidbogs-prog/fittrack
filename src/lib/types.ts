@@ -205,6 +205,21 @@ export interface CoachMessage {
   created_at: string;
 }
 
+/** Premium access (roadmap 1.6 E). Written by webhooks or by hand, never by the client. */
+export interface Entitlement {
+  user_id: string;
+  plan: "premium";
+  source: "manual" | "paddle" | "youcanpay" | "apple" | "google";
+  status: "active" | "past_due" | "canceled" | "expired";
+  /** null = no end date (manual grants). */
+  current_period_end: string | null;
+  provider_customer_id: string | null;
+  provider_ref: string | null;
+  note: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 /** One metered model call (roadmap 1.6 D). Never holds message content. */
 export interface AiUsage {
   id: number;
