@@ -10,7 +10,8 @@
     "import:off": "node scripts/import-off.ts",
     "import:usda": "node scripts/import-usda.ts",
     "test": "vitest run",
-    "eval:coach": "vitest run --config vitest.eval.config.ts"
+    "eval:coach": "vitest run --config vitest.eval.config.ts src/lib/coach/coach.eval.ts",
+    "eval:compare": "COACH_COMPARE=1 vitest run --config vitest.eval.config.ts src/lib/coach/compare.eval.ts"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",

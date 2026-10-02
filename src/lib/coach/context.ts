@@ -54,7 +54,9 @@ export async function buildCoachContext(
   ] = await Promise.all([
     supabase
       .from("diary_entries")
-      .select("entry_date, grams, quick_kcal, quick_protein_g, food:foods(name, kcal, protein_g)")
+      .select(
+        "entry_date, grams, quick_kcal, quick_protein_g, quick_fibre_g, food:foods(name, kcal, protein_g, fibre_g)"
+      )
       .eq("user_id", userId)
       .gte("entry_date", windowStart)
       .lte("entry_date", today),
@@ -111,14 +113,15 @@ export async function buildCoachContext(
   // Per-day kcal + protein across the window, derived the standard way
   // (per-100g scaling for foods, snapshots for quick adds) — plus a
   // frequency fingerprint of what the user actually eats.
-  const byDay = new Map<string, { kcal: number; protein: number }>();
+  const byDay = new Map<string, { kcal: number; protein: number; fibre: number }>();
   const freq = new Map<string, { count: number; totalGrams: number }>();
   for (const row of (entryData ?? []) as unknown as {
     entry_date: string;
     grams: number | null;
     quick_kcal: number | null;
     quick_protein_g: number | null;
-    food: { name: string; kcal: number; protein_g: number } | null;
+    quick_fibre_g: number | null;
+    food: { name: string; kcal: number; protein_g: number; fibre_g: number | null } | null;
   }[]) {
     const kcal =
       row.food != null && row.grams != null
@@ -128,9 +131,14 @@ export async function buildCoachContext(
       row.food != null && row.grams != null
         ? (row.food.protein_g * row.grams) / 100
         : (row.quick_protein_g ?? 0);
-    const day = byDay.get(row.entry_date) ?? { kcal: 0, protein: 0 };
+    const fibre =
+      row.food != null && row.grams != null
+        ? ((row.food.fibre_g ?? 0) * row.grams) / 100
+        : (row.quick_fibre_g ?? 0);
+    const day = byDay.get(row.entry_date) ?? { kcal: 0, protein: 0, fibre: 0 };
     day.kcal += kcal;
     day.protein += protein;
+    day.fibre += fibre;
     byDay.set(row.entry_date, day);
     if (row.food != null && row.grams != null) {
       const f = freq.get(row.food.name) ?? { count: 0, totalGrams: 0 };
@@ -150,6 +158,9 @@ export async function buildCoachContext(
     loggedDays > 0 ? completed.reduce((sum, [, d]) => sum + d.kcal, 0) / loggedDays : 0;
   const avgProtein =
     loggedDays > 0 ? completed.reduce((sum, [, d]) => sum + d.protein, 0) / loggedDays : 0;
+  // Fibre is unknown (null) for some foods, so this is a floor, not exact.
+  const avgFibre =
+    loggedDays > 0 ? completed.reduce((sum, [, d]) => sum + d.fibre, 0) / loggedDays : 0;
 
   const trendPoints = weightTrend((weightData ?? []) as WeightLog[]);
   const latestTrend = trendPoints.at(-1);
@@ -181,7 +192,7 @@ export async function buildCoachContext(
       : completed
           .map(
             ([date, d]) =>
-              `- ${date}: ${Math.round(d.kcal)} kcal, protein ${Math.round(d.protein)} g`
+              `- ${date}: ${Math.round(d.kcal)} kcal, protein ${Math.round(d.protein)} g, fibre ${Math.round(d.fibre)} g`
           )
           .join("\n");
 
@@ -268,7 +279,7 @@ DAILY TARGETS (${
 - ${targets.kcal} kcal · protein ${targets.protein} g · carbs ${targets.carbs} g · fat ${targets.fat} g · fibre ${targets.fibre} g
 
 LAST ${WINDOW_DAYS} DAYS (completed days only; today is still in progress)
-- Logged ${loggedDays} of ${WINDOW_DAYS - 1} days · avg ${Math.round(avgKcal)} kcal vs ${targets.kcal} target · avg protein ${Math.round(avgProtein)} g vs ${targets.protein} g target
+- Logged ${loggedDays} of ${WINDOW_DAYS - 1} days · avg ${Math.round(avgKcal)} kcal vs ${targets.kcal} target · avg protein ${Math.round(avgProtein)} g vs ${targets.protein} g target · avg fibre at least ${Math.round(avgFibre)} g vs ${targets.fibre} g target (some foods lack fibre data)
 ${dayLines}
 
 MEALS TODAY (${today}, in progress; portions with per-portion kcal and protein)
