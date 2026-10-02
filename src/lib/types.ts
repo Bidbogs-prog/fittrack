@@ -205,6 +205,20 @@ export interface CoachMessage {
   created_at: string;
 }
 
+/** One metered model call (roadmap 1.6 D). Never holds message content. */
+export interface AiUsage {
+  id: number;
+  user_id: string;
+  feature: string;
+  provider: string;
+  model: string;
+  input_tokens: number | null;
+  cached_tokens: number | null;
+  output_tokens: number | null;
+  cost_usd: number | null;
+  created_at: string;
+}
+
 export interface WeightLog {
   id: string;
   user_id: string;

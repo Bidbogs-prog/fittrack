@@ -118,9 +118,9 @@ This is a living document. Check items off as they ship, add notes/links to PRs,
 - [x] Guardrail-trigger analytics: PostHog `coach_guardrail_triggered` with the flag name only — no message content, no nutrition values, no PII (existing convention)
 
 **D. LLM Gateway + cost control**
-- [ ] `src/lib/llm.ts`: server-only OpenAI-compatible client pointed at LLM Gateway (`LLMGATEWAY_API_KEY`, `LLMGATEWAY_MODEL`); degrades to a friendly error without keys, same as `gemini.ts`
+- [x] `src/lib/llm.ts`: server-only OpenAI-compatible client pointed at LLM Gateway (`LLMGATEWAY_API_KEY`, `LLMGATEWAY_MODEL`); falls back to `gemini.ts` without a gateway key. Coach streams via `src/app/api/coach/route.ts` (NDJSON); summaries on an economy-tier model (`LLMGATEWAY_MODEL_ECONOMY`); eval targets `LLMGATEWAY_MODEL`
 - [ ] Model policy: cheapest model that passes the eval set; tight max-tokens; prompt caching where the gateway supports it; model swappable by env without code changes. Start evals with the Gemini Flash family (already proven for the day-review coach) vs one Haiku-class alternate; the eval set decides, not vibes
-- [ ] `ai_usage` metering table (user, feature, tokens in/out, estimated cost, day) + per-user daily message caps + global kill-switch env var
+- [x] `ai_usage` metering table (user, feature, tokens in/out, estimated cost, day) + per-user daily message caps + global kill-switch env var — migration `20260815000000_ai_usage.sql`, `src/lib/ai-usage.ts`; `COACH_DAILY_MESSAGE_LIMIT` / `COACH_MONTHLY_MESSAGE_LIMIT` / `AI_COACH_DISABLED`. Cost is stored only when the provider reports it
 - [ ] Later: migrate insights/photo-log/plan generation onto `llm.ts` so `gemini.ts` stops being a second code path
 
 **E. Premium wiring (with 3.1)**

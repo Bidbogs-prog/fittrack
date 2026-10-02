@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Composer } from "@/components/orbit/composer";
 import { track } from "@/lib/analytics";
-import { sendCoachMessage } from "./actions";
+import type { CoachStreamEvent } from "@/app/api/coach/route";
 
 export interface ChatMessage {
   id: string;
@@ -57,45 +57,72 @@ export function CoachChat({
       : initialMessages
   );
   const [error, setError] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
+  const [pending, setPending] = useState(false);
   const convoRef = useRef<string | null>(conversationId);
   const localSeq = useRef(1);
   const anchorRef = useRef<string | null>(initialPrompt ? "local-0" : null);
   const sentInitial = useRef(false);
 
-  function request(message: string) {
-    startTransition(async () => {
-      const fd = new FormData();
-      fd.set("message", message);
-      if (convoRef.current) fd.set("conversation_id", convoRef.current);
-      let res: Awaited<ReturnType<typeof sendCoachMessage>>;
-      try {
-        res = await sendCoachMessage(fd);
-      } catch {
-        res = { data: null, error: t("offline") };
+  async function request(message: string) {
+    setPending(true);
+    const replyId = `local-${++localSeq.current}`;
+    let started = false;
+    let finished = false;
+    const fail = (msg: string) => {
+      setError(msg);
+      anchorRef.current = null;
+      // Drop the partial reply and the unsent turn; nothing was saved server-side.
+      setMessages((prev) => prev.filter((m) => m.id !== replyId).slice(0, -1));
+    };
+    const onEvent = (ev: CoachStreamEvent) => {
+      if (ev.type === "delta") {
+        if (!started) {
+          started = true;
+          setMessages((prev) => [...prev, { id: replyId, role: "assistant", content: ev.text, sources: [] }]);
+        } else {
+          setMessages((prev) => prev.map((m) => (m.id === replyId ? { ...m, content: m.content + ev.text } : m)));
+        }
+      } else if (ev.type === "error") {
+        finished = true;
+        fail(ev.error);
+      } else {
+        finished = true;
+        const isNew = convoRef.current == null;
+        convoRef.current = ev.conversationId;
+        setMessages((prev) => prev.map((m) => (m.id === replyId ? { ...m, sources: ev.sources } : m)));
+        track("coach_message_sent", { restricted: ev.restricted });
+        for (const flag of ev.flags) track("coach_guardrail_triggered", { flag });
+        if (isNew) router.replace(`/coach?c=${ev.conversationId}`, { scroll: false });
       }
-      if (res.data == null) {
-        setError(res.error);
-        anchorRef.current = null;
-        setMessages((prev) => prev.slice(0, -1));
+    };
+
+    try {
+      const res = await fetch("/api/coach", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message, conversationId: convoRef.current }),
+      });
+      if (!res.ok || !res.body) {
+        const body = (await res.json().catch(() => null)) as { error?: string } | null;
+        fail(body?.error ?? t("offline"));
         return;
       }
-      const isNew = convoRef.current == null;
-      convoRef.current = res.data.conversationId;
-      const reply = res.data;
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `local-${++localSeq.current}`,
-          role: "assistant",
-          content: reply.reply,
-          sources: reply.sources,
-        },
-      ]);
-      track("coach_message_sent", { restricted: reply.restricted });
-      for (const flag of reply.flags) track("coach_guardrail_triggered", { flag });
-      if (isNew) router.replace(`/coach?c=${reply.conversationId}`, { scroll: false });
-    });
+      const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
+      let buffer = "";
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += value;
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+        for (const line of lines) if (line.trim()) onEvent(JSON.parse(line) as CoachStreamEvent);
+      }
+      if (!finished) fail(t("offline"));
+    } catch {
+      if (!finished) fail(t("offline"));
+    } finally {
+      setPending(false);
+    }
   }
 
   function send(text: string) {
@@ -163,7 +190,7 @@ export function CoachChat({
             )
           )
         )}
-        {pending && (
+        {pending && messages[messages.length - 1]?.role === "user" && (
           <div aria-live="polite" aria-busy="true" className="flex flex-col gap-2 py-1">
             <p className="text-xs text-paper-mute">{t("reading")}</p>
             {[180, 240, 120].map((w, i) => (
