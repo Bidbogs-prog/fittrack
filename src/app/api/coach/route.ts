@@ -19,6 +19,7 @@ import type { CoachMessage } from "@/lib/types";
  * NDJSON: `{type:"delta",text}` chunks, then `{type:"done",...}` once the
  * exchange is saved, or `{type:"error",error}` if the model fails mid-reply
  * (nothing is saved then). Pre-stream failures are plain JSON `{error}`.
+ * Errors are codes (CoachErrorCode); the chat translates them (coach.errors.*).
  */
 
 export const maxDuration = 60;
@@ -38,23 +39,38 @@ export type CoachStreamEvent =
       flags: string[];
       /** Titles of the cited evidence briefs the reply was grounded in. */
       sources: string[];
+      /** Saved assistant message id (for feedback). */
+      replyId: string | null;
     }
-  | { type: "error"; error: string };
+  | { type: "error"; error: CoachErrorCode };
 
-const fail = (error: string, status: number) => NextResponse.json({ error }, { status });
+export type CoachErrorCode =
+  | "signIn"
+  | "unavailable"
+  | "onboarding"
+  | "adultsOnly"
+  | "empty"
+  | "tooLong"
+  | "dailyLimit"
+  | "monthlyLimit"
+  | "notFound"
+  | "saveFailed"
+  | "midReply";
+
+const fail = (error: CoachErrorCode, status: number) => NextResponse.json({ error }, { status });
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
   const { data: claims } = await supabase.auth.getClaims();
-  if (!claims?.claims) return fail("Sign in to talk to the coach.", 401);
+  if (!claims?.claims) return fail("signIn", 401);
   const { userId, profile } = await getProfile();
 
-  if (coachDisabled()) return fail("The coach is temporarily unavailable. Try again later.", 503);
+  if (coachDisabled()) return fail("unavailable", 503);
 
   // The under-18 gate is enforced here, not just in the page UI.
-  if (!profile.birth_date) return fail("Finish onboarding so the coach knows your targets.", 400);
+  if (!profile.birth_date) return fail("onboarding", 400);
   if (ageFromBirthDate(profile.birth_date) < SAFETY.minAge) {
-    return fail("The coach is only available for adults (18+).", 403);
+    return fail("adultsOnly", 403);
   }
 
   const body = (await request.json().catch(() => null)) as {
@@ -62,16 +78,16 @@ export async function POST(request: NextRequest) {
     conversationId?: unknown;
   } | null;
   const message = typeof body?.message === "string" ? body.message.trim() : "";
-  if (!message) return fail("Write a message first.", 400);
+  if (!message) return fail("empty", 400);
   if (message.length > MAX_MESSAGE_LEN) {
-    return fail(`Keep messages under ${MAX_MESSAGE_LEN} characters.`, 400);
+    return fail("tooLong", 400);
   }
 
   const quota = await coachQuotaError(supabase, userId, await isPremium(supabase, userId));
   if (quota) return fail(quota, 429);
 
   const active = await getActiveTargets(supabase, userId, profile);
-  if (!active) return fail("Finish onboarding so the coach knows your targets.", 400);
+  if (!active) return fail("onboarding", 400);
 
   // Load (and verify ownership of) the conversation, or start a new one.
   let conversationId: string | null = null;
@@ -83,7 +99,7 @@ export async function POST(request: NextRequest) {
       .eq("id", body.conversationId)
       .eq("user_id", userId)
       .maybeSingle();
-    if (!convo) return fail("That conversation no longer exists.", 404);
+    if (!convo) return fail("notFound", 404);
     conversationId = convo.id as string;
     summary = (convo.summary as string | null) ?? null;
   }
@@ -108,7 +124,7 @@ export async function POST(request: NextRequest) {
   }
 
   const { context, safety } = await buildCoachContext(supabase, userId, profile, active);
-  if (safety.blocked) return fail("The coach is only available for adults (18+).", 403);
+  if (safety.blocked) return fail("adultsOnly", 403);
 
   // Deterministic topic router (roadmap 1.6 B): curated, cited briefs for
   // the topics this message touches — the model is told to prefer them
@@ -142,7 +158,7 @@ export async function POST(request: NextRequest) {
   try {
     first = await events.next();
   } catch (err) {
-    if (err instanceof LlmError) return fail(err.message, 503);
+    if (err instanceof LlmError) return fail("unavailable", 503);
     throw err;
   }
 
@@ -172,12 +188,12 @@ export async function POST(request: NextRequest) {
             .select("id")
             .single();
           if (createError || !created) {
-            emit({ type: "error", error: "Could not start the conversation. Try again." });
+            emit({ type: "error", error: "saveFailed" });
             return;
           }
           conversationId = created.id as string;
         }
-        const { error: insertError } = await supabase.from("coach_messages").insert([
+        const { data: inserted, error: insertError } = await supabase.from("coach_messages").insert([
           { conversation_id: conversationId, role: "user", content: message },
           {
             conversation_id: conversationId,
@@ -189,9 +205,9 @@ export async function POST(request: NextRequest) {
               briefs: briefs.map((b) => b.id),
             },
           },
-        ]);
+        ]).select("id, role");
         if (insertError) {
-          emit({ type: "error", error: "The reply could not be saved. Try again." });
+          emit({ type: "error", error: "saveFailed" });
           return;
         }
         await supabase
@@ -206,6 +222,7 @@ export async function POST(request: NextRequest) {
           restricted: safety.restricted,
           flags: safety.flags,
           sources: briefs.map((b) => b.title),
+          replyId: (inserted ?? []).find((m) => m.role === "assistant")?.id ?? null,
         });
 
         // Rolling memory: past the threshold, refresh the summary every few
@@ -244,7 +261,7 @@ export async function POST(request: NextRequest) {
         if (!request.signal.aborted) {
           emit({
             type: "error",
-            error: err instanceof LlmError ? err.message : "The coach failed mid-reply. Try again.",
+            error: "midReply",
           });
           if (!(err instanceof LlmError)) console.error("[coach] stream failed", err);
         }

@@ -112,12 +112,14 @@ export default async function CoachPage({
   }
 
   const chatMessages: ChatMessage[] = messages.map((m) => {
-    const briefIds = (m.payload as { briefs?: string[] } | null)?.briefs ?? [];
+    const payload = m.payload as { briefs?: string[]; feedback?: "up" | "down" | null } | null;
     return {
       id: m.id,
       role: m.role,
       content: m.content,
-      sources: briefIds.map((id) => BRIEF_TITLES.get(id)).filter((x): x is string => !!x),
+      sources: (payload?.briefs ?? []).map((id) => BRIEF_TITLES.get(id)).filter((x): x is string => !!x),
+      dbId: m.role === "assistant" ? m.id : undefined,
+      feedback: payload?.feedback ?? null,
     };
   });
 

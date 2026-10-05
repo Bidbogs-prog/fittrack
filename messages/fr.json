@@ -611,6 +611,21 @@
     "stepsHint": "via Activité"
   },
   "coach": {
+    "helpful": "Utile",
+    "notHelpful": "Pas utile",
+    "errors": {
+      "signIn": "Connectez-vous pour parler au coach.",
+      "unavailable": "Le coach est momentanément indisponible. Réessayez dans un instant.",
+      "onboarding": "Terminez l'inscription pour que le coach connaisse vos objectifs.",
+      "adultsOnly": "Le coach est réservé aux adultes (18 ans et plus).",
+      "empty": "Écrivez d'abord un message.",
+      "tooLong": "Les messages doivent faire moins de 2 000 caractères.",
+      "dailyLimit": "Vous avez atteint la limite de messages au coach pour aujourd'hui. Réessayez demain.",
+      "monthlyLimit": "Vous avez utilisé vos messages au coach de ce mois. Ils se renouvellent le 1er.",
+      "notFound": "Cette conversation n'existe plus.",
+      "saveFailed": "La réponse n'a pas pu être enregistrée. Réessayez.",
+      "midReply": "Le coach s'est arrêté en cours de réponse. Réessayez."
+    },
     "planPremium": "Premium · {left} messages restants aujourd'hui",
     "planFree": "{left} messages gratuits restants sur {monthly} ce mois-ci",
     "title": "Coach",

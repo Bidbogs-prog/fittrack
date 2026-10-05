@@ -139,20 +139,20 @@ export async function featureQuotaError(
     : null;
 }
 
-/** Null when within limits, otherwise a user-facing reason. */
+/** Null when within limits, otherwise which cap was hit (translated by the chat). */
 export async function coachQuotaError(
   supabase: Supabase,
   userId: string,
   premium: boolean
-): Promise<string | null> {
+): Promise<"dailyLimit" | "monthlyLimit" | null> {
   const a = await getCoachAllowance(supabase, userId, premium);
   // Fail open: a metering outage shouldn't lock paying users out.
   if (!a.known) return null;
   if (a.monthly != null && a.usedMonth >= a.monthly) {
-    return "You've used this month's coach messages. They reset on the 1st.";
+    return "monthlyLimit";
   }
   if (a.daily != null && a.usedToday >= a.daily) {
-    return "You've reached today's coach message limit. Try again tomorrow.";
+    return "dailyLimit";
   }
   return null;
 }

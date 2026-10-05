@@ -611,6 +611,21 @@
     "stepsHint": "from Activity"
   },
   "coach": {
+    "helpful": "Helpful",
+    "notHelpful": "Not helpful",
+    "errors": {
+      "signIn": "Sign in to talk to the coach.",
+      "unavailable": "The coach is temporarily unavailable. Try again in a moment.",
+      "onboarding": "Finish onboarding so the coach knows your targets.",
+      "adultsOnly": "The coach is only available for adults (18+).",
+      "empty": "Write a message first.",
+      "tooLong": "Keep messages under 2,000 characters.",
+      "dailyLimit": "You've reached today's coach message limit. Try again tomorrow.",
+      "monthlyLimit": "You've used this month's coach messages. They reset on the 1st.",
+      "notFound": "That conversation no longer exists.",
+      "saveFailed": "The reply couldn't be saved. Try again.",
+      "midReply": "The coach stopped mid-reply. Try again."
+    },
     "planPremium": "Premium · {left} messages left today",
     "planFree": "{left} of {monthly} free messages left this month",
     "title": "Coach",

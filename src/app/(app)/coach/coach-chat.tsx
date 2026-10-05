@@ -5,13 +5,18 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Composer } from "@/components/orbit/composer";
 import { track } from "@/lib/analytics";
+import { ThumbsDown, ThumbsUp } from "@phosphor-icons/react";
 import type { CoachStreamEvent } from "@/app/api/coach/route";
+import { rateCoachMessage } from "./actions";
 
 export interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
   sources: string[];
+  /** Saved assistant message id; feedback needs it. */
+  dbId?: string;
+  feedback?: "up" | "down" | null;
 }
 
 /** Coach replies are plain text; **bold** spans get the flame emphasis. */
@@ -63,6 +68,16 @@ export function CoachChat({
   const anchorRef = useRef<string | null>(initialPrompt ? "local-0" : null);
   const sentInitial = useRef(false);
 
+  const errorText = (code: string) => (t.has(`errors.${code}`) ? t(`errors.${code}`) : t("offline"));
+
+  function rate(m: ChatMessage, rating: "up" | "down") {
+    if (!m.dbId) return;
+    const next = m.feedback === rating ? null : rating;
+    setMessages((prev) => prev.map((x) => (x.id === m.id ? { ...x, feedback: next } : x)));
+    if (next) track("coach_feedback", { rating: next });
+    void rateCoachMessage(m.dbId, next).catch(() => {});
+  }
+
   async function request(message: string) {
     setPending(true);
     const replyId = `local-${++localSeq.current}`;
@@ -84,12 +99,16 @@ export function CoachChat({
         }
       } else if (ev.type === "error") {
         finished = true;
-        fail(ev.error);
+        fail(errorText(ev.error));
       } else {
         finished = true;
         const isNew = convoRef.current == null;
         convoRef.current = ev.conversationId;
-        setMessages((prev) => prev.map((m) => (m.id === replyId ? { ...m, sources: ev.sources } : m)));
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === replyId ? { ...m, sources: ev.sources, dbId: ev.replyId ?? undefined, feedback: null } : m
+          )
+        );
         track("coach_message_sent", { restricted: ev.restricted });
         for (const flag of ev.flags) track("coach_guardrail_triggered", { flag });
         if (isNew) router.replace(`/coach?c=${ev.conversationId}`, { scroll: false });
@@ -104,7 +123,7 @@ export function CoachChat({
       });
       if (!res.ok || !res.body) {
         const body = (await res.json().catch(() => null)) as { error?: string } | null;
-        fail(body?.error ?? t("offline"));
+        fail(body?.error ? errorText(body.error) : t("offline"));
         return;
       }
       const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
@@ -185,6 +204,26 @@ export function CoachChat({
                   <p className="mt-1.5 text-[11px] text-paper-mute">
                     {t("sources")}: {m.sources.join(" · ")}
                   </p>
+                )}
+                {m.dbId && (
+                  <div className="mt-1 flex gap-1 text-paper-mute">
+                    {(["up", "down"] as const).map((r) => {
+                      const Icon = r === "up" ? ThumbsUp : ThumbsDown;
+                      const on = m.feedback === r;
+                      return (
+                        <button
+                          key={r}
+                          type="button"
+                          onClick={() => rate(m, r)}
+                          aria-pressed={on}
+                          aria-label={t(r === "up" ? "helpful" : "notHelpful")}
+                          className={`grid size-8 place-items-center rounded-full hover:bg-ink-800 hover:text-paper ${on ? "text-flame" : ""}`}
+                        >
+                          <Icon weight={on ? "fill" : "regular"} className="size-4" />
+                        </button>
+                      );
+                    })}
+                  </div>
                 )}
               </div>
             )
