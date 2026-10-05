@@ -13,7 +13,13 @@
  * before the gateway is configured. Never import this from client code.
  */
 
-import { GeminiError, generateText as geminiGenerateText, type GeminiTurn } from "@/lib/gemini";
+import {
+  GeminiError,
+  generateJson as geminiGenerateJson,
+  generateText as geminiGenerateText,
+  type GeminiSchema,
+  type GeminiTurn,
+} from "@/lib/gemini";
 
 const DEFAULT_BASE_URL = "https://api.llmgateway.io/v1";
 /** The model the eval set already passes on; swap via env once a candidate beats it. */
@@ -50,6 +56,10 @@ export interface LlmRequest {
   temperature?: number;
   maxOutputTokens?: number;
   signal?: AbortSignal;
+  /** Inline image sent with the last user turn (base64, no data: prefix). */
+  image?: { mimeType: string; base64: string };
+  /** Ask for JSON matching this schema (OpenAI json_schema response format). */
+  schema?: GeminiSchema;
 }
 
 interface GatewayUsage {
@@ -93,6 +103,20 @@ function toUsage(model: string, u: GatewayUsage | null | undefined): LlmUsage {
   };
 }
 
+/** Gemini's OpenAPI-style schema (upper-case types) → standard JSON Schema. */
+function toJsonSchema(s: GeminiSchema): Record<string, unknown> {
+  return {
+    type: s.type.toLowerCase(),
+    ...(s.description ? { description: s.description } : {}),
+    ...(s.enum ? { enum: s.enum } : {}),
+    ...(s.properties
+      ? { properties: Object.fromEntries(Object.entries(s.properties).map(([k, v]) => [k, toJsonSchema(v)])) }
+      : {}),
+    ...(s.required ? { required: s.required } : {}),
+    ...(s.items ? { items: toJsonSchema(s.items) } : {}),
+  };
+}
+
 async function gatewayFetch(req: LlmRequest, stream: boolean): Promise<{ res: Response; model: string }> {
   const model = req.model ?? modelFor(req.tier ?? "premium");
   // Thinking tokens come out of max_tokens; unbounded thinking truncated
@@ -114,8 +138,26 @@ async function gatewayFetch(req: LlmRequest, stream: boolean): Promise<{ res: Re
         model,
         messages: [
           { role: "system", content: req.systemPrompt },
-          ...req.turns.map((t) => ({ role: t.role === "model" ? "assistant" : "user", content: t.text })),
+          ...req.turns.map((t, i) => {
+            const role = t.role === "model" ? "assistant" : "user";
+            if (!req.image || i !== req.turns.length - 1 || role !== "user") return { role, content: t.text };
+            return {
+              role,
+              content: [
+                { type: "image_url", image_url: { url: `data:${req.image.mimeType};base64,${req.image.base64}` } },
+                { type: "text", text: t.text },
+              ],
+            };
+          }),
         ],
+        ...(req.schema
+          ? {
+              response_format: {
+                type: "json_schema",
+                json_schema: { name: "result", schema: toJsonSchema(req.schema), strict: false },
+              },
+            }
+          : {}),
         temperature: req.temperature ?? 0.6,
         max_tokens: req.maxOutputTokens ?? 4096,
         ...(effort ? { reasoning_effort: effort } : {}),
@@ -135,7 +177,7 @@ async function gatewayFetch(req: LlmRequest, stream: boolean): Promise<{ res: Re
     if (res.status === 401 || res.status === 403) {
       throw new LlmError("The AI provider rejected the API key. Check LLMGATEWAY_API_KEY.");
     }
-    if (res.status === 402) throw new LlmError("The coach is temporarily unavailable. Try again later.");
+    if (res.status === 402) throw new LlmError("AI features are temporarily unavailable. Try again later.");
     throw new LlmError(`The AI provider failed (${res.status}). Try again.`);
   }
   return { res, model };
@@ -221,4 +263,52 @@ export async function generateText(req: LlmRequest): Promise<{ text: string; usa
   }
   if (!text) throw new LlmError("The AI provider returned an empty response. Try again.");
   return { text, usage: toUsage(model, body.usage) };
+}
+
+/**
+ * Structured output: JSON matching `schema`, parsed. Supports one inline
+ * image. Falls back to gemini.ts (free tier, no token counts) without a
+ * gateway key. Throws LlmError with a user-presentable message.
+ */
+export async function generateJson<T>(
+  req: Omit<LlmRequest, "schema" | "turns"> & { userPrompt: string; schema: GeminiSchema }
+): Promise<{ data: T; usage: LlmUsage }> {
+  if (!gatewayEnabled()) {
+    try {
+      const data = await geminiGenerateJson<T>({
+        systemPrompt: req.systemPrompt,
+        userPrompt: req.userPrompt,
+        schema: req.schema,
+        temperature: req.temperature,
+        image: req.image,
+      });
+      return {
+        data,
+        usage: {
+          provider: "gemini",
+          model: modelFor(req.tier ?? "premium"),
+          inputTokens: null,
+          cachedTokens: null,
+          outputTokens: null,
+          costUsd: null,
+        },
+      };
+    } catch (err) {
+      if (err instanceof GeminiError) throw new LlmError(err.message);
+      throw err;
+    }
+  }
+
+  const { text, usage } = await generateText({
+    ...req,
+    turns: [{ role: "user", text: req.userPrompt }],
+  });
+  // Some providers wrap JSON in a code fence despite response_format.
+  const json = text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1);
+  try {
+    return { data: JSON.parse(json) as T, usage };
+  } catch {
+    console.error(`[llm] ${usage.model} returned unparseable JSON: ${text.slice(0, 200)}`);
+    throw new LlmError("The AI returned malformed output. Try again.");
+  }
 }

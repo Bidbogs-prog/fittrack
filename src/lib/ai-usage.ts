@@ -11,13 +11,16 @@ import type { LlmUsage } from "@/lib/llm";
  *   COACH_PREMIUM_DAILY_MESSAGE_LIMIT   premium: replies per UTC day (default 50, 0 = unlimited);
  *                                       premium has no monthly cap
  *
+ *   MEAL_LOG_DAILY_LIMIT                free: AI meal parses per UTC day (default 30, 0 = unlimited)
+ *   MEAL_LOG_PREMIUM_DAILY_LIMIT        premium: AI meal parses per UTC day (default 100, 0 = unlimited)
+ *
  * Defaults are the free-tier allowance, so a deploy that forgets the env
  * vars stays cheap rather than open-ended.
  */
 
 type Supabase = Awaited<ReturnType<typeof createClient>>;
 
-export type AiFeature = "coach" | "coach_summary";
+export type AiFeature = "coach" | "coach_summary" | "meal_log";
 
 export async function recordAiUsage(
   supabase: Supabase,
@@ -91,6 +94,28 @@ export async function getCoachAllowance(
     usedToday: data.filter((r) => new Date(r.created_at as string) >= dayStart).length,
     known: true,
   };
+}
+
+/** Null when within the AI meal-logging cap, otherwise a user-facing reason. Fails open. */
+export async function mealLogQuotaError(
+  supabase: Supabase,
+  userId: string,
+  premium: boolean
+): Promise<string | null> {
+  const daily = premium ? limit("MEAL_LOG_PREMIUM_DAILY_LIMIT", 100) : limit("MEAL_LOG_DAILY_LIMIT", 30);
+  if (daily == null) return null;
+  const now = new Date();
+  const dayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const { count, error } = await supabase
+    .from("ai_usage")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("feature", "meal_log")
+    .gte("created_at", dayStart.toISOString());
+  if (error || count == null) return null;
+  return count >= daily
+    ? "You've reached today's AI logging limit. You can still log from the food search, or try again tomorrow."
+    : null;
 }
 
 /** Null when within limits, otherwise a user-facing reason. */
