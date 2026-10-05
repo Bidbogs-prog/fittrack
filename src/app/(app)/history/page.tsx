@@ -37,10 +37,6 @@ export default async function HistoryPage({
     getTranslations("history"),
     getFormatter(),
   ]);
-  const active = await getActiveTargets(supabase, userId, profile);
-  if (!active) redirect("/onboarding");
-  const { targets } = active;
-
   const range: Range = params.r === "week" || params.r === "90d" ? params.r : "month";
   const DAYS = RANGES[range];
   // Weekly reports always cover the last four weeks, whatever the range.
@@ -49,7 +45,13 @@ export default async function HistoryPage({
   const today = toDateString(new Date());
   const since = shiftDate(today, -(span - 1));
 
-  const [{ data: entriesData }, { data: weightData }] = await Promise.all([
+  // Four Monday-to-Sunday weeks for the report switcher, newest partial.
+  const thisMonday = weekStart();
+  const weekStarts = [3, 2, 1, 0].map((offset) => shiftDate(thisMonday, -offset * 7));
+
+  // Everything below depends only on the profile: fetch in one round trip.
+  const [active, { data: entriesData }, { data: weightData }, { data: savedReports }] = await Promise.all([
+    getActiveTargets(supabase, userId, profile),
     supabase
       .from("diary_entries")
       .select("*, food:foods(*)")
@@ -62,7 +64,15 @@ export default async function HistoryPage({
       .eq("user_id", userId)
       .gte("log_date", shiftDate(today, -90))
       .order("log_date"),
+    supabase
+      .from("ai_insights")
+      .select("period_start, payload")
+      .eq("user_id", userId)
+      .eq("scope", "week")
+      .in("period_start", weekStarts),
   ]);
+  if (!active) redirect("/onboarding");
+  const { targets } = active;
 
   const byDate = new Map<string, DiaryEntry[]>();
   for (const entry of (entriesData ?? []) as DiaryEntry[]) {
@@ -105,10 +115,7 @@ export default async function HistoryPage({
   const lastWeight = trendPoints[trendPoints.length - 1] ?? null;
   const unit = weightUnit(profile.units);
 
-  // Four Monday-to-Sunday weeks for the report switcher, newest partial.
-  const thisMonday = weekStart();
-  const weeks = [3, 2, 1, 0].map((offset) => {
-    const start = shiftDate(thisMonday, -offset * 7);
+  const weeks = weekStarts.map((start) => {
     const end = shiftDate(start, 6);
     const visibleEnd = end < today ? end : today;
     const daysTotal =
@@ -116,12 +123,6 @@ export default async function HistoryPage({
     const block = allDays.filter((d) => d.date >= start && d.date <= visibleEnd && d.kcal != null);
     return { start, label: rangeLabel(start, visibleEnd, format), daysLogged: block.length, daysTotal };
   });
-  const { data: savedReports } = await supabase
-    .from("ai_insights")
-    .select("period_start, payload")
-    .eq("user_id", userId)
-    .eq("scope", "week")
-    .in("period_start", weeks.map((w) => w.start));
   const reportByWeek = new Map(
     (savedReports ?? []).map((r) => [r.period_start as string, r.payload as WeekReport])
   );

@@ -31,14 +31,12 @@ export function parseDateParam(value: string | undefined, fallback: string): str
 export const getDayData = cache(async (date: string) => {
   const { supabase, userId, profile } = await getProfile();
 
-  const active = await getActiveTargets(supabase, userId, profile);
-  if (!active) redirect("/onboarding");
-  const { targets, adaptive } = active;
-
   const today = toDateString(new Date());
   const yesterday = shiftDate(date, -1);
 
+  // Targets and the day's rows are independent: one round trip, not two.
   const [
+    active,
     { data: entriesData },
     { data: weightData },
     { data: yesterdayData },
@@ -48,6 +46,7 @@ export const getDayData = cache(async (date: string) => {
     { data: exerciseData },
     { data: stepData },
   ] = await Promise.all([
+    getActiveTargets(supabase, userId, profile),
     supabase
       .from("diary_entries")
       .select("*, food:foods(*)")
@@ -83,6 +82,9 @@ export const getDayData = cache(async (date: string) => {
       .order("created_at"),
     supabase.from("step_logs").select("steps").eq("user_id", userId).eq("log_date", date).maybeSingle(),
   ]);
+
+  if (!active) redirect("/onboarding");
+  const { targets, adaptive } = active;
 
   const entries = (entriesData ?? []) as DiaryEntry[];
   const eaten = sumMacros(entries.map(entryMacros));

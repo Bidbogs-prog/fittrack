@@ -492,6 +492,7 @@
     "unknown": "pas de données"
   },
   "shell": {
+    "loading": "Chargement",
     "athlete": "champion",
     "updateStats": "Mettre à jour mes mesures",
     "settings": "Réglages",

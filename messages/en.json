@@ -492,6 +492,7 @@
     "unknown": "no data"
   },
   "shell": {
+    "loading": "Loading",
     "athlete": "athlete",
     "updateStats": "Update body stats",
     "settings": "Settings",

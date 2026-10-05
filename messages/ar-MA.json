@@ -492,6 +492,7 @@
     "unknown": "لا بيانات"
   },
   "shell": {
+    "loading": "جارٍ التحميل",
     "athlete": "بطل",
     "updateStats": "تحديث بيانات الجسم",
     "settings": "الإعدادات",
