@@ -610,6 +610,8 @@
     "stepsHint": "from Activity"
   },
   "coach": {
+    "planPremium": "Premium · {left} messages left today",
+    "planFree": "{left} of {monthly} free messages left this month",
     "title": "Coach",
     "backToOrbit": "Back to today's orbit",
     "kcalLeft": "kcal left",
@@ -752,6 +754,10 @@
     "showFewer": "Show fewer"
   },
   "me": {
+    "planPremium": "Premium",
+    "planFree": "Free plan",
+    "planPremiumHint": "Up to {daily} coach messages a day, no monthly cap.",
+    "planFreeHint": "{left} of {monthly} coach messages left this month · up to {daily} a day.",
     "title": "Me",
     "athlete": "athlete",
     "body": "Body",

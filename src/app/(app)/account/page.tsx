@@ -3,7 +3,9 @@ import Link from "next/link";
 import { getFormatter, getLocale, getTranslations } from "next-intl/server";
 import { LOCALES, LOCALE_LABELS } from "@/i18n/request";
 import { getActiveTargets } from "@/lib/adaptive";
+import { getCoachAllowance } from "@/lib/ai-usage";
 import { getProfile, isAdmin } from "@/lib/auth";
+import { isPremium } from "@/lib/entitlements";
 import { ACTIVITY_LEVELS, ageFromBirthDate, macroSplitFromProfile } from "@/lib/nutrition";
 import { formatHeight, formatWeight } from "@/lib/units";
 import { signout } from "../../(auth)/actions";
@@ -30,10 +32,14 @@ export default async function AccountPage({
   ]);
 
   // Entry point only — every /admin page and action re-verifies membership.
-  const [admin, active] = await Promise.all([
+  const [admin, active, premium] = await Promise.all([
     isAdmin(supabase, userId),
     getActiveTargets(supabase, userId, profile),
+    isPremium(supabase, userId),
   ]);
+  const allowance = await getCoachAllowance(supabase, userId, premium);
+  const monthlyLeft =
+    allowance.monthly != null ? Math.max(0, allowance.monthly - allowance.usedMonth) : null;
   const targets = active?.targets ?? null;
   const format = await getFormatter();
 
@@ -58,6 +64,24 @@ export default async function AccountPage({
             {profile.full_name ?? t("title")}
           </h1>
           <p className="mt-0.5 truncate text-xs text-paper-mute lg:mt-1 lg:text-[13px]">{profile.email}</p>
+            <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-paper-mute lg:text-xs">
+            <span
+              className={
+                premium
+                  ? "rounded-full bg-[linear-gradient(135deg,#ffc94d,#ff9d3b_50%,#f2701f)] px-2 py-0.5 font-semibold text-flame-ink"
+                  : "rounded-full border border-ink-700 px-2 py-0.5 font-medium text-paper-dim"
+              }
+            >
+              {premium ? t("planPremium") : t("planFree")}
+            </span>
+            <span>
+              {premium
+                ? allowance.daily != null && t("planPremiumHint", { daily: allowance.daily })
+                : monthlyLeft != null &&
+                  allowance.daily != null &&
+                  t("planFreeHint", { left: monthlyLeft, monthly: allowance.monthly!, daily: allowance.daily })}
+            </span>
+          </p>
         </div>
       </header>
 

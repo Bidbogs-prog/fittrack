@@ -50,38 +50,63 @@ export function coachDisabled(): boolean {
   return process.env.AI_COACH_DISABLED === "1";
 }
 
-/** Null when within limits, otherwise a user-facing reason. */
-export async function coachQuotaError(
+export interface CoachAllowance {
+  premium: boolean;
+  /** null = unlimited */
+  daily: number | null;
+  monthly: number | null;
+  usedToday: number;
+  usedMonth: number;
+  /** false when usage couldn't be read (metering outage) */
+  known: boolean;
+}
+
+/** The user's coach caps and how much of them is used (UTC day / month). */
+export async function getCoachAllowance(
   supabase: Supabase,
   userId: string,
   premium: boolean
-): Promise<string | null> {
+): Promise<CoachAllowance> {
   const daily = premium
     ? limit("COACH_PREMIUM_DAILY_MESSAGE_LIMIT", 50)
     : limit("COACH_DAILY_MESSAGE_LIMIT", 10);
   const monthly = premium ? null : limit("COACH_MONTHLY_MESSAGE_LIMIT", 30);
-  if (daily == null && monthly == null) return null;
+  const base = { premium, daily, monthly, usedToday: 0, usedMonth: 0 };
+  if (daily == null && monthly == null) return { ...base, known: true };
 
   const now = new Date();
   const dayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
   const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
-  const since = monthly != null ? monthStart : dayStart;
 
   const { data, error } = await supabase
     .from("ai_usage")
     .select("created_at")
     .eq("user_id", userId)
     .eq("feature", "coach")
-    .gte("created_at", since.toISOString());
-  // Fail open: a metering outage shouldn't lock paying users out.
-  if (error || !data) return null;
+    .gte("created_at", (monthly != null ? monthStart : dayStart).toISOString());
+  if (error || !data) return { ...base, known: false };
+  return {
+    ...base,
+    usedMonth: data.length,
+    usedToday: data.filter((r) => new Date(r.created_at as string) >= dayStart).length,
+    known: true,
+  };
+}
 
-  if (monthly != null && data.length >= monthly) {
+/** Null when within limits, otherwise a user-facing reason. */
+export async function coachQuotaError(
+  supabase: Supabase,
+  userId: string,
+  premium: boolean
+): Promise<string | null> {
+  const a = await getCoachAllowance(supabase, userId, premium);
+  // Fail open: a metering outage shouldn't lock paying users out.
+  if (!a.known) return null;
+  if (a.monthly != null && a.usedMonth >= a.monthly) {
     return "You've used this month's coach messages. They reset on the 1st.";
   }
-  if (daily != null) {
-    const today = data.filter((r) => new Date(r.created_at as string) >= dayStart).length;
-    if (today >= daily) return "You've reached today's coach message limit. Try again tomorrow.";
+  if (a.daily != null && a.usedToday >= a.daily) {
+    return "You've reached today's coach message limit. Try again tomorrow.";
   }
   return null;
 }

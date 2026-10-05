@@ -610,6 +610,8 @@
     "stepsHint": "من النشاط"
   },
   "coach": {
+    "planPremium": "بريميوم · بقيت {left} رسالة اليوم",
+    "planFree": "بقيت {left} من {monthly} رسالة مجانية هذا الشهر",
     "title": "المدرب",
     "backToOrbit": "العودة إلى مدار اليوم",
     "kcalLeft": "سعرة متبقية",
@@ -752,6 +754,10 @@
     "showFewer": "عرض أقل"
   },
   "me": {
+    "planPremium": "بريميوم",
+    "planFree": "الخطة المجانية",
+    "planPremiumHint": "حتى {daily} رسالة للمدرب يومياً، بدون حد شهري.",
+    "planFreeHint": "بقيت {left} من {monthly} رسالة للمدرب هذا الشهر · {daily} كحد أقصى يومياً.",
     "title": "أنا",
     "athlete": "بطل",
     "body": "الجسم",

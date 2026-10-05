@@ -3,7 +3,9 @@ import Link from "next/link";
 import { getFormatter, getTranslations } from "next-intl/server";
 import { MiniDial } from "@/components/orbit/orbit";
 import { LogProvider } from "@/components/orbit/log-provider";
+import { getCoachAllowance } from "@/lib/ai-usage";
 import { getProfile } from "@/lib/auth";
+import { isPremium } from "@/lib/entitlements";
 import { COACH_BRIEFS } from "@/lib/coach/evidence";
 import { SAFETY } from "@/lib/coach/safety";
 import { ageFromBirthDate } from "@/lib/nutrition";
@@ -26,7 +28,21 @@ export default async function CoachPage({
     searchParams,
     getTranslations("coach"),
   ]);
-  const [data, format] = await Promise.all([getDayData(toDateString(new Date())), getFormatter()]);
+  const [data, format, premium] = await Promise.all([
+    getDayData(toDateString(new Date())),
+    getFormatter(),
+    isPremium(supabase, userId),
+  ]);
+  const allowance = await getCoachAllowance(supabase, userId, premium);
+  const planLine = !allowance.known
+    ? null
+    : premium
+      ? allowance.daily != null
+        ? t("planPremium", { left: Math.max(0, allowance.daily - allowance.usedToday) })
+        : null
+      : allowance.monthly != null
+        ? t("planFree", { left: Math.max(0, allowance.monthly - allowance.usedMonth), monthly: allowance.monthly })
+        : null;
 
   const header = (
     <div className="sticky top-0 z-20 flex items-center gap-3 border-b border-ink-800 bg-ink-950/85 py-2.5 ps-[18px] pe-28 backdrop-blur-md lg:ps-9 lg:pe-36">
@@ -44,7 +60,7 @@ export default async function CoachPage({
             {data.remaining < 0 ? t("kcalOver") : t("kcalLeft")}
           </span>
         </p>
-        <p className="truncate text-[11px] text-paper-mute">{t("tapRing")}</p>
+        <p className={`truncate text-[11px] ${premium ? "text-flame" : "text-paper-mute"}`}>{planLine ?? t("tapRing")}</p>
       </div>
     </div>
   );

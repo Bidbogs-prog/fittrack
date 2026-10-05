@@ -610,6 +610,8 @@
     "stepsHint": "via Activité"
   },
   "coach": {
+    "planPremium": "Premium · {left} messages restants aujourd'hui",
+    "planFree": "{left} messages gratuits restants sur {monthly} ce mois-ci",
     "title": "Coach",
     "backToOrbit": "Retour à l'orbite du jour",
     "kcalLeft": "kcal restantes",
@@ -752,6 +754,10 @@
     "showFewer": "Voir moins"
   },
   "me": {
+    "planPremium": "Premium",
+    "planFree": "Offre gratuite",
+    "planPremiumHint": "Jusqu'à {daily} messages au coach par jour, sans limite mensuelle.",
+    "planFreeHint": "{left} messages au coach restants sur {monthly} ce mois-ci · {daily} max par jour.",
     "title": "Moi",
     "athlete": "champion",
     "body": "Corps",
