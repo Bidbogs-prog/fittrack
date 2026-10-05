@@ -117,6 +117,71 @@ function payloadItem(row: PayloadRow, mult: number): AiMealItem {
 interface Catalogue {
   text: string;
   expand: Map<string, (mult: number) => AiMealItem[]>;
+  /** E-ids → the day's logged rows, for edit/delete requests. */
+  entries: Map<string, DiaryRow>;
+}
+
+type DiaryRow = PayloadRow & { id: string; meal: MealType };
+
+/** A proposed change to an already-logged row; nothing is written until applyAiEdits. */
+export interface AiEdit {
+  entryId: string;
+  action: "delete" | "update";
+  name: string;
+  meal: MealType;
+  /** Current amount, e.g. "150 g" or "2 servings". */
+  before: string;
+  /** New amount label when the amount changes. */
+  after: string | null;
+  grams: number | null;
+  servings: number | null;
+  toMeal: MealType | null;
+  kcalBefore: number;
+  kcalAfter: number;
+}
+
+interface ParsedEdit {
+  ref: string;
+  action: string;
+  grams?: number;
+  servings?: number;
+  meal?: string;
+}
+
+const amountLabel = (r: PayloadRow) =>
+  r.grams != null
+    ? `${Math.round(r.grams)} g`
+    : r.servings != null
+      ? `${round1(Number(r.servings))} serving${Number(r.servings) === 1 ? "" : "s"}`
+      : "1 portion";
+
+/** Validate one model-proposed edit against the real row; null if it can't apply. */
+function toEdit(row: DiaryRow, pe: ParsedEdit): AiEdit | null {
+  const name = (row.food?.name ?? row.quick_name ?? "Quick add").slice(0, 60);
+  const kcalBefore = Math.round(entryMacros(row).kcal);
+  const base = { entryId: row.id, name, meal: row.meal, before: amountLabel(row), kcalBefore };
+  if (pe.action === "delete") {
+    return { ...base, action: "delete", after: null, grams: null, servings: null, toMeal: null, kcalAfter: 0 };
+  }
+  if (pe.action !== "update") return null;
+  const toMeal = MEAL_TYPES.includes(pe.meal as MealType) && pe.meal !== row.meal ? (pe.meal as MealType) : null;
+  let grams: number | null = null;
+  let servings: number | null = null;
+  let kcalAfter = kcalBefore;
+  let after: string | null = null;
+  const g = cleanNumber(pe.grams, 5000);
+  const sv = cleanNumber(pe.servings, 100);
+  if (row.food && row.grams != null && g && g >= 1) {
+    grams = Math.round(g);
+    kcalAfter = Math.round(macrosForPortion(row.food, grams).kcal);
+    after = `${grams} g`;
+  } else if (!row.food && row.servings != null && Number(row.servings) > 0 && sv && sv > 0) {
+    servings = sv;
+    kcalAfter = Math.round((kcalBefore * sv) / Number(row.servings));
+    after = `${round1(sv)} serving${sv === 1 ? "" : "s"}`;
+  }
+  if (grams == null && servings == null && toMeal == null) return null;
+  return { ...base, action: "update", after, grams, servings, toMeal, kcalAfter };
 }
 
 /**
@@ -124,9 +189,13 @@ interface Catalogue {
  * id-keyed list for the parser. Short ids (S1, R1, D1) instead of uuids:
  * the model can't invent a plausible one, and they cost fewer tokens.
  */
-async function loadCatalogue(supabase: Supabase, userId: string): Promise<Catalogue> {
+async function loadCatalogue(
+  supabase: Supabase,
+  userId: string,
+  entryDate: string | null
+): Promise<Catalogue> {
   const since = new Date(Date.now() - CATALOGUE_DAYS * 86_400_000).toISOString().slice(0, 10);
-  const [{ data: saved }, { data: recipes }, { data: recent }] = await Promise.all([
+  const [{ data: saved }, { data: recipes }, { data: recent }, { data: dayRows }] = await Promise.all([
     supabase
       .from("saved_meals")
       .select(`id, name, items:saved_meal_items(${PAYLOAD_COLS})`)
@@ -145,6 +214,15 @@ async function loadCatalogue(supabase: Supabase, userId: string): Promise<Catalo
       .gte("entry_date", since)
       .order("entry_date", { ascending: false })
       .limit(300),
+    entryDate
+      ? supabase
+          .from("diary_entries")
+          .select(`id, meal, ${PAYLOAD_COLS}`)
+          .eq("user_id", userId)
+          .eq("entry_date", entryDate)
+          .order("created_at")
+          .limit(60)
+      : Promise.resolve({ data: [] }),
   ]);
 
   const lines: string[] = [];
@@ -197,10 +275,21 @@ async function loadCatalogue(supabase: Supabase, userId: string): Promise<Catalo
     expand.set(id, (mult) => rows.map((r) => payloadItem(r, mult)));
   });
 
+  const entries = new Map<string, DiaryRow>();
+  const diaryLines = ((dayRows ?? []) as unknown as DiaryRow[]).map((row, i) => {
+    const id = `E${i + 1}`;
+    entries.set(id, row);
+    const name = row.food?.name ?? row.quick_name ?? "Quick add";
+    return `${id}: ${row.meal} — ${name} ${amountLabel(row)} (${Math.round(entryMacros(row).kcal)} kcal)`;
+  });
+
   const today = new Date().toISOString().slice(0, 10);
   return {
-    text: lines.length ? `\n\nTHE USER'S OWN MEALS (today is ${today})\n${lines.join("\n")}` : "",
+    text:
+      (lines.length ? `\n\nTHE USER'S OWN MEALS (today is ${today})\n${lines.join("\n")}` : "") +
+      (diaryLines.length ? `\n\nDIARY FOR THE DAY BEING EDITED (${entryDate})\n${diaryLines.join("\n")}` : ""),
     expand,
+    entries,
   };
 }
 
@@ -217,8 +306,8 @@ function cleanNumber(n: unknown, max: number): number | null {
 export async function parseMeal(
   formData: FormData
 ): Promise<
-  | { items: AiMealItem[]; error: null; toCoach?: false }
-  | { items: null; error: string; toCoach?: boolean }
+  | { items: AiMealItem[]; edits: AiEdit[]; error: null; toCoach?: false }
+  | { items: null; edits?: undefined; error: string; toCoach?: boolean }
 > {
   const { supabase, userId } = await requireUser();
 
@@ -250,11 +339,15 @@ export async function parseMeal(
   if (quota) return { items: null, error: quota };
 
   // Text can point at the user's own meals; a photo alone can't.
-  const catalogue = description ? await loadCatalogue(supabase, userId) : { text: "", expand: new Map() };
+  const rawDate = String(formData.get("entry_date") ?? "");
+  const entryDate = /^\d{4}-\d{2}-\d{2}$/.test(rawDate) ? rawDate : null;
+  const catalogue: Catalogue = description
+    ? await loadCatalogue(supabase, userId, entryDate)
+    : { text: "", expand: new Map(), entries: new Map() };
 
-  let parsed: { intent?: string; items: ParsedItem[]; refs?: ParsedRef[] };
+  let parsed: { intent?: string; items: ParsedItem[]; refs?: ParsedRef[]; edits?: ParsedEdit[] };
   try {
-    const res = await generateJson<{ intent?: string; items: ParsedItem[]; refs?: ParsedRef[] }>({
+    const res = await generateJson<{ intent?: string; items: ParsedItem[]; refs?: ParsedRef[]; edits?: ParsedEdit[] }>({
       systemPrompt: PARSE_SYSTEM_PROMPT,
       userPrompt: description
         ? `MEAL DESCRIPTION\n${description}${catalogue.text}`
@@ -271,9 +364,18 @@ export async function parseMeal(
   }
 
   // Not a meal: the orbit hands the text to the coach instead of erroring.
+  const seen = new Set<string>();
+  const edits = (Array.isArray(parsed.edits) ? parsed.edits : []).flatMap((pe) => {
+    const row = catalogue.entries.get(String(pe.ref ?? "").trim().toUpperCase());
+    if (!row || seen.has(row.id)) return [];
+    seen.add(row.id);
+    const edit = toEdit(row, pe);
+    return edit ? [edit] : [];
+  });
   const noFood =
     (!Array.isArray(parsed.items) || parsed.items.length === 0) &&
-    (!Array.isArray(parsed.refs) || parsed.refs.length === 0);
+    (!Array.isArray(parsed.refs) || parsed.refs.length === 0) &&
+    edits.length === 0;
   if (!hasPhoto && (parsed.intent === "chat" || noFood)) {
     return { items: null, error: "That sounds like a question for the coach — ask it on the Coach tab.", toCoach: true };
   }
@@ -315,7 +417,7 @@ export async function parseMeal(
   ).filter((item): item is AiMealItem => item != null);
   const items = [...fromCatalogue, ...estimated].slice(0, MAX_ITEMS);
 
-  if (items.length === 0) {
+  if (items.length === 0 && edits.length === 0) {
     return {
       items: null,
       error: hasPhoto
@@ -323,7 +425,58 @@ export async function parseMeal(
         : "Couldn't read any foods out of that — try naming them with rough amounts.",
     };
   }
-  return { items, error: null };
+  return { items, edits, error: null };
+}
+
+/** Apply user-confirmed edits from parseMeal. Ownership re-checked per row. */
+export async function applyAiEdits(input: {
+  edits: { entryId: string; action: "delete" | "update"; grams?: number | null; servings?: number | null; toMeal?: MealType | null }[];
+}): Promise<{ error: string | null }> {
+  const { supabase, userId } = await requireUser();
+  const edits = Array.isArray(input.edits) ? input.edits.slice(0, 60) : [];
+  if (edits.length === 0) return { error: "Invalid entry." };
+
+  const ids = [...new Set(edits.map((x) => String(x.entryId)))];
+  const { data } = await supabase
+    .from("diary_entries")
+    .select("id, food_id, servings, quick_kcal, quick_protein_g, quick_carbs_g, quick_fat_g, quick_fibre_g")
+    .eq("user_id", userId)
+    .in("id", ids);
+  const rows = new Map((data ?? []).map((r) => [r.id as string, r]));
+
+  const deletes: string[] = [];
+  for (const x of edits) {
+    const row = rows.get(String(x.entryId));
+    if (!row) return { error: "One of those entries no longer exists." };
+    if (x.action === "delete") {
+      deletes.push(row.id as string);
+      continue;
+    }
+    const patch: Record<string, unknown> = {};
+    if (x.toMeal && MEAL_TYPES.includes(x.toMeal)) patch.meal = x.toMeal;
+    const g = cleanNumber(x.grams, 5000);
+    if (row.food_id && g && g >= 1) patch.grams = Math.round(g);
+    const sv = cleanNumber(x.servings, 100);
+    const old = Number(row.servings);
+    if (!row.food_id && sv && sv > 0 && old > 0) {
+      const f = sv / old;
+      patch.servings = sv;
+      for (const k of ["quick_kcal", "quick_protein_g", "quick_carbs_g", "quick_fat_g", "quick_fibre_g"] as const) {
+        const v = row[k] as number | null;
+        patch[k] = v == null ? null : round1(v * f);
+      }
+    }
+    if (Object.keys(patch).length === 0) continue;
+    const { error } = await supabase.from("diary_entries").update(patch).eq("id", row.id).eq("user_id", userId);
+    if (error) return { error: "Couldn't update that entry. Try again." };
+  }
+  if (deletes.length > 0) {
+    const { error } = await supabase.from("diary_entries").delete().eq("user_id", userId).in("id", deletes);
+    if (error) return { error: "Couldn't remove that entry. Try again." };
+  }
+
+  revalidatePath("/dashboard");
+  return { error: null };
 }
 
 /** One reviewed item: either a library food portion or an AI-estimate snapshot. */

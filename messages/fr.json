@@ -506,6 +506,10 @@
     "gain": "Prise de masse"
   },
   "log": {
+    "editTitle": "Modifier votre journal",
+    "editApply": "Appliquer",
+    "editCancel": "Annuler",
+    "editThenAdd": "Vous vérifierez ensuite {count, plural, one {# nouvel élément} other {# nouveaux éléments}} à ajouter.",
     "confirmTitle": "Confirmez ce que vous avez mangé",
     "meal": "Repas",
     "tapGrams": "Touchez les grammes pour modifier",
@@ -527,6 +531,8 @@
     "queuedOffline": "Vous êtes hors ligne. Enregistré sur cet appareil ; la synchronisation se fera à la reconnexion."
   },
   "composer": {
+    "matching": "Recherche de vos aliments…",
+    "portions": "Estimation des portions…",
     "placeholder": "Vous avez mangé, ou une question ? Dites-le…",
     "coachPlaceholder": "Demandez à votre coach…",
     "listening": "J'écoute…",

@@ -18,6 +18,8 @@ import { BarcodeScanner } from "@/components/barcode-scanner";
 import { mealForMinutes, minutesOfDate } from "@/lib/day-time";
 import type { Food, MealType } from "@/lib/types";
 import { ConfirmSheet } from "./confirm-sheet";
+import { EditSheet } from "./edit-sheet";
+import { ThinkingOrbit } from "./thinking";
 import { useLog } from "./log-provider";
 
 /** Tallest the input grows (Tailwind max-h-32) before it scrolls. */
@@ -176,8 +178,15 @@ export function Composer({
     <div className="z-30 max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:bg-[linear-gradient(transparent,var(--ink-950)_30%)] max-lg:px-3.5 max-lg:pt-2.5 max-lg:pb-[max(1rem,env(safe-area-inset-bottom))] lg:sticky lg:bottom-0 lg:bg-[linear-gradient(transparent,var(--ink-950)_28%)] lg:pt-3 lg:pb-5">
       <div className="relative mx-auto flex w-full max-w-3xl flex-col gap-2">
         <ConfirmSheet />
+        <EditSheet />
 
-        {(log.error || log.notice) && !log.sheet && (
+        {log.parsing && (
+          <div className="rounded-2xl border border-ink-800 bg-ink-900/90 px-3.5 py-2.5 backdrop-blur-md">
+            <ThinkingOrbit size={26} interval={1400} steps={[t("reading"), t("matching"), t("portions")]} />
+          </div>
+        )}
+
+        {(log.error || log.notice) && !log.sheet && !log.editSheet && (
           <p
             role={log.error ? "alert" : "status"}
             className={`flex items-start justify-between gap-3 rounded-xl border px-3 py-2 text-[13px] ${

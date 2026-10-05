@@ -12,7 +12,7 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { logAiMeal, parseMeal, type AiMealItem } from "@/app/(app)/dashboard/ai-log";
+import { applyAiEdits, logAiMeal, parseMeal, type AiEdit, type AiMealItem } from "@/app/(app)/dashboard/ai-log";
 import { track } from "@/lib/analytics";
 import { MEAL_DEFAULT_MIN, mealForMinutes, minutesOfDate } from "@/lib/day-time";
 import { macrosForPortion, round1, type Macros } from "@/lib/nutrition";
@@ -35,6 +35,13 @@ export interface ReviewItem {
   /** A food id from base.matches, or "est" for the AI estimate. */
   source: string;
   grams: string;
+}
+
+/** Proposed diary changes awaiting confirmation; `then` = new items to add after. */
+export interface PendingEdits {
+  transcript: string;
+  edits: AiEdit[];
+  then: AiMealItem[];
 }
 
 export interface PendingLog {
@@ -119,9 +126,14 @@ const QUESTION_PREFIXES = [
   "dois", "peux", "idée", "علاش", "كيفاش", "واش", "شنو", "اشنو", "هل", "لماذا", "كيف", "ماذا", "ما ",
 ];
 
+/** Diary verbs: "can you remove the rice?" is a request, not a question for the coach. */
+const DIARY_VERBS =
+  /\b(add|log|remove|delete|undo|change|move|replace|swap|edit|update|ajoute|enl[eè]ve|supprime|retire|modifie|change|d[ée]place|remplace|zid|7yed|bddel|bdl)\b|احذف|امسح|حيد|زيد|بدل|غيّر|أضف/;
+
 /** Rough intent split for the composer: questions go to the coach. */
 export function looksLikeQuestion(text: string): boolean {
   const t = text.trim().toLowerCase();
+  if (DIARY_VERBS.test(t)) return false;
   if (/[?؟]\s*$/.test(t)) return true;
   return QUESTION_PREFIXES.some((p) => t.startsWith(p));
 }
@@ -146,6 +158,10 @@ interface LogContextValue {
   submitPhoto: (file: File) => void;
   addFood: (food: Food, grams: number) => void;
   setError: (message: string | null) => void;
+
+  editSheet: PendingEdits | null;
+  confirmEdits: () => void;
+  cancelEdits: () => void;
 
   sheet: PendingLog | null;
   updateItem: (key: string, patch: Partial<ReviewItem>) => void;
@@ -197,6 +213,7 @@ export function LogProvider({
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [sheet, setSheet] = useState<PendingLog | null>(null);
+  const [editSheet, setEditSheet] = useState<PendingEdits | null>(null);
   const seq = useRef(0);
 
   const clearMessages = useCallback(() => {
@@ -237,9 +254,12 @@ export function LogProvider({
       startParse(async () => {
         const fd = new FormData();
         fd.set("description", message);
-        try {
+        fd.set("entry_date", entryDate);
+          try {
           const res = await parseMeal(fd);
-          if (res.items == null && res.toCoach) {
+          if (res.items != null && res.edits.length > 0) {
+            setEditSheet({ transcript: message, edits: res.edits, then: res.items });
+          } else if (res.items == null && res.toCoach) {
             track("composer_routed_to_coach", { source, by: "intent" });
             router.push(`/coach?c=new&q=${encodeURIComponent(message.slice(0, 2000))}`);
           } else if (res.items == null) setError(res.error);
@@ -249,8 +269,42 @@ export function LogProvider({
         }
       });
     },
-    [clearMessages, openSheet, router, t]
+    [clearMessages, entryDate, openSheet, router, t]
   );
+
+  const cancelEdits = useCallback(() => setEditSheet(null), []);
+
+  const confirmEdits = useCallback(() => {
+    const current = editSheet;
+    if (!current) return;
+    setError(null);
+    startConfirm(async () => {
+      try {
+        const res = await applyAiEdits({
+          edits: current.edits.map((x) => ({
+            entryId: x.entryId,
+            action: x.action,
+            grams: x.grams,
+            servings: x.servings,
+            toMeal: x.toMeal,
+          })),
+        });
+        if (res.error) {
+          setError(res.error);
+          return;
+        }
+        track("orbit_entries_edited", {
+          deleted: current.edits.filter((x) => x.action === "delete").length,
+          updated: current.edits.filter((x) => x.action === "update").length,
+        });
+        setEditSheet(null);
+        if (current.then.length > 0) openSheet(current.then, "text", current.transcript);
+        router.refresh();
+      } catch {
+        setError(t("offlineParse"));
+      }
+    });
+  }, [editSheet, openSheet, router, t]);
 
   const submitPhoto = useCallback(
     (file: File) => {
@@ -467,6 +521,9 @@ export function LogProvider({
     submitPhoto,
     addFood,
     setError,
+    editSheet,
+    confirmEdits,
+    cancelEdits,
     sheet,
     updateItem,
     removeItem,

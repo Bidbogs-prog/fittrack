@@ -506,6 +506,10 @@
     "gain": "Lean bulk"
   },
   "log": {
+    "editTitle": "Update your diary",
+    "editApply": "Apply",
+    "editCancel": "Cancel",
+    "editThenAdd": "Then you'll review {count, plural, one {# new item} other {# new items}} to add.",
     "confirmTitle": "Confirm what you ate",
     "meal": "Meal",
     "tapGrams": "Tap grams to edit",
@@ -527,6 +531,8 @@
     "queuedOffline": "You're offline. Saved on this device; it syncs when you reconnect."
   },
   "composer": {
+    "matching": "Matching your foods…",
+    "portions": "Estimating portions…",
     "placeholder": "Ate something, or have a question? Just say it…",
     "coachPlaceholder": "Ask your coach…",
     "listening": "Listening…",

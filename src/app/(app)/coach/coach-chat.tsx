@@ -7,6 +7,7 @@ import { Composer } from "@/components/orbit/composer";
 import { track } from "@/lib/analytics";
 import { ThumbsDown, ThumbsUp } from "@phosphor-icons/react";
 import type { CoachStreamEvent } from "@/app/api/coach/route";
+import { ThinkingOrbit } from "@/components/orbit/thinking";
 import { rateCoachMessage } from "./actions";
 
 export interface ChatMessage {
@@ -44,44 +45,11 @@ function Rich({ text }: { text: string }) {
  */
 function CoachThinking() {
   const t = useTranslations("coach");
-  const steps = [t("reading"), t("thinkingTargets"), t("thinkingEvidence"), t("thinkingWriting")];
-  const [step, setStep] = useState(0);
-  useEffect(() => {
-    const id = window.setInterval(() => setStep((s) => Math.min(s + 1, steps.length - 1)), 1700);
-    return () => window.clearInterval(id);
-  }, [steps.length]);
-
   return (
-    <div role="status" aria-live="polite" className="flex items-center gap-3 py-1.5">
-      <svg viewBox="0 0 32 32" className="size-8 shrink-0" aria-hidden>
-        <circle cx="16" cy="16" r="12" fill="none" stroke="var(--ink-800)" strokeWidth="2.5" />
-        <g className="coach-orbit">
-          <circle
-            cx="16"
-            cy="16"
-            r="12"
-            fill="none"
-            stroke="url(#coach-arc)"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeDasharray="22 54"
-          />
-        </g>
-        <g className="coach-orbit-slow">
-          <circle cx="16" cy="4" r="1.8" fill="var(--flame-glow)" />
-        </g>
-        <circle cx="16" cy="16" r="3" fill="var(--flame)" opacity="0.9" />
-        <defs>
-          <linearGradient id="coach-arc" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor="#ffc94d" />
-            <stop offset="1" stopColor="#f2701f" />
-          </linearGradient>
-        </defs>
-      </svg>
-      <p key={step} className="coach-step coach-shimmer text-[13px] font-medium">
-        {steps[step]}
-      </p>
-    </div>
+    <ThinkingOrbit
+      className="py-1.5"
+      steps={[t("reading"), t("thinkingTargets"), t("thinkingEvidence"), t("thinkingWriting")]}
+    />
   );
 }
 
