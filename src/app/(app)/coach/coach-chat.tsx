@@ -38,6 +38,54 @@ function Rich({ text }: { text: string }) {
 }
 
 /**
+ * While the coach works: a small orbit (the dial's ring with a flame arc and
+ * a satellite dot) and status lines that step through what the server is
+ * actually doing — reading logs, checking targets, pulling evidence, writing.
+ */
+function CoachThinking() {
+  const t = useTranslations("coach");
+  const steps = [t("reading"), t("thinkingTargets"), t("thinkingEvidence"), t("thinkingWriting")];
+  const [step, setStep] = useState(0);
+  useEffect(() => {
+    const id = window.setInterval(() => setStep((s) => Math.min(s + 1, steps.length - 1)), 1700);
+    return () => window.clearInterval(id);
+  }, [steps.length]);
+
+  return (
+    <div role="status" aria-live="polite" className="flex items-center gap-3 py-1.5">
+      <svg viewBox="0 0 32 32" className="size-8 shrink-0" aria-hidden>
+        <circle cx="16" cy="16" r="12" fill="none" stroke="var(--ink-800)" strokeWidth="2.5" />
+        <g className="coach-orbit">
+          <circle
+            cx="16"
+            cy="16"
+            r="12"
+            fill="none"
+            stroke="url(#coach-arc)"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeDasharray="22 54"
+          />
+        </g>
+        <g className="coach-orbit-slow">
+          <circle cx="16" cy="4" r="1.8" fill="var(--flame-glow)" />
+        </g>
+        <circle cx="16" cy="16" r="3" fill="var(--flame)" opacity="0.9" />
+        <defs>
+          <linearGradient id="coach-arc" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stopColor="#ffc94d" />
+            <stop offset="1" stopColor="#f2701f" />
+          </linearGradient>
+        </defs>
+      </svg>
+      <p key={step} className="coach-step coach-shimmer text-[13px] font-medium">
+        {steps[step]}
+      </p>
+    </div>
+  );
+}
+
+/**
  * The coach thread (roadmap 1.6 A), merged into the orbit: user turns are
  * paper bubbles, the coach answers in plain text, and the docked composer
  * sends here instead of parsing meals. Server-rendered history seeds local
@@ -199,6 +247,9 @@ export function CoachChat({
               <div key={m.id} data-msg={m.id} className="max-w-[92%] lg:ms-0">
                 <p dir="auto" className="whitespace-pre-wrap text-sm leading-relaxed text-paper">
                   <Rich text={m.content} />
+                  {pending && m.id === messages[messages.length - 1]?.id && (
+                    <span aria-hidden className="coach-caret" />
+                  )}
                 </p>
                 {m.sources.length > 0 && (
                   <p className="mt-1.5 text-[11px] text-paper-mute">
@@ -229,18 +280,7 @@ export function CoachChat({
             )
           )
         )}
-        {pending && messages[messages.length - 1]?.role === "user" && (
-          <div aria-live="polite" aria-busy="true" className="flex flex-col gap-2 py-1">
-            <p className="text-xs text-paper-mute">{t("reading")}</p>
-            {[180, 240, 120].map((w, i) => (
-              <span
-                key={i}
-                className="h-2.5 animate-pulse rounded bg-ink-800"
-                style={{ width: w, animationDelay: `${i * 150}ms` }}
-              />
-            ))}
-          </div>
-        )}
+        {pending && messages[messages.length - 1]?.role === "user" && <CoachThinking />}
         {error && (
           <p role="alert" className="rounded-xl border border-danger/30 bg-danger/[0.08] px-3 py-2 text-sm text-danger">
             {error}

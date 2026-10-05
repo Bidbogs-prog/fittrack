@@ -302,6 +302,49 @@ body {
   }
 }
 
+/* Coach "thinking" — an orbit mark echoing the dial, cycling status
+   lines, and a caret while the reply streams. Static under reduced motion. */
+@keyframes coach-orbit {
+  to { transform: rotate(360deg); }
+}
+@keyframes coach-step {
+  from { opacity: 0; transform: translateY(4px); filter: blur(2px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+@keyframes coach-shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+@keyframes coach-caret {
+  0%, 45% { opacity: 1; }
+  55%, 100% { opacity: 0; }
+}
+.coach-orbit { animation: coach-orbit 1.6s linear infinite; transform-origin: 50% 50%; }
+.coach-orbit-slow { animation: coach-orbit 4.8s linear infinite reverse; transform-origin: 50% 50%; }
+.coach-step { animation: coach-step 0.45s var(--ease-reveal) both; }
+.coach-shimmer {
+  background: linear-gradient(90deg, var(--paper-mute) 0%, var(--paper-mute) 40%, var(--flame-glow) 50%, var(--paper-mute) 60%, var(--paper-mute) 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: coach-shimmer 2.4s linear infinite;
+}
+.coach-caret {
+  display: inline-block;
+  width: 0.5em;
+  height: 1em;
+  margin-inline-start: 2px;
+  vertical-align: -0.15em;
+  border-radius: 2px;
+  background: var(--flame);
+  animation: coach-caret 1s steps(1) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .coach-orbit, .coach-orbit-slow, .coach-step, .coach-shimmer, .coach-caret { animation: none; }
+  .coach-shimmer { color: var(--paper-mute); background: none; }
+}
+
 /* Numeric displays */
 .tabular {
   font-variant-numeric: tabular-nums;

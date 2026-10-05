@@ -645,6 +645,9 @@
     "starter2": "What should I change to hit my protein target?",
     "starter3": "Is my weight trend on track for my goal?",
     "reading": "Reading your data…",
+    "thinkingTargets": "Checking your targets…",
+    "thinkingEvidence": "Pulling the evidence…",
+    "thinkingWriting": "Writing your answer…",
     "sources": "Sources",
     "offline": "You're offline. Your message wasn't sent; try again when you reconnect.",
     "disclaimer": "The coach is an AI, not a doctor. Nothing here is medical advice, and it can make mistakes, so check numbers against your diary. For health concerns, talk to a professional. The coach is for adults 18+."

@@ -239,7 +239,10 @@ export function LogProvider({
         fd.set("description", message);
         try {
           const res = await parseMeal(fd);
-          if (res.items == null) setError(res.error);
+          if (res.items == null && res.toCoach) {
+            track("composer_routed_to_coach", { source, by: "intent" });
+            router.push(`/coach?c=new&q=${encodeURIComponent(message.slice(0, 2000))}`);
+          } else if (res.items == null) setError(res.error);
           else openSheet(res.items, source, message);
         } catch {
           setError(t("offlineParse"));

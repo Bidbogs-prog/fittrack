@@ -216,7 +216,10 @@ function cleanNumber(n: unknown, max: number): number | null {
  */
 export async function parseMeal(
   formData: FormData
-): Promise<{ items: AiMealItem[]; error: null } | { items: null; error: string }> {
+): Promise<
+  | { items: AiMealItem[]; error: null; toCoach?: false }
+  | { items: null; error: string; toCoach?: boolean }
+> {
   const { supabase, userId } = await requireUser();
 
   const description = String(formData.get("description") ?? "")
@@ -249,9 +252,9 @@ export async function parseMeal(
   // Text can point at the user's own meals; a photo alone can't.
   const catalogue = description ? await loadCatalogue(supabase, userId) : { text: "", expand: new Map() };
 
-  let parsed: { items: ParsedItem[]; refs?: ParsedRef[] };
+  let parsed: { intent?: string; items: ParsedItem[]; refs?: ParsedRef[] };
   try {
-    const res = await generateJson<{ items: ParsedItem[]; refs?: ParsedRef[] }>({
+    const res = await generateJson<{ intent?: string; items: ParsedItem[]; refs?: ParsedRef[] }>({
       systemPrompt: PARSE_SYSTEM_PROMPT,
       userPrompt: description
         ? `MEAL DESCRIPTION\n${description}${catalogue.text}`
@@ -265,6 +268,14 @@ export async function parseMeal(
   } catch (err) {
     if (err instanceof LlmError) return { items: null, error: err.message };
     throw err;
+  }
+
+  // Not a meal: the orbit hands the text to the coach instead of erroring.
+  const noFood =
+    (!Array.isArray(parsed.items) || parsed.items.length === 0) &&
+    (!Array.isArray(parsed.refs) || parsed.refs.length === 0);
+  if (!hasPhoto && (parsed.intent === "chat" || noFood)) {
+    return { items: null, error: "That sounds like a question for the coach — ask it on the Coach tab.", toCoach: true };
   }
 
   const fromCatalogue = (Array.isArray(parsed.refs) ? parsed.refs : []).flatMap((r) => {

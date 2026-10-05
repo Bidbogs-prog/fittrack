@@ -8,6 +8,12 @@ import type { GeminiSchema } from "@/lib/gemini";
 export const PARSE_SCHEMA: GeminiSchema = {
   type: "OBJECT",
   properties: {
+    intent: {
+      type: "STRING",
+      enum: ["log", "chat"],
+      description:
+        "log = the user reports food/drink they ate or asks to add/log something; chat = anything else (questions, advice, feelings, plans, greetings)",
+    },
     items: {
       type: "ARRAY",
       items: {
@@ -44,7 +50,7 @@ export const PARSE_SCHEMA: GeminiSchema = {
       },
     },
   },
-  required: ["items"],
+  required: ["intent", "items"],
 };
 // Optional: the model fills refs only when the user points at their own meals.
 (PARSE_SCHEMA.properties!).refs = {
@@ -73,5 +79,6 @@ Rules:
 - search_query: generic words that would match a food database built from Open Food Facts Morocco (mostly French product names) plus common whole foods in English. Prefer the French generic term for produce and dishes, the brand name for packaged products.
 - A photo shows one meal: identify only foods you can actually see, plus obvious hidden staples (cooking oil) folded into the item's estimate.
 - If nothing edible is described or visible, return an empty items array.
+- intent: "log" only when the user is recording food or drink (\"2 eggs and toast\", \"add my usual lunch\", a meal photo). Anything else — a question, a request for advice or a plan, how they feel, small talk — is "chat": return empty items and refs and do not invent foods.
 
 THE USER'S OWN MEALS: a catalogue of their saved meals (S…), recipes (R…) and meals logged in the last week (D…) may follow the description. When the user refers to one of them — "my protein shake breakfast", "my usual lunch", "same as yesterday's dinner", "2 servings of my harira" — put it in refs with its id and a servings multiplier instead of re-estimating it in items. Match by meaning and language (Darija, French, English), not exact spelling; for "yesterday's X" or "same as this morning" use the D entry with that date and meal. Only use ids that are listed. Anything else they mention still goes in items. If nothing in the catalogue fits, leave refs empty.`;
