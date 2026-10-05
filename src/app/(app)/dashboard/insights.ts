@@ -1,6 +1,9 @@
 "use server";
 
-import { GeminiError, generateJson, type GeminiSchema } from "@/lib/gemini";
+import { featureQuotaError, recordAiUsage } from "@/lib/ai-usage";
+import { isPremium } from "@/lib/entitlements";
+import { type GeminiSchema } from "@/lib/gemini";
+import { generateJson, LlmError } from "@/lib/llm";
 import { getActiveTargets, type ActiveTargets } from "@/lib/adaptive";
 import { getProfile } from "@/lib/auth";
 import { entryAmountLabel, entryMacros, entryMicros, entryName } from "@/lib/diary";
@@ -184,12 +187,16 @@ export async function generateDayInsights(
     return { data: null, error: "Nothing logged for this day yet — add a meal first." };
   }
 
+  const quota = await featureQuotaError(supabase, userId, "day_insights", await isPremium(supabase, userId));
+  if (quota) return { data: null, error: quota };
+
   try {
-    const data = await generateJson<DayInsights>({
+    const { data, usage } = await generateJson<DayInsights>({
       systemPrompt: SYSTEM_PROMPT,
       userPrompt: describeDay(profile, entries, entryDate, active, exercises),
       schema: INSIGHTS_SCHEMA,
     });
+    await recordAiUsage(supabase, userId, "day_insights", usage);
     if (!data.summary || !Array.isArray(data.insights) || data.insights.length === 0) {
       return { data: null, error: "The coach came back empty-handed. Try again." };
     }
@@ -207,7 +214,7 @@ export async function generateDayInsights(
     );
     return { data, error: null };
   } catch (err) {
-    if (err instanceof GeminiError) return { data: null, error: err.message };
+    if (err instanceof LlmError) return { data: null, error: err.message };
     throw err;
   }
 }

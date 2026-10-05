@@ -13,6 +13,9 @@ import type { LlmUsage } from "@/lib/llm";
  *
  *   MEAL_LOG_DAILY_LIMIT                free: AI meal parses per UTC day (default 30, 0 = unlimited)
  *   MEAL_LOG_PREMIUM_DAILY_LIMIT        premium: AI meal parses per UTC day (default 100, 0 = unlimited)
+ *   DAY_INSIGHTS_DAILY_LIMIT / DAY_INSIGHTS_PREMIUM_DAILY_LIMIT    default 5 / 20
+ *   WEEK_REPORT_DAILY_LIMIT / WEEK_REPORT_PREMIUM_DAILY_LIMIT      default 3 / 10
+ *   PLAN_GENERATE_DAILY_LIMIT / PLAN_GENERATE_PREMIUM_DAILY_LIMIT  default 2 / 10
  *
  * Defaults are the free-tier allowance, so a deploy that forgets the env
  * vars stays cheap rather than open-ended.
@@ -20,7 +23,7 @@ import type { LlmUsage } from "@/lib/llm";
 
 type Supabase = Awaited<ReturnType<typeof createClient>>;
 
-export type AiFeature = "coach" | "coach_summary" | "meal_log";
+export type AiFeature = "coach" | "coach_summary" | "meal_log" | "day_insights" | "week_report" | "plan_generate";
 
 export async function recordAiUsage(
   supabase: Supabase,
@@ -96,13 +99,31 @@ export async function getCoachAllowance(
   };
 }
 
-/** Null when within the AI meal-logging cap, otherwise a user-facing reason. Fails open. */
-export async function mealLogQuotaError(
+/** Per-feature daily caps: [env prefix, free default, premium default]. */
+const DAILY_CAPS: Partial<Record<AiFeature, [string, number, number]>> = {
+  meal_log: ["MEAL_LOG", 30, 100],
+  day_insights: ["DAY_INSIGHTS", 5, 20],
+  week_report: ["WEEK_REPORT", 3, 10],
+  plan_generate: ["PLAN_GENERATE", 2, 10],
+};
+
+const CAP_MESSAGES: Partial<Record<AiFeature, string>> = {
+  meal_log: "You've reached today's AI logging limit. You can still log from the food search, or try again tomorrow.",
+};
+
+/** Null when within the feature's daily cap, otherwise a user-facing reason. Fails open. */
+export async function featureQuotaError(
   supabase: Supabase,
   userId: string,
+  feature: AiFeature,
   premium: boolean
 ): Promise<string | null> {
-  const daily = premium ? limit("MEAL_LOG_PREMIUM_DAILY_LIMIT", 100) : limit("MEAL_LOG_DAILY_LIMIT", 30);
+  const cap = DAILY_CAPS[feature];
+  if (!cap) return null;
+  const [prefix, free, paid] = cap;
+  const daily = premium
+    ? limit(`${prefix}_PREMIUM_DAILY_LIMIT`, paid)
+    : limit(`${prefix}_DAILY_LIMIT`, free);
   if (daily == null) return null;
   const now = new Date();
   const dayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
@@ -110,11 +131,11 @@ export async function mealLogQuotaError(
     .from("ai_usage")
     .select("id", { count: "exact", head: true })
     .eq("user_id", userId)
-    .eq("feature", "meal_log")
+    .eq("feature", feature)
     .gte("created_at", dayStart.toISOString());
   if (error || count == null) return null;
   return count >= daily
-    ? "You've reached today's AI logging limit. You can still log from the food search, or try again tomorrow."
+    ? (CAP_MESSAGES[feature] ?? "You've reached today's limit for this AI feature. Try again tomorrow.")
     : null;
 }
 

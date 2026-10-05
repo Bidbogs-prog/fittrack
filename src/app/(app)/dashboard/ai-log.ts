@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { entryMacros, recipePerServing } from "@/lib/diary";
 import { rankFoods } from "@/lib/foods";
-import { mealLogQuotaError, recordAiUsage } from "@/lib/ai-usage";
+import { featureQuotaError, recordAiUsage } from "@/lib/ai-usage";
 import { isPremium } from "@/lib/entitlements";
 import { PARSE_SCHEMA, PARSE_SYSTEM_PROMPT } from "./ai-log-prompt";
 import { generateJson, LlmError } from "@/lib/llm";
@@ -243,7 +243,7 @@ export async function parseMeal(
     };
   }
 
-  const quota = await mealLogQuotaError(supabase, userId, await isPremium(supabase, userId));
+  const quota = await featureQuotaError(supabase, userId, "meal_log", await isPremium(supabase, userId));
   if (quota) return { items: null, error: quota };
 
   // Text can point at the user's own meals; a photo alone can't.

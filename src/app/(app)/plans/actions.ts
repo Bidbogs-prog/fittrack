@@ -4,7 +4,10 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getActiveTargets } from "@/lib/adaptive";
 import { getProfile, requireUser } from "@/lib/auth";
-import { GeminiError, generateJson, type GeminiSchema } from "@/lib/gemini";
+import { featureQuotaError, recordAiUsage } from "@/lib/ai-usage";
+import { isPremium } from "@/lib/entitlements";
+import { type GeminiSchema } from "@/lib/gemini";
+import { generateJson, LlmError } from "@/lib/llm";
 import { macrosForPortion, sumMacros } from "@/lib/nutrition";
 import { MEAL_TYPES, type Food, type MealPlanItem, type MealType } from "@/lib/types";
 
@@ -190,16 +193,21 @@ ${preferences || "None given — assume typical Moroccan tastes."}
 FOOD LIST (id | name | category | facts per 100 g)
 ${foodList}`;
 
+  const quota = await featureQuotaError(supabase, userId, "plan_generate", await isPremium(supabase, userId));
+  if (quota) return { error: quota };
+
   let generated: GeneratedPlan;
   try {
-    generated = await generateJson<GeneratedPlan>({
+    const res = await generateJson<GeneratedPlan>({
       systemPrompt: PLAN_SYSTEM_PROMPT,
       userPrompt,
       schema: PLAN_SCHEMA,
       temperature: 0.7,
     });
+    generated = res.data;
+    await recordAiUsage(supabase, userId, "plan_generate", res.usage);
   } catch (err) {
-    if (err instanceof GeminiError) return { error: err.message };
+    if (err instanceof LlmError) return { error: err.message };
     throw err;
   }
 

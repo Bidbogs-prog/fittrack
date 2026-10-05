@@ -3,7 +3,10 @@
 import { getActiveTargets } from "@/lib/adaptive";
 import { getProfile } from "@/lib/auth";
 import { entryMacros } from "@/lib/diary";
-import { GeminiError, generateJson, type GeminiSchema } from "@/lib/gemini";
+import { featureQuotaError, recordAiUsage } from "@/lib/ai-usage";
+import { isPremium } from "@/lib/entitlements";
+import { type GeminiSchema } from "@/lib/gemini";
+import { generateJson, LlmError } from "@/lib/llm";
 import { GOALS, round1, sumMacros } from "@/lib/nutrition";
 import type { DiaryEntry, WeightLog } from "@/lib/types";
 import { trendDelta, weightTrend } from "@/lib/weight";
@@ -206,12 +209,16 @@ WEIGHT TREND: ${
       : "not enough weigh-ins this week"
   }`;
 
+  const quota = await featureQuotaError(supabase, userId, "week_report", await isPremium(supabase, userId));
+  if (quota) return { data: null, error: quota };
+
   try {
-    const data = await generateJson<WeekReport>({
+    const { data, usage } = await generateJson<WeekReport>({
       systemPrompt: SYSTEM_PROMPT,
       userPrompt,
       schema: REPORT_SCHEMA,
     });
+    await recordAiUsage(supabase, userId, "week_report", usage);
     if (!data.summary || !Array.isArray(data.highlights) || data.highlights.length === 0) {
       return { data: null, error: "The coach came back empty-handed. Try again." };
     }
@@ -227,7 +234,7 @@ WEIGHT TREND: ${
     );
     return { data, error: null };
   } catch (err) {
-    if (err instanceof GeminiError) return { data: null, error: err.message };
+    if (err instanceof LlmError) return { data: null, error: err.message };
     throw err;
   }
 }
