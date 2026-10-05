@@ -2,10 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
+import { entryMacros, recipePerServing } from "@/lib/diary";
 import { rankFoods } from "@/lib/foods";
 import { GeminiError, generateJson, type GeminiSchema } from "@/lib/gemini";
-import { round1 } from "@/lib/nutrition";
-import { MEAL_TYPES, type Food, type MealType } from "@/lib/types";
+import { macrosForPortion, round1, type Macros } from "@/lib/nutrition";
+import { MEAL_TYPES, type Food, type MealType, type RecipeItem } from "@/lib/types";
 
 /**
  * AI meal logging (roadmap 1.1): a free-text description and/or photo goes
@@ -35,6 +36,12 @@ export interface AiMealItem {
   est: AiEstimate;
   /** Library candidates (best first); may be empty. */
   matches: Food[];
+  /**
+   * Set when the row came from one of the user's recipes (directly or via a
+   * saved/recent meal): logging the estimate keeps the recipe link, with
+   * servings scaled by grams / this item's grams.
+   */
+  recipe?: { id: string; servings: number };
 }
 
 interface ParsedItem extends AiEstimate {
@@ -42,6 +49,12 @@ interface ParsedItem extends AiEstimate {
   portion: string;
   grams: number;
   search_query: string;
+}
+
+/** A pointer into the user's own catalogue (saved meal, recipe, recent meal). */
+interface ParsedRef {
+  ref: string;
+  servings: number;
 }
 
 const PARSE_SCHEMA: GeminiSchema = {
@@ -85,6 +98,22 @@ const PARSE_SCHEMA: GeminiSchema = {
   },
   required: ["items"],
 };
+// Optional: the model fills refs only when the user points at their own meals.
+(PARSE_SCHEMA.properties!).refs = {
+  type: "ARRAY",
+  description: "The user's saved meals, recipes or recent meals they asked to log, by catalogue id",
+  items: {
+    type: "OBJECT",
+    properties: {
+      ref: { type: "STRING", description: "A catalogue id exactly as listed, e.g. S2, R1, D4" },
+      servings: {
+        type: "NUMBER",
+        description: "Multiplier: 1 = as saved; 2 = double; for recipes, number of servings",
+      },
+    },
+    required: ["ref", "servings"],
+  },
+};
 
 const PARSE_SYSTEM_PROMPT = `You are the meal-parsing engine of So3ra, a nutrition tracker used mainly in Morocco. Given a user's description of a meal (text, photo, or both), split it into distinct food items and estimate each portion like a careful registered dietitian.
 
@@ -95,9 +124,153 @@ Rules:
 - The user may write in English, French, Arabic or Darija. Keep "name" in the language the user used; for photos use the photo's most likely local name.
 - search_query: generic words that would match a food database built from Open Food Facts Morocco (mostly French product names) plus common whole foods in English. Prefer the French generic term for produce and dishes, the brand name for packaged products.
 - A photo shows one meal: identify only foods you can actually see, plus obvious hidden staples (cooking oil) folded into the item's estimate.
-- If nothing edible is described or visible, return an empty items array.`;
+- If nothing edible is described or visible, return an empty items array.
 
-const MAX_ITEMS = 10;
+THE USER'S OWN MEALS: a catalogue of their saved meals (S…), recipes (R…) and meals logged in the last week (D…) may follow the description. When the user refers to one of them — "my protein shake breakfast", "my usual lunch", "same as yesterday's dinner", "2 servings of my harira" — put it in refs with its id and a servings multiplier instead of re-estimating it in items. Match by meaning and language (Darija, French, English), not exact spelling; for "yesterday's X" or "same as this morning" use the D entry with that date and meal. Only use ids that are listed. Anything else they mention still goes in items. If nothing in the catalogue fits, leave refs empty.`;
+
+const MAX_ITEMS = 20;
+const CATALOGUE_DAYS = 7;
+
+type Supabase = Awaited<ReturnType<typeof requireUser>>["supabase"];
+
+/** A diary-shaped row: food portion or macro snapshot (optionally a logged recipe). */
+interface PayloadRow {
+  food: Food | null;
+  grams: number | null;
+  recipe_id: string | null;
+  servings: number | null;
+  quick_name: string | null;
+  quick_kcal: number | null;
+  quick_protein_g: number | null;
+  quick_carbs_g: number | null;
+  quick_fat_g: number | null;
+  quick_fibre_g: number | null;
+}
+
+const PAYLOAD_COLS =
+  "grams, recipe_id, servings, quick_name, quick_kcal, quick_protein_g, quick_carbs_g, quick_fat_g, quick_fibre_g, food:foods(*)";
+
+const toEst = (m: Macros, f = 1): AiEstimate => ({
+  kcal: round1(m.kcal * f),
+  protein_g: round1(m.protein * f),
+  carbs_g: round1(m.carbs * f),
+  fat_g: round1(m.fat * f),
+  fibre_g: round1(m.fibre * f),
+});
+
+/** A saved/recent row as a confirmable item, scaled by `mult`. */
+function payloadItem(row: PayloadRow, mult: number): AiMealItem {
+  if (row.food != null && row.grams != null) {
+    const grams = Math.max(1, Math.round(row.grams * mult));
+    return {
+      name: row.food.name,
+      portion: `${grams} g`,
+      grams,
+      est: toEst(macrosForPortion(row.food, grams)),
+      matches: [row.food],
+    };
+  }
+  // Snapshots have no weight: a nominal 100 g "portion" lets the sheet scale it.
+  const servings = row.servings != null ? Number(row.servings) * mult : null;
+  return {
+    name: (row.quick_name ?? "Quick add").slice(0, 60),
+    portion: servings != null ? `${round1(servings)} serving${servings === 1 ? "" : "s"}` : "1 portion",
+    grams: 100,
+    est: toEst(entryMacros(row), mult),
+    matches: [],
+    ...(row.recipe_id && servings != null ? { recipe: { id: row.recipe_id, servings } } : {}),
+  };
+}
+
+interface Catalogue {
+  text: string;
+  expand: Map<string, (mult: number) => AiMealItem[]>;
+}
+
+/**
+ * The user's saved meals, recipes and last week's meals as a compact,
+ * id-keyed list for the parser. Short ids (S1, R1, D1) instead of uuids:
+ * the model can't invent a plausible one, and they cost fewer tokens.
+ */
+async function loadCatalogue(supabase: Supabase, userId: string): Promise<Catalogue> {
+  const since = new Date(Date.now() - CATALOGUE_DAYS * 86_400_000).toISOString().slice(0, 10);
+  const [{ data: saved }, { data: recipes }, { data: recent }] = await Promise.all([
+    supabase
+      .from("saved_meals")
+      .select(`id, name, items:saved_meal_items(${PAYLOAD_COLS})`)
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(30),
+    supabase
+      .from("recipes")
+      .select("id, name, servings, items:recipe_items(grams, food:foods(*))")
+      .eq("user_id", userId)
+      .limit(30),
+    supabase
+      .from("diary_entries")
+      .select(`entry_date, meal, ${PAYLOAD_COLS}`)
+      .eq("user_id", userId)
+      .gte("entry_date", since)
+      .order("entry_date", { ascending: false })
+      .limit(300),
+  ]);
+
+  const lines: string[] = [];
+  const expand = new Map<string, (mult: number) => AiMealItem[]>();
+  const kcalOf = (rows: PayloadRow[]) => Math.round(rows.reduce((s, r) => s + entryMacros(r).kcal, 0));
+  const describe = (rows: PayloadRow[]) =>
+    rows
+      .slice(0, 6)
+      .map((r) => (r.food ? `${r.food.name} ${Math.round(r.grams ?? 0)} g` : (r.quick_name ?? "quick add")))
+      .join(", ");
+
+  ((saved ?? []) as unknown as { name: string; items: PayloadRow[] }[]).forEach((m, i) => {
+    if (!m.items?.length) return;
+    const id = `S${i + 1}`;
+    lines.push(`${id}: "${m.name}" — ${describe(m.items)} (≈${kcalOf(m.items)} kcal)`);
+    expand.set(id, (mult) => m.items.map((r) => payloadItem(r, mult)));
+  });
+
+  ((recipes ?? []) as unknown as { id: string; name: string; servings: number; items: RecipeItem[] }[]).forEach(
+    (r, i) => {
+      if (!r.items?.length) return;
+      const id = `R${i + 1}`;
+      const per = recipePerServing(r.items, r.servings);
+      const gramsPer = r.items.reduce((s, it) => s + it.grams, 0) / (r.servings > 0 ? r.servings : 1);
+      lines.push(`${id}: recipe "${r.name}" — ${Math.round(per.kcal)} kcal per serving`);
+      expand.set(id, (servings) => {
+        const grams = Math.max(1, Math.round(gramsPer * servings));
+        return [
+          {
+            name: r.name.slice(0, 60),
+            portion: `${round1(servings)} serving${servings === 1 ? "" : "s"}`,
+            grams,
+            est: toEst(per, servings),
+            matches: [],
+            recipe: { id: r.id, servings },
+          },
+        ];
+      });
+    }
+  );
+
+  const groups = new Map<string, PayloadRow[]>();
+  for (const row of (recent ?? []) as unknown as (PayloadRow & { entry_date: string; meal: string })[]) {
+    const key = `${row.entry_date} ${row.meal}`;
+    groups.set(key, [...(groups.get(key) ?? []), row]);
+  }
+  [...groups.entries()].slice(0, 28).forEach(([key, rows], i) => {
+    const id = `D${i + 1}`;
+    lines.push(`${id}: ${key} — ${describe(rows)} (≈${kcalOf(rows)} kcal)`);
+    expand.set(id, (mult) => rows.map((r) => payloadItem(r, mult)));
+  });
+
+  const today = new Date().toISOString().slice(0, 10);
+  return {
+    text: lines.length ? `\n\nTHE USER'S OWN MEALS (today is ${today})\n${lines.join("\n")}` : "",
+    expand,
+  };
+}
 
 function cleanNumber(n: unknown, max: number): number | null {
   const v = Number(n);
@@ -112,7 +285,7 @@ function cleanNumber(n: unknown, max: number): number | null {
 export async function parseMeal(
   formData: FormData
 ): Promise<{ items: AiMealItem[]; error: null } | { items: null; error: string }> {
-  const { supabase } = await requireUser();
+  const { supabase, userId } = await requireUser();
 
   const description = String(formData.get("description") ?? "")
     .trim()
@@ -138,12 +311,15 @@ export async function parseMeal(
     };
   }
 
-  let parsed: { items: ParsedItem[] };
+  // Text can point at the user's own meals; a photo alone can't.
+  const catalogue = description ? await loadCatalogue(supabase, userId) : { text: "", expand: new Map() };
+
+  let parsed: { items: ParsedItem[]; refs?: ParsedRef[] };
   try {
-    parsed = await generateJson<{ items: ParsedItem[] }>({
+    parsed = await generateJson<{ items: ParsedItem[]; refs?: ParsedRef[] }>({
       systemPrompt: PARSE_SYSTEM_PROMPT,
       userPrompt: description
-        ? `MEAL DESCRIPTION\n${description}`
+        ? `MEAL DESCRIPTION\n${description}${catalogue.text}`
         : "Identify the foods in this meal photo.",
       schema: PARSE_SCHEMA,
       temperature: 0.2,
@@ -154,8 +330,14 @@ export async function parseMeal(
     throw err;
   }
 
+  const fromCatalogue = (Array.isArray(parsed.refs) ? parsed.refs : []).flatMap((r) => {
+    const make = catalogue.expand.get(String(r.ref ?? "").trim().toUpperCase());
+    const mult = cleanNumber(r.servings, 20);
+    return make ? make(mult && mult > 0 ? mult : 1) : [];
+  });
+
   const rows = (Array.isArray(parsed.items) ? parsed.items : []).slice(0, MAX_ITEMS);
-  const items = (
+  const estimated = (
     await Promise.all(
       rows.map(async (row): Promise<AiMealItem | null> => {
         const grams = cleanNumber(row.grams, 5000);
@@ -183,6 +365,7 @@ export async function parseMeal(
       })
     )
   ).filter((item): item is AiMealItem => item != null);
+  const items = [...fromCatalogue, ...estimated].slice(0, MAX_ITEMS);
 
   if (items.length === 0) {
     return {
@@ -204,6 +387,9 @@ export interface ConfirmedAiItem {
   /** Snapshot fields, used when food_id is null. */
   name: string;
   est: AiEstimate | null;
+  /** With est: keep the link to the user's recipe this snapshot came from. */
+  recipe_id?: string | null;
+  servings?: number | null;
 }
 
 /** Insert the user-confirmed items as diary entries. */
@@ -228,6 +414,12 @@ export async function logAiMeal(input: {
     const { data } = await supabase.from("foods").select("id").in("id", foodIds);
     visible = new Set((data ?? []).map((f) => f.id));
   }
+  const recipeIds = [...new Set(items.map((i) => i.recipe_id).filter((id): id is string => !!id))];
+  let ownRecipes = new Set<string>();
+  if (recipeIds.length > 0) {
+    const { data } = await supabase.from("recipes").select("id").eq("user_id", userId).in("id", recipeIds);
+    ownRecipes = new Set((data ?? []).map((r) => r.id));
+  }
 
   const rows: Record<string, unknown>[] = [];
   for (const item of items) {
@@ -250,6 +442,9 @@ export async function logAiMeal(input: {
         quick_carbs_g: cleanNumber(item.est?.carbs_g, 2000),
         quick_fat_g: cleanNumber(item.est?.fat_g, 2000),
         quick_fibre_g: cleanNumber(item.est?.fibre_g, 2000),
+        ...(item.recipe_id && ownRecipes.has(item.recipe_id) && cleanNumber(item.servings, 100)
+          ? { recipe_id: item.recipe_id, servings: cleanNumber(item.servings, 100) }
+          : {}),
       });
     }
   }

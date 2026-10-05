@@ -395,6 +395,10 @@ export function LogProvider({
         food_id: null,
         grams: null,
         name: item.base.name,
+        recipe_id: item.base.recipe?.id ?? null,
+        servings: item.base.recipe
+          ? round1((item.base.recipe.servings * (Number(item.grams) || 0)) / (item.base.grams || 1))
+          : null,
         est: {
           kcal: round1(m.kcal),
           protein_g: round1(m.protein),
