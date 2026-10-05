@@ -63,6 +63,21 @@ export default async function SignupPage({
         <OAuthButtons />
       </div>
 
+      <p data-reveal className="mt-4 text-xs leading-relaxed text-paper-mute">
+        {t.rich("agreeLegal", {
+          terms: (chunks) => (
+            <Link href="/terms" className="underline underline-offset-2 hover:text-paper">
+              {chunks}
+            </Link>
+          ),
+          privacy: (chunks) => (
+            <Link href="/privacy" className="underline underline-offset-2 hover:text-paper">
+              {chunks}
+            </Link>
+          ),
+        })}
+      </p>
+
       <p data-reveal className="mt-6 text-sm text-paper-mute">
         {t("alreadyTracking")}{" "}
         <Link href="/login" className="font-medium text-paper underline-offset-4 hover:underline">

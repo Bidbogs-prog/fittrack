@@ -50,6 +50,15 @@ export default async function Home() {
               </a>{" "}
               (ODbL)
             </span>
+            <Link href="/privacy" className="hover:text-paper">
+              {t("privacy")}
+            </Link>
+            <Link href="/terms" className="hover:text-paper">
+              {t("terms")}
+            </Link>
+            <Link href="/refunds" className="hover:text-paper">
+              {t("refunds")}
+            </Link>
             <span>English · Français · العربية</span>
           </nav>
         </div>

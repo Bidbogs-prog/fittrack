@@ -29,6 +29,7 @@
     "passwordPlaceholder": "At least 8 characters",
     "passwordHint": "Use 8+ characters.",
     "alreadyTracking": "Already tracking?",
+    "agreeLegal": "By creating an account you agree to the <terms>Terms</terms> and <privacy>Privacy policy</privacy>.",
     "linkExpired": "Link expired",
     "linkExpiredHint": "This reset link is invalid or has expired. Request a fresh one and try again.",
     "requestNewLink": "Request a new link",
@@ -901,7 +902,10 @@
       "label": "Footer",
       "login": "Log in",
       "signup": "Create account",
-      "foodData": "Food data:"
+      "foodData": "Food data:",
+      "privacy": "Privacy",
+      "terms": "Terms",
+      "refunds": "Refunds"
     }
   }
 }

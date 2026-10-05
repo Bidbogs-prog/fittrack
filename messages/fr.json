@@ -29,6 +29,7 @@
     "passwordPlaceholder": "8 caractères minimum",
     "passwordHint": "Utilisez 8 caractères ou plus.",
     "alreadyTracking": "Déjà inscrit ?",
+    "agreeLegal": "En créant un compte, vous acceptez les <terms>Conditions</terms> et la <privacy>Politique de confidentialité</privacy>.",
     "linkExpired": "Lien expiré",
     "linkExpiredHint": "Ce lien de réinitialisation est invalide ou a expiré. Demandez-en un nouveau et réessayez.",
     "requestNewLink": "Demander un nouveau lien",
@@ -901,7 +902,10 @@
       "label": "Pied de page",
       "login": "Se connecter",
       "signup": "Créer un compte",
-      "foodData": "Données alimentaires :"
+      "foodData": "Données alimentaires :",
+      "privacy": "Confidentialité",
+      "terms": "Conditions",
+      "refunds": "Remboursements"
     }
   }
 }
