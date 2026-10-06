@@ -22,6 +22,76 @@ This is a living document. Check items off as they ship, add notes/links to PRs,
 
 ---
 
+## GTM — Validate demand before going native *(added 2026-10-05)*
+
+> The PWA is the MVP. Run an invite-gated beta in Morocco, measure retention and native-app demand, launch publicly for Ramadan 2027 (~Feb 8), and only then decide on a Capacitor build. Product Hunt is optional and comes after retention data exists.
+
+### G0 — Founder blockers (owner: founder, in progress — gate every public step on these)
+- [ ] Move the repo off the work laptop to a personal machine/network/GitHub; rotate LLM Gateway, Gemini and Supabase secret keys (`.env.local` + Vercel)
+- [ ] Employment: read IP/outside-activity clauses, disclose So3ra in writing, get acknowledgement (also covers creator marketing on TikTok and any public launch under the founder's name)
+- [ ] Legal vehicle and payouts confirmed with the comptable (auto-entrepreneur eligibility while salaried, SARLAU alternative, foreign-payout tax, 80k MAD single-client rule)
+- [ ] CNDP declaration (law 09-08) before recruiting Moroccan users at scale
+- [ ] Professional review of `/privacy`, `/terms`, `/refunds`; set `NEXT_PUBLIC_LEGAL_OPERATOR` / `NEXT_PUBLIC_CONTACT_EMAIL`
+- [ ] Verify coach helpline numbers in `src/lib/coach/prompt.ts` (Morocco 141/15, France FFAB 09 69 325 900, 15/112)
+- [ ] Vercel function region matched to the Supabase region
+- [ ] Payment provider confirms Morocco payouts (Paddle first; Lemon Squeezy only if non-PayPal payout works)
+
+*A closed friends-and-family beta (≤100) may start while G0 is in progress; nothing public until it's done.*
+
+### G1 — Beta infrastructure (weeks 0–2)
+- [ ] Cookie/analytics consent banner — PostHog and Sentry load only after consent (France/CNIL; also CNDP hygiene)
+- [ ] `waitlist` table (email, locale, city, phone OS, current health app, referral code, source/UTM, status, created_at) — insert-only RLS, Turnstile + rate limit on the endpoint
+- [ ] Landing-page waitlist form (en/fr/ar-MA) + "Have an invite code?" path; confirmation shows the person's referral link
+- [ ] Invite codes: `invite_codes` table (code, source label, max uses, uses, grants_premium_days, expires_at); signup requires a valid code or an admitted waitlist entry
+- [ ] Founding-member premium: a valid code writes an `entitlements` row (`source='manual'`, `current_period_end = now() + N days`, note = code) — default 90 days
+- [ ] Admin: waitlist list with filters + "admit next N" (emails an invite code); per-code usage view
+- [ ] Referral priority: each confirmed referral moves the referrer up the list
+- [ ] Source attribution: store UTM + invite code on the profile at signup; register as PostHog person properties for cohorting
+- [ ] Global AI spend kill switch: daily `ai_usage.cost_usd` sum vs `AI_DAILY_SPEND_LIMIT_USD` → AI features return "temporarily unavailable" (complements the gateway key's own cap)
+- [ ] Free coach allowance to 10/month: `COACH_MONTHLY_MESSAGE_LIMIT` default + plan-badge copy
+
+### G2 — Intent measurement (weeks 0–2, alongside G1)
+- [ ] Premium fake door: "Go Premium — 59 MAD/mo" on `/account` and at coach-cap moments → `premium_intent` PostHog event + "Coming soon — you're on the list" (stored on profile)
+- [ ] Health-sync fake door: "Sync with Apple Health / Health Connect" in Me and the activity card → `native_intent` event + "Notify me when the app is out" (stored on profile, OS captured)
+- [ ] Install prompt tracking: `pwa_installed` event, install rate by OS
+
+### G3 — Retention levers (weeks 1–4)
+- [ ] Web push: VAPID keys, `push_subscriptions` table, opt-in after the 3rd logged meal (not on first visit), service-worker handler
+- [ ] Scheduled sender (Vercel Cron or Supabase scheduled function): meal reminders in the user's timezone, skipped if that meal is already logged; quiet hours; per-user frequency cap
+- [ ] Weekly email digest for users without push (most iOS users who haven't installed the PWA): week summary + one coach tip; one-click unsubscribe
+- [ ] Ramadan mode (most foundations exist — `fasting window` on profile, coach briefs and prompt already Ramadan-aware): suhoor/iftar meal labels while active, auto-suggest from the fasting window, hydration hint between iftar and suhoor, Ramadan starter prompts in the coach, landing/creator assets
+
+### G4 — Closed beta (weeks 2–10, 100–300 users)
+- [ ] Define and build the cohort dashboard (PostHog) before the first batch: activation, D7, D30, logging days/week, AI log share, fake-door rates — per source/invite code
+- [ ] Recruit: 5–10 Darija/French fitness micro-creators (own codes, paid in premium + small fee), 3 gyms (QR poster, one code each), 2 university sports clubs, 2–3 dietitians
+- [ ] Weekly admit batches of 50–200 (batch size = AI cost control); watch `ai_usage` cost per active user vs the $0.12 free / $0.54 premium model
+- [ ] 10 user interviews (5 retained, 5 churned); in-app feedback via coach thumbs + a one-question survey at day 7
+- [ ] Iterate on the core loop where activation/D7 miss
+
+### G5 — Public launch for Ramadan 2027 (late January)
+- [ ] Open the waitlist in larger batches; creator posts timed for the week before Ramadan
+- [ ] Press/blog angle: "AI nutrition coach that speaks Darija and knows Moroccan food" (EN/FR/AR)
+- [ ] Payments live if a provider is confirmed (Paddle → `entitlements` via webhook); otherwise extend founding-member grants
+
+### G6 — Optional: Product Hunt (after D30 data)
+- [ ] Only once D30 meets the bar; positioned as "AI nutrition coach that understands your actual food, in any language"; demo = Darija voice logging + photo + coach
+- [ ] Treat as press/backlinks; tag the traffic as its own cohort so it doesn't distort beta metrics
+
+### Go/no-go for native (Capacitor wrapper, see 3.2)
+
+| Metric (per cohort) | Bar |
+|---|---|
+| Activation: ≥3 meals logged in first 48 h | ≥50% of signups |
+| D7 retention (logged on day 7) | ≥25% |
+| D30 retention | ≥12–15% (judged only after reminders have run a full month) |
+| Logging days per week, retained users | ≥3 |
+| Premium fake-door click-through | ≥5% of actives |
+| Health-sync "notify me" | ≥25–30% of retained users |
+
+**Rule:** D30 and health-sync demand both clear → build the Capacitor wrapper (HealthKit + Health Connect plugins, native push, both stores, one codebase). D30 misses → fix the core loop first; native won't save it.
+
+---
+
 ## P0 — Table stakes
 
 > Nothing else matters until logging is fast and the app has memory.
@@ -174,6 +244,7 @@ This is a living document. Check items off as they ship, add notes/links to PRs,
 - [ ] Stripe + plan gating; payments fund LLM Gateway credits (see 1.6 D/E for metering and margin math)
 
 ### 3.2 Native apps
+*Gated by the GTM go/no-go above — build only when D30 and health-sync demand clear their bars.*
 - [ ] Capacitor (or React Native) wrapper → App Store / Play Store presence, HealthKit/Google Fit access
 
 ### 3.3 Social & accountability
