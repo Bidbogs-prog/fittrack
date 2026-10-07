@@ -25,7 +25,15 @@ import type { LlmUsage } from "@/lib/llm";
 
 type Supabase = Awaited<ReturnType<typeof createClient>>;
 
-export type AiFeature = "coach" | "coach_summary" | "meal_log" | "day_insights" | "week_report" | "plan_generate";
+export type AiFeature =
+  | "coach"
+  | "coach_summary"
+  | "coach_memory"
+  | "weekly_checkin"
+  | "meal_log"
+  | "day_insights"
+  | "week_report"
+  | "plan_generate";
 
 export async function recordAiUsage(
   supabase: Supabase,
@@ -107,6 +115,8 @@ const DAILY_CAPS: Partial<Record<AiFeature, [string, number, number]>> = {
   day_insights: ["DAY_INSIGHTS", 5, 20],
   week_report: ["WEEK_REPORT", 3, 10],
   plan_generate: ["PLAN_GENERATE", 2, 10],
+  // Premium-only feature: free 0 (also gated by isPremium); regenerations are rare.
+  weekly_checkin: ["WEEKLY_CHECKIN", 0, 3],
 };
 
 const CAP_MESSAGES: Partial<Record<AiFeature, string>> = {

@@ -827,13 +827,32 @@
     "coachChats": "Mémoire et discussions du coach",
     "export": "Exporter (CSV)",
     "premiumTitle": "So3ra Premium",
-    "premiumBody": "50 messages au coach par jour, saisie IA illimitée, rapports hebdo détaillés et plans personnalisés.",
     "premiumCta": "Passer Premium — 59 MAD/mois",
     "intentDone": "Bientôt disponible — vous êtes sur la liste. Vous serez prévenu en premier.",
     "syncTitle": "Synchronisation santé",
     "syncBody": "Importez automatiquement pas, entraînements et poids depuis Apple Santé ou Health Connect.",
     "syncCta": "Synchroniser avec Apple Santé / Health Connect",
-    "syncDone": "Arrive avec l'app mobile — nous vous préviendrons à sa sortie."
+    "syncDone": "Arrive avec l'app mobile — nous vous préviendrons à sa sortie.",
+    "premiumYours": "Vous êtes Premium",
+    "premiumSoon": "À venir — dites-nous ce qui vous intéresse",
+    "notifyMe": "Me prévenir",
+    "notified": "Noté",
+    "premiumFeature": {
+      "checkin": "Bilan du lundi : votre coach analyse la semaine et explique vos objectifs",
+      "memory": "Mémoire du coach : il retient vos préférences, votre rythme et vos objectifs",
+      "coach": "50 messages au coach par jour, sans limite mensuelle",
+      "logging": "Jusqu'à 100 saisies IA par jour, plus d'analyses, de rapports et de plans",
+      "menu": "Scanner de menu : photographiez un menu, obtenez les meilleurs choix pour votre journée",
+      "weekPlan": "Plan de repas de la semaine avec liste de courses",
+      "nutrients": "Rapport mensuel des carences avec aliments pour les combler",
+      "ramadan": "Plan Ramadan du coach : shour, ftour et hydratation"
+    },
+    "memoryTitle": "Ce que le coach retient",
+    "memoryBody": "Ce que vous avez dit au coach et qu'il garde pour les prochaines conversations. Supprimez ce que vous voulez, quand vous voulez.",
+    "memoryTeaser": "Avec Premium, le coach retient vos préférences, votre rythme et vos objectifs d'une conversation à l'autre — plus besoin de vous répéter.",
+    "memoryEmpty": "Rien pour l'instant. Parlez au coach de votre rythme, des aliments que vous évitez ou de votre objectif sportif.",
+    "memoryForget": "Oublier : {fact}",
+    "memoryForgetAll": "Tout oublier"
   },
   "landing": {
     "nav": {
@@ -1000,5 +1019,18 @@
       "rate": "Trop de tentatives. Patientez quelques minutes.",
       "generic": "Une erreur s'est produite. Réessayez."
     }
+  },
+  "checkin": {
+    "eyebrow": "Bilan du lundi",
+    "teaser": "Chaque lundi, votre coach revient sur la semaine passée, explique vos objectifs de la semaine et vous donne un point à travailler.",
+    "unlock": "Débloquer avec Premium",
+    "intentDone": "Bientôt disponible — vous êtes sur la liste.",
+    "thinking1": "Analyse de votre semaine…",
+    "thinking2": "Vérification de vos objectifs…",
+    "thinking3": "Choix de votre priorité…",
+    "failed": "Votre bilan n'a pas pu être préparé. Rechargez pour réessayer.",
+    "focus": "Cette semaine :",
+    "discuss": "En parler avec le coach",
+    "discussPrompt": "À propos de ma priorité de la semaine : {focus} Comment m'y prendre ?"
   }
 }

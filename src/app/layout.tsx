@@ -85,6 +85,7 @@ export const metadata: Metadata = {
 /** Every namespace a client component reads; src/i18n/client-namespaces.test.ts enforces it. */
 const CLIENT_NAMESPACES = [
   "addFood",
+  "checkin",
   "coach",
   "common",
   "composer",

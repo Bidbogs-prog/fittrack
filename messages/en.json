@@ -827,13 +827,32 @@
     "coachChats": "Coach memory & chats",
     "export": "Export data (CSV)",
     "premiumTitle": "So3ra Premium",
-    "premiumBody": "50 coach messages a day, unlimited AI logging, deeper weekly reports and personal plans.",
     "premiumCta": "Go Premium — 59 MAD/mo",
     "intentDone": "Coming soon — you're on the list. We'll let you know first.",
     "syncTitle": "Health sync",
     "syncBody": "Pull steps, workouts and weight from Apple Health or Health Connect automatically.",
     "syncCta": "Sync with Apple Health / Health Connect",
-    "syncDone": "Coming with the mobile app — we'll notify you when it's out."
+    "syncDone": "Coming with the mobile app — we'll notify you when it's out.",
+    "premiumYours": "You're on Premium",
+    "premiumSoon": "Coming next — tell us what you want",
+    "notifyMe": "Notify me",
+    "notified": "Noted",
+    "premiumFeature": {
+      "checkin": "Monday check-in: your coach reviews the week and explains your targets",
+      "memory": "Coach memory: it remembers your preferences, routine and goals",
+      "coach": "50 coach messages a day, no monthly cap",
+      "logging": "Up to 100 AI meal logs a day, plus more insights, reports and plans",
+      "menu": "Menu scanner: snap a menu, get the best picks for your day",
+      "weekPlan": "Week meal plan with a shopping list",
+      "nutrients": "Monthly nutrient-gaps report with food fixes",
+      "ramadan": "Ramadan coach plan: suhoor, iftar and hydration"
+    },
+    "memoryTitle": "What the coach remembers",
+    "memoryBody": "Things you've told the coach that it keeps for future chats. Remove anything, anytime.",
+    "memoryTeaser": "With Premium, the coach remembers your preferences, routine and goals across conversations — no repeating yourself.",
+    "memoryEmpty": "Nothing yet. Tell the coach about your routine, foods you avoid or what you're training for.",
+    "memoryForget": "Forget: {fact}",
+    "memoryForgetAll": "Forget everything"
   },
   "landing": {
     "nav": {
@@ -1000,5 +1019,18 @@
       "rate": "Too many attempts. Wait a few minutes and try again.",
       "generic": "Something went wrong. Try again."
     }
+  },
+  "checkin": {
+    "eyebrow": "Monday check-in",
+    "teaser": "Every Monday your coach reviews last week, explains this week's targets and gives you one thing to focus on.",
+    "unlock": "Unlock with Premium",
+    "intentDone": "Coming soon — you're on the list.",
+    "thinking1": "Reviewing your week…",
+    "thinking2": "Checking your targets…",
+    "thinking3": "Picking your focus…",
+    "failed": "Your check-in couldn't be prepared. Reload to try again.",
+    "focus": "This week:",
+    "discuss": "Talk it through with the coach",
+    "discussPrompt": "About my check-in focus this week: {focus} How do I make it work?"
   }
 }

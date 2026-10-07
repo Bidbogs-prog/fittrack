@@ -5,6 +5,7 @@ import { aiSpendExceeded, coachDisabled, coachQuotaError, recordAiUsage } from "
 import { getProfile } from "@/lib/auth";
 import { isPremium } from "@/lib/entitlements";
 import { buildCoachContext } from "@/lib/coach/context";
+import { loadMemories, memoryPromptBlock, updateMemories } from "@/lib/coach/memory";
 import { briefsPromptBlock, selectBriefs } from "@/lib/coach/evidence";
 import { coachSystemPrompt } from "@/lib/coach/prompt";
 import { SAFETY } from "@/lib/coach/safety";
@@ -83,7 +84,8 @@ export async function POST(request: NextRequest) {
     return fail("tooLong", 400);
   }
 
-  const quota = await coachQuotaError(supabase, userId, await isPremium(supabase, userId));
+  const premium = await isPremium(supabase, userId);
+  const quota = await coachQuotaError(supabase, userId, premium);
   if (quota) return fail(quota, 429);
 
   const active = await getActiveTargets(supabase, userId, profile);
@@ -123,7 +125,10 @@ export async function POST(request: NextRequest) {
     total = count ?? history.length;
   }
 
-  const { context, safety } = await buildCoachContext(supabase, userId, profile, active);
+  const [{ context, safety }, memories] = await Promise.all([
+    buildCoachContext(supabase, userId, profile, active),
+    premium ? loadMemories(supabase, userId) : Promise.resolve([]),
+  ]);
   if (safety.blocked) return fail("adultsOnly", 403);
 
   // Deterministic topic router (roadmap 1.6 B): curated, cited briefs for
@@ -134,7 +139,7 @@ export async function POST(request: NextRequest) {
   const turns: LlmTurn[] = [
     {
       role: "user",
-      text: `${context}${summary ? `\n\nEARLIER IN THIS CONVERSATION (summary)\n${summary}` : ""}${briefsPromptBlock(briefs)}\n\n(The conversation starts now. Reply only as the coach.)`,
+      text: `${context}${memoryPromptBlock(memories)}${summary ? `\n\nEARLIER IN THIS CONVERSATION (summary)\n${summary}` : ""}${briefsPromptBlock(briefs)}\n\n(The conversation starts now. Reply only as the coach.)`,
     },
     { role: "model", text: "Understood — I have their data and I'm ready." },
     ...history.map<LlmTurn>((m) => ({
@@ -224,6 +229,16 @@ export async function POST(request: NextRequest) {
           sources: briefs.map((b) => b.title),
           replyId: (inserted ?? []).find((m) => m.role === "assistant")?.id ?? null,
         });
+
+        // Long-term memory (premium): learn durable facts from what the user
+        // just said. Best-effort, after "done", never fails the exchange.
+        if (premium) {
+          try {
+            await updateMemories(supabase, userId, message, memories);
+          } catch (memErr) {
+            console.warn("[coach] memory update failed", memErr instanceof Error ? memErr.message : memErr);
+          }
+        }
 
         // Rolling memory: past the threshold, refresh the summary every few
         // turns so trimmed-off messages stay represented. Runs after "done"

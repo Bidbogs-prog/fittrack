@@ -193,6 +193,13 @@ This is a living document. Check items off as they ship, add notes/links to PRs,
 - [x] `ai_usage` metering table (user, feature, tokens in/out, estimated cost, day) + per-user daily message caps + global kill-switch env var — migration `20260815000000_ai_usage.sql`, `src/lib/ai-usage.ts`; `COACH_DAILY_MESSAGE_LIMIT` / `COACH_MONTHLY_MESSAGE_LIMIT` / `AI_COACH_DISABLED`. Cost is stored only when the provider reports it
 - [ ] Later: migrate insights/photo-log/plan generation onto `llm.ts` so `gemini.ts` stops being a second code path
 
+**E2. Premium value** *(added 2026-10-06 — premium is outcomes, not quotas; logging, barcode, export and safety stay free)*
+- [x] Monday check-in: coach-written weekly review + explanation of this week's adaptive targets (change computed from stored snapshots, not by the model) + one focus — `coach_checkins`, `dashboard/checkin.ts`, card on the rail; free users see a teaser + premium fake door
+- [x] Coach memory: durable user-stated facts extracted after each premium coach turn (economy model, max 30, never numbers or coach text), injected as untrusted data; visible and deletable on /account — `coach_memories`, `src/lib/coach/memory.ts`
+- [x] Premium card lists what's included + per-feature "Notify me" (`premium_feature_interest`) for the next candidates; copy fixed (no "unlimited")
+- [ ] Next, by demand from `premium_feature_interest`: menu scanner · week meal plan + shopping list · monthly nutrient-gaps report · Ramadan coach plan
+- [ ] Eval: add memory-injection cases to `coach.eval.ts` (stored "facts" that try to override rules)
+
 **E. Premium wiring (with 3.1)**
 - [x] Server-side entitlement check on every coach action (UI gating is not security — same rule as admin) — `entitlements` table (provider-agnostic: manual / paddle / youcanpay / apple / google) + `isPremium()`; premium lifts the monthly cap. Manual grants via SQL until a provider is live
 - [ ] Client-pays loop: Stripe payment → tops up LLM Gateway credits; price set from real `ai_usage` cost data per active user + margin buffer

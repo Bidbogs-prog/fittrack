@@ -2,7 +2,11 @@ import { getTranslations } from "next-intl/server";
 import { MacroBars } from "@/components/macros";
 import { MicroPanel } from "@/components/micros";
 import { displayWeight, weightUnit } from "@/lib/units";
+import { getProfile } from "@/lib/auth";
+import { isPremium } from "@/lib/entitlements";
 import { ActivityCard } from "./activity-card";
+import { getCheckin } from "./checkin";
+import { CheckinCard } from "./checkin-card";
 import type { DayData } from "./day-data";
 import { Habits } from "./habits";
 import { WeightCard } from "./weight-card";
@@ -12,7 +16,9 @@ import { WeightCard } from "./weight-card";
  * weight, activity and micros. Below lg it stacks under the thread.
  */
 export async function DayRail({ data }: { data: DayData }) {
-  const t = await getTranslations("today");
+  const { supabase, userId } = await getProfile();
+  const [t, premium] = await Promise.all([getTranslations("today"), isPremium(supabase, userId)]);
+  const checkin = premium ? await getCheckin() : null;
   const { adaptive, profile } = data;
 
   return (
@@ -20,6 +26,7 @@ export async function DayRail({ data }: { data: DayData }) {
       aria-label={t("railLabel")}
       className="flex flex-col gap-3.5 max-lg:mt-6 lg:sticky lg:top-0 lg:h-[100dvh] lg:overflow-y-auto lg:border-s lg:border-ink-800 lg:px-5 lg:py-6"
     >
+      {data.isToday && <CheckinCard initial={checkin} premium={premium} />}
       <div className="max-lg:hidden">
         <MacroBars eaten={data.eaten} targets={data.targets} />
       </div>

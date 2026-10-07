@@ -18,6 +18,7 @@ export default function PrivacyPage() {
         <li><strong>Profile:</strong> birth date, sex, height, weight, activity level, goal, units, language and fasting window — used to calculate your targets.</li>
         <li><strong>Health and activity logs:</strong> meals and portions, foods and recipes you create, saved meals, weight, water, exercise and steps.</li>
         <li><strong>AI features:</strong> text and voice transcripts you send to meal logging, meal photos you upload, and your conversations with the coach.</li>
+        <li><strong>Coach memory (Premium):</strong> short facts you tell the coach — for example foods you avoid or what you&rsquo;re training for — kept so it doesn&rsquo;t ask again, plus your weekly check-ins. You can see and delete every remembered fact on the Me page.</li>
         <li><strong>Usage records:</strong> for each AI request we store the feature, model and token counts (never the content) to enforce limits and track cost.</li>
         <li><strong>Product analytics and errors:</strong> pseudonymous events (for example &ldquo;meal logged&rdquo;) and crash reports. These never include what you ate, your body numbers or message content.</li>
       </ul>

@@ -6,7 +6,13 @@ import { getActiveTargets } from "@/lib/adaptive";
 import { getCoachAllowance } from "@/lib/ai-usage";
 import { getProfile, isAdmin } from "@/lib/auth";
 import { isPremium } from "@/lib/entitlements";
+import { FeatureInterest } from "@/components/feature-interest";
 import { IntentButton } from "@/components/intent-button";
+import { loadMemories } from "@/lib/coach/memory";
+import { MemoryList } from "./memory-list";
+
+const PREMIUM_LIVE = ["checkin", "memory", "coach", "logging"] as const;
+const PREMIUM_SOON = ["menu", "weekPlan", "nutrients", "ramadan"] as const;
 import { ACTIVITY_LEVELS, ageFromBirthDate, macroSplitFromProfile } from "@/lib/nutrition";
 import { formatHeight, formatWeight } from "@/lib/units";
 import { signout } from "../../(auth)/actions";
@@ -38,7 +44,10 @@ export default async function AccountPage({
     getActiveTargets(supabase, userId, profile),
     isPremium(supabase, userId),
   ]);
-  const allowance = await getCoachAllowance(supabase, userId, premium);
+  const [allowance, memories] = await Promise.all([
+    getCoachAllowance(supabase, userId, premium),
+    premium ? loadMemories(supabase, userId) : Promise.resolve([]),
+  ]);
   const monthlyLeft =
     allowance.monthly != null ? Math.max(0, allowance.monthly - allowance.usedMonth) : null;
   const targets = active?.targets ?? null;
@@ -101,23 +110,44 @@ export default async function AccountPage({
 
       {/* Fake doors (GTM G2): measure demand for Premium and the native app. */}
       <div className="grid gap-3 sm:grid-cols-2 lg:gap-4">
-        {!premium && (
-          <section className="flex flex-col gap-2.5 rounded-[20px] border border-flame/30 bg-[linear-gradient(135deg,rgba(255,157,59,.12),rgba(242,112,31,.03))] p-3.5 lg:rounded-[22px] lg:p-5">
-            <h2 className="flex items-center gap-2 font-display text-base font-semibold text-paper">
-              <Crown weight="fill" className="size-4.5 text-flame" />
-              {t("premiumTitle")}
-            </h2>
-            <p className="text-[13px] leading-relaxed text-paper-dim">{t("premiumBody")}</p>
+        <section className="flex flex-col gap-2.5 rounded-[20px] border border-flame/30 bg-[linear-gradient(135deg,rgba(255,157,59,.12),rgba(242,112,31,.03))] p-3.5 sm:row-span-2 lg:rounded-[22px] lg:p-5">
+          <h2 className="flex items-center gap-2 font-display text-base font-semibold text-paper">
+            <Crown weight="fill" className="size-4.5 text-flame" />
+            {premium ? t("premiumYours") : t("premiumTitle")}
+          </h2>
+          <ul className="flex flex-col gap-1.5">
+            {PREMIUM_LIVE.map((k) => (
+              <li key={k} className="flex gap-2 text-[13px] text-paper-dim">
+                <CheckCircle weight="fill" className="mt-0.5 size-4 shrink-0 text-flame" />
+                {t(`premiumFeature.${k}`)}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-1 text-[10px] font-semibold tracking-[0.14em] text-paper-mute uppercase">{t("premiumSoon")}</p>
+          <ul className="flex flex-col gap-1.5">
+            {PREMIUM_SOON.map((k) => (
+              <li key={k} className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 text-[13px] text-paper-dim">
+                <span>{t(`premiumFeature.${k}`)}</span>
+                <FeatureInterest feature={k} label={t("notifyMe")} doneLabel={t("notified")} />
+              </li>
+            ))}
+          </ul>
+          {!premium && (
             <IntentButton
               kind="premium"
               surface="account"
               label={t("premiumCta")}
               doneLabel={t("intentDone")}
               initialDone={!!profile.premium_intent_at}
-              className="btn-press btn-flame mt-auto inline-flex min-h-10 items-center justify-center self-start rounded-xl px-4 text-sm font-semibold"
+              className="btn-press btn-flame mt-2 inline-flex min-h-10 items-center justify-center self-start rounded-xl px-4 text-sm font-semibold"
             />
-          </section>
-        )}
+          )}
+        </section>
+        <section className={`${card} flex flex-col gap-2.5 p-3.5 lg:p-5`}>
+          <h2 className="font-display text-base font-semibold text-paper">{t("memoryTitle")}</h2>
+          <p className="text-[13px] leading-relaxed text-paper-dim">{premium ? t("memoryBody") : t("memoryTeaser")}</p>
+          {premium && <MemoryList memories={memories} />}
+        </section>
         <section className={`${card} flex flex-col gap-2.5 p-3.5 lg:p-5`}>
           <h2 className="flex items-center gap-2 font-display text-base font-semibold text-paper">
             <Heartbeat weight="fill" className="size-4.5 text-danger" />
