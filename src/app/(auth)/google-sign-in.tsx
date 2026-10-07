@@ -4,6 +4,7 @@ import Script from "next/script";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { useClientValue } from "@/lib/use-client-clock";
 
 /** Minimal typing for Google Identity Services. */
 interface GoogleId {
@@ -24,6 +25,22 @@ declare global {
 }
 
 const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+
+/**
+ * Google only accepts origins registered on the OAuth client ("Authorized
+ * JavaScript origins"). Vercel gives every deploy its own URL, so the Google
+ * button is used only on the canonical site (NEXT_PUBLIC_SITE_URL), extra
+ * origins in NEXT_PUBLIC_GOOGLE_ORIGINS (comma-separated) and localhost;
+ * anywhere else the redirect flow takes over instead of "no registered origin".
+ */
+function originAllowed(): boolean {
+  const here = window.location.origin;
+  if (/^http:\/\/localhost(:\d+)?$/.test(here)) return true;
+  const allowed = [process.env.NEXT_PUBLIC_SITE_URL, ...(process.env.NEXT_PUBLIC_GOOGLE_ORIGINS ?? "").split(",")]
+    .map((o) => o?.trim().replace(/\/+$/, ""))
+    .filter(Boolean);
+  return allowed.includes(here);
+}
 
 async function sha256Hex(text: string): Promise<string> {
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
@@ -57,11 +74,12 @@ export function GoogleSignIn({
   const slot = useRef<HTMLDivElement>(null);
   const [ready, setReady] = useState(false);
   const [broken, setBroken] = useState(!CLIENT_ID);
+  const usable = useClientValue(() => !!CLIENT_ID && originAllowed(), false);
   const [error, setError] = useState(false);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (!ready || !CLIENT_ID || !slot.current || !window.google) return;
+    if (!ready || !usable || !CLIENT_ID || !slot.current || !window.google) return;
     let cancelled = false;
     const nonce = crypto.randomUUID();
     void sha256Hex(nonce).then((hashed) => {
@@ -105,9 +123,9 @@ export function GoogleSignIn({
     return () => {
       cancelled = true;
     };
-  }, [ready, next, locale, context, router]);
+  }, [ready, usable, next, locale, context, router]);
 
-  if (broken) return <>{fallback}</>;
+  if (broken || !usable) return <>{fallback}</>;
 
   return (
     <div className="flex flex-col items-center gap-2">
