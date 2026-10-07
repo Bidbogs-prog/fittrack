@@ -1,20 +1,27 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { initAnalytics, trackPageview } from "@/lib/analytics";
+import { initAnalytics, readConsent, trackPageview } from "@/lib/analytics";
 
 /** Mounts PostHog and reports SPA pageviews. Renders nothing. */
 export function Analytics() {
   const pathname = usePathname();
 
+  const [on, setOn] = useState(false);
   useEffect(() => {
-    initAnalytics();
+    const start = () => {
+      initAnalytics();
+      setOn(readConsent() === "granted");
+    };
+    start();
+    window.addEventListener("so3ra-consent", start);
+    return () => window.removeEventListener("so3ra-consent", start);
   }, []);
 
   useEffect(() => {
-    trackPageview(pathname);
-  }, [pathname]);
+    if (on) trackPageview(pathname);
+  }, [pathname, on]);
 
   return null;
 }

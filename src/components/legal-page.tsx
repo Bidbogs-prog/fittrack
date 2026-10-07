@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ConsentReset } from "@/components/consent-banner";
 import { Logo } from "@/components/logo";
 import { LEGAL_UPDATED } from "@/lib/site";
 
@@ -20,6 +21,7 @@ export function LegalPage({ title, children }: { title: string; children: React.
         <Link href="/privacy" className="hover:text-paper">Privacy</Link>
         <Link href="/terms" className="hover:text-paper">Terms</Link>
         <Link href="/refunds" className="hover:text-paper">Refunds</Link>
+        <ConsentReset />
       </nav>
     </div>
   );

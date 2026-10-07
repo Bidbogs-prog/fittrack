@@ -39,21 +39,21 @@ This is a living document. Check items off as they ship, add notes/links to PRs,
 *A closed friends-and-family beta (≤100) may start while G0 is in progress; nothing public until it's done.*
 
 ### G1 — Beta infrastructure (weeks 0–2)
-- [ ] Cookie/analytics consent banner — PostHog and Sentry load only after consent (France/CNIL; also CNDP hygiene)
-- [ ] `waitlist` table (email, locale, city, phone OS, current health app, referral code, source/UTM, status, created_at) — insert-only RLS, Turnstile + rate limit on the endpoint
-- [ ] Landing-page waitlist form (en/fr/ar-MA) + "Have an invite code?" path; confirmation shows the person's referral link
-- [ ] Invite codes: `invite_codes` table (code, source label, max uses, uses, grants_premium_days, expires_at); signup requires a valid code or an admitted waitlist entry
-- [ ] Founding-member premium: a valid code writes an `entitlements` row (`source='manual'`, `current_period_end = now() + N days`, note = code) — default 90 days
-- [ ] Admin: waitlist list with filters + "admit next N" (emails an invite code); per-code usage view
-- [ ] Referral priority: each confirmed referral moves the referrer up the list
-- [ ] Source attribution: store UTM + invite code on the profile at signup; register as PostHog person properties for cohorting
-- [ ] Global AI spend kill switch: daily `ai_usage.cost_usd` sum vs `AI_DAILY_SPEND_LIMIT_USD` → AI features return "temporarily unavailable" (complements the gateway key's own cap)
-- [ ] Free coach allowance to 10/month: `COACH_MONTHLY_MESSAGE_LIMIT` default + plan-badge copy
+- [x] Cookie/analytics consent banner — PostHog and Sentry load only after consent (France/CNIL; also CNDP hygiene)
+- [x] `waitlist` table (email, locale, city, phone OS, current health app, referral code, source/UTM, status, created_at) — insert-only RLS, Turnstile + rate limit on the endpoint
+- [x] Landing-page waitlist form (en/fr/ar-MA) + "Have an invite code?" path; confirmation shows the person's referral link
+- [x] Invite codes: `invite_codes` table (code, source label, max uses, uses, grants_premium_days, expires_at); signup requires a valid code or an admitted waitlist entry
+- [x] Founding-member premium: a valid code writes an `entitlements` row (`source='manual'`, `current_period_end = now() + N days`, note = code) — default 90 days
+- [x] Admin: waitlist list with filters + "admit next N" (admitted emails get in automatically on signup; copyable email list — no email provider yet); per-code usage view
+- [x] Referral priority: each confirmed referral moves the referrer up the list
+- [x] Source attribution: store UTM + invite code on the profile at signup; register as PostHog person properties for cohorting
+- [x] Global AI spend kill switch: daily `ai_usage.cost_usd` sum vs `AI_DAILY_SPEND_LIMIT_USD` → AI features return "temporarily unavailable" (complements the gateway key's own cap)
+- [x] Free coach allowance to 10/month: `COACH_MONTHLY_MESSAGE_LIMIT` default + plan-badge copy
 
 ### G2 — Intent measurement (weeks 0–2, alongside G1)
-- [ ] Premium fake door: "Go Premium — 59 MAD/mo" on `/account` and at coach-cap moments → `premium_intent` PostHog event + "Coming soon — you're on the list" (stored on profile)
-- [ ] Health-sync fake door: "Sync with Apple Health / Health Connect" in Me and the activity card → `native_intent` event + "Notify me when the app is out" (stored on profile, OS captured)
-- [ ] Install prompt tracking: `pwa_installed` event, install rate by OS
+- [x] Premium fake door: "Go Premium — 59 MAD/mo" on `/account` and at coach-cap moments → `premium_intent` PostHog event + "Coming soon — you're on the list" (stored on profile)
+- [x] Health-sync fake door: "Sync with Apple Health / Health Connect" in Me and the activity card → `native_intent` event + "Notify me when the app is out" (stored on profile, OS captured)
+- [x] Install prompt tracking: `pwa_installed` event, install rate by OS
 
 ### G3 — Retention levers (weeks 1–4)
 - [ ] Web push: VAPID keys, `push_subscriptions` table, opt-in after the 3rd logged meal (not on first visit), service-worker handler

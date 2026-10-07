@@ -1,4 +1,4 @@
-import { CaretRight, CheckCircle, DownloadSimple, Info, SignOut, WarningCircle } from "@phosphor-icons/react/dist/ssr";
+import { CaretRight, CheckCircle, Crown, DownloadSimple, Heartbeat, Info, SignOut, WarningCircle } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { getFormatter, getLocale, getTranslations } from "next-intl/server";
 import { LOCALES, LOCALE_LABELS } from "@/i18n/request";
@@ -6,6 +6,7 @@ import { getActiveTargets } from "@/lib/adaptive";
 import { getCoachAllowance } from "@/lib/ai-usage";
 import { getProfile, isAdmin } from "@/lib/auth";
 import { isPremium } from "@/lib/entitlements";
+import { IntentButton } from "@/components/intent-button";
 import { ACTIVITY_LEVELS, ageFromBirthDate, macroSplitFromProfile } from "@/lib/nutrition";
 import { formatHeight, formatWeight } from "@/lib/units";
 import { signout } from "../../(auth)/actions";
@@ -97,6 +98,42 @@ export default async function AccountPage({
           <span className="min-w-0 break-words">{error}</span>
         </p>
       )}
+
+      {/* Fake doors (GTM G2): measure demand for Premium and the native app. */}
+      <div className="grid gap-3 sm:grid-cols-2 lg:gap-4">
+        {!premium && (
+          <section className="flex flex-col gap-2.5 rounded-[20px] border border-flame/30 bg-[linear-gradient(135deg,rgba(255,157,59,.12),rgba(242,112,31,.03))] p-3.5 lg:rounded-[22px] lg:p-5">
+            <h2 className="flex items-center gap-2 font-display text-base font-semibold text-paper">
+              <Crown weight="fill" className="size-4.5 text-flame" />
+              {t("premiumTitle")}
+            </h2>
+            <p className="text-[13px] leading-relaxed text-paper-dim">{t("premiumBody")}</p>
+            <IntentButton
+              kind="premium"
+              surface="account"
+              label={t("premiumCta")}
+              doneLabel={t("intentDone")}
+              initialDone={!!profile.premium_intent_at}
+              className="btn-press btn-flame mt-auto inline-flex min-h-10 items-center justify-center self-start rounded-xl px-4 text-sm font-semibold"
+            />
+          </section>
+        )}
+        <section className={`${card} flex flex-col gap-2.5 p-3.5 lg:p-5`}>
+          <h2 className="flex items-center gap-2 font-display text-base font-semibold text-paper">
+            <Heartbeat weight="fill" className="size-4.5 text-danger" />
+            {t("syncTitle")}
+          </h2>
+          <p className="text-[13px] leading-relaxed text-paper-dim">{t("syncBody")}</p>
+          <IntentButton
+            kind="native"
+            surface="account"
+            label={t("syncCta")}
+            doneLabel={t("syncDone")}
+            initialDone={!!profile.native_intent_at}
+            className="btn-press mt-auto inline-flex min-h-10 items-center justify-center self-start rounded-xl border border-ink-700 px-4 text-sm font-semibold text-paper hover:border-flame/60"
+          />
+        </section>
+      </div>
 
       <div className="grid gap-3 lg:grid-cols-3 lg:gap-4">
         {/* body */}

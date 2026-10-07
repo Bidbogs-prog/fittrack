@@ -7,6 +7,7 @@ import { Composer } from "@/components/orbit/composer";
 import { track } from "@/lib/analytics";
 import { ThumbsDown, ThumbsUp } from "@phosphor-icons/react";
 import type { CoachStreamEvent } from "@/app/api/coach/route";
+import { IntentButton } from "@/components/intent-button";
 import { ThinkingOrbit } from "@/components/orbit/thinking";
 import { rateCoachMessage } from "./actions";
 
@@ -65,10 +66,12 @@ export function CoachChat({
   conversationId,
   initialMessages,
   initialPrompt,
+  premium = false,
 }: {
   conversationId: string | null;
   initialMessages: ChatMessage[];
   initialPrompt: string | null;
+  premium?: boolean;
 }) {
   const t = useTranslations("coach");
   const router = useRouter();
@@ -84,7 +87,12 @@ export function CoachChat({
   const anchorRef = useRef<string | null>(initialPrompt ? "local-0" : null);
   const sentInitial = useRef(false);
 
-  const errorText = (code: string) => (t.has(`errors.${code}`) ? t(`errors.${code}`) : t("offline"));
+  const [limitHit, setLimitHit] = useState(false);
+  const errorText = (code: string) => {
+    if (code === "dailyLimit" || code === "monthlyLimit") setLimitHit(true);
+    return codeText(code);
+  };
+  const codeText = (code: string) => (t.has(`errors.${code}`) ? t(`errors.${code}`) : t("offline"));
 
   function rate(m: ChatMessage, rating: "up" | "down") {
     if (!m.dbId) return;
@@ -253,6 +261,18 @@ export function CoachChat({
           <p role="alert" className="rounded-xl border border-danger/30 bg-danger/[0.08] px-3 py-2 text-sm text-danger">
             {error}
           </p>
+        )}
+        {error && limitHit && !premium && (
+          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-flame/30 bg-flame/[0.08] px-3 py-2.5">
+            <p className="min-w-0 flex-1 text-[13px] text-paper-dim">{t("premiumNudge")}</p>
+            <IntentButton
+              kind="premium"
+              surface="coach_cap"
+              label={t("premiumCta")}
+              doneLabel={t("intentDone")}
+              className="btn-press btn-flame inline-flex min-h-9 items-center rounded-lg px-3 text-[13px] font-semibold"
+            />
+          </div>
         )}
         <p className="mt-auto pt-4 text-[11px] leading-relaxed text-paper-mute">{t("disclaimer")}</p>
       </div>

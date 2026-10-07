@@ -382,7 +382,9 @@
     "logWeightFor": "+ Log weight for {date}",
     "loggedWeightEdit": "Logged {value} {unit} · edit",
     "saveMealButton": "Save meal",
-    "saveMealTitle": "Save this {meal} to reuse it"
+    "saveMealTitle": "Save this {meal} to reuse it",
+    "syncCta": "Sync with Apple Health / Health Connect",
+    "syncDone": "Coming with the mobile app — we'll notify you."
   },
   "common": {
     "close": "Close",
@@ -657,7 +659,10 @@
     "thinkingWriting": "Writing your answer…",
     "sources": "Sources",
     "offline": "You're offline. Your message wasn't sent; try again when you reconnect.",
-    "disclaimer": "The coach is an AI, not a doctor. Nothing here is medical advice, and it can make mistakes, so check numbers against your diary. For health concerns, talk to a professional. The coach is for adults 18+."
+    "disclaimer": "The coach is an AI, not a doctor. Nothing here is medical advice, and it can make mistakes, so check numbers against your diary. For health concerns, talk to a professional. The coach is for adults 18+.",
+    "premiumNudge": "Premium gives you 50 coach messages a day.",
+    "premiumCta": "Go Premium — 59 MAD/mo",
+    "intentDone": "Coming soon — you're on the list."
   },
   "history": {
     "title": "History",
@@ -819,7 +824,15 @@
     "imperial": "Imperial",
     "account": "Account",
     "coachChats": "Coach memory & chats",
-    "export": "Export data (CSV)"
+    "export": "Export data (CSV)",
+    "premiumTitle": "So3ra Premium",
+    "premiumBody": "50 coach messages a day, unlimited AI logging, deeper weekly reports and personal plans.",
+    "premiumCta": "Go Premium — 59 MAD/mo",
+    "intentDone": "Coming soon — you're on the list. We'll let you know first.",
+    "syncTitle": "Health sync",
+    "syncBody": "Pull steps, workouts and weight from Apple Health or Health Connect automatically.",
+    "syncCta": "Sync with Apple Health / Health Connect",
+    "syncDone": "Coming with the mobile app — we'll notify you when it's out."
   },
   "landing": {
     "nav": {
@@ -931,6 +944,60 @@
       "privacy": "Privacy",
       "terms": "Terms",
       "refunds": "Refunds"
+    }
+  },
+  "consent": {
+    "title": "Cookie choices",
+    "body": "We use privacy-friendly analytics and crash reports to improve So3ra. No ads, no selling data. Allow them?",
+    "learnMore": "Privacy policy",
+    "accept": "Allow",
+    "decline": "No thanks",
+    "change": "Cookie choices"
+  },
+  "invite": {
+    "eyebrow": "Private beta",
+    "title": "Enter your invite code",
+    "body": "So3ra is in a private beta while we tune it with early users. Enter the code you were given to get in — it also unlocks founding-member Premium.",
+    "codeLabel": "Invite code",
+    "submit": "Unlock So3ra",
+    "noCode": "No code? Join the waitlist with {email} — when you're admitted, you'll get in automatically with this account.",
+    "joinWaitlist": "Join the waitlist",
+    "signOut": "Sign out",
+    "errors": {
+      "invalid": "That code doesn't exist. Check it and try again.",
+      "expired": "That code has expired.",
+      "full": "That code has been fully used.",
+      "generic": "Something went wrong. Try again."
+    }
+  },
+  "waitlist": {
+    "eyebrow": "Private beta",
+    "title": "Get early access",
+    "body": "We're letting people in weekly. Join the list, and move up for every friend who joins with your link.",
+    "email": "Email",
+    "city": "City",
+    "cityPlaceholder": "Casablanca",
+    "phone": "Your phone",
+    "choose": "Choose",
+    "other": "Other",
+    "healthApp": "Health app you use today",
+    "none": "None",
+    "submit": "Join the waitlist",
+    "joining": "Joining…",
+    "haveCode": "Have an invite code? Create your account",
+    "legal": "We'll only email you about your access. <privacy>Privacy policy</privacy>.",
+    "joinedTitle": "You're on the list",
+    "alreadyTitle": "You're already on the list",
+    "position": "You're #{position} in line.",
+    "referBody": "Every friend who joins with your link moves you up.",
+    "share": "Share my link",
+    "copied": "Copied",
+    "shareText": "I'm joining the So3ra beta — the AI nutrition coach that speaks Darija. Join with my link:",
+    "errors": {
+      "email": "Enter a valid email address.",
+      "captcha": "Please complete the check and try again.",
+      "rate": "Too many attempts. Wait a few minutes and try again.",
+      "generic": "Something went wrong. Try again."
     }
   }
 }

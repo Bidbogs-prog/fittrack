@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import { Barbell, Footprints, Plus, X } from "@phosphor-icons/react";
 import type { ExerciseLog } from "@/lib/types";
+import { IntentButton } from "@/components/intent-button";
 import { addExercise, deleteExercise, logSteps } from "./actions";
 
 /**
@@ -198,6 +199,16 @@ export function ActivityCard({
         </form>
 
         {error && <p className="mt-3 text-sm text-danger">{error}</p>}
+
+        <div className="mt-3 border-t border-ink-800 pt-3">
+          <IntentButton
+            kind="native"
+            surface="activity"
+            label={t("syncCta")}
+            doneLabel={t("syncDone")}
+            className="inline-flex min-h-9 items-center gap-1.5 text-[13px] font-medium text-flame hover:text-flame-glow"
+          />
+        </div>
       </div>
     </section>
   );

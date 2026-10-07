@@ -54,6 +54,10 @@ export interface Profile {
   /** Display units; storage is always metric (see src/lib/units.ts). */
   units: Units;
   onboarded: boolean;
+  /** Fake-door intent (GTM G2): set when the user taps Go Premium / Health sync. */
+  premium_intent_at?: string | null;
+  native_intent_at?: string | null;
+  native_intent_os?: "ios" | "android" | "other" | null;
 }
 
 export type Units = "metric" | "imperial";

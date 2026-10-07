@@ -6,12 +6,17 @@ import { Logo } from "@/components/logo";
 import { RouteFx } from "@/components/motion/route-fx";
 import { MainFrame, MobileTabs, SideNav } from "@/components/nav";
 import { getProfile } from "@/lib/auth";
+import { ensureBetaAccess, getBetaInfo } from "@/lib/beta";
+import { isPremium } from "@/lib/entitlements";
+import { IdentifyUser } from "@/components/identify-user";
 import { signout } from "../(auth)/actions";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const [{ profile }, t] = await Promise.all([getProfile(), getTranslations("shell")]);
+  const [{ supabase, userId, profile }, t] = await Promise.all([getProfile(), getTranslations("shell")]);
 
+  if (!(await ensureBetaAccess(supabase, userId))) redirect("/invite");
   if (!profile.onboarded) redirect("/onboarding");
+  const [beta, premium] = await Promise.all([getBetaInfo(supabase, userId), isPremium(supabase, userId)]);
 
   const firstName = profile.full_name?.split(" ")[0] ?? t("athlete");
   const initial = (profile.full_name ?? profile.email ?? "?").trim().charAt(0).toUpperCase();
@@ -66,6 +71,15 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <MobileTabs />
       </header>
 
+      <IdentifyUser
+        userId={userId}
+        props={{
+          premium,
+          beta_via: beta.via ?? "unknown",
+          ...(beta.inviteCode ? { invite_code: beta.inviteCode } : {}),
+          ...Object.fromEntries(Object.entries(beta.source ?? {}).map(([k, v]) => [`src_${k}`, v])),
+        }}
+      />
       <MainFrame>
         <RouteFx>{children}</RouteFx>
       </MainFrame>

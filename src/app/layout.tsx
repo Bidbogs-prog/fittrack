@@ -3,6 +3,8 @@ import { Geist, Geist_Mono, Outfit } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import { Analytics } from "@/components/analytics";
+import { ConsentBanner } from "@/components/consent-banner";
+import { SourceCapture } from "@/components/source-capture";
 import { isRtl } from "@/i18n/request";
 import { SwRegister } from "@/components/sw-register";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, SITE_URL } from "@/lib/site";
@@ -128,9 +130,13 @@ export default async function RootLayout({
           installed iOS app draws under the translucent status bar
           (black-translucent + viewport-fit=cover); env() is 0 elsewhere. */}
       <body className="grain flex min-h-[100dvh] flex-col pt-[env(safe-area-inset-top)]">
-        <NextIntlClientProvider messages={messages}>{children}</NextIntlClientProvider>
+        <NextIntlClientProvider messages={messages}>
+          {children}
+          <ConsentBanner />
+        </NextIntlClientProvider>
         <SwRegister />
         <Analytics />
+        <SourceCapture />
       </body>
     </html>
   );

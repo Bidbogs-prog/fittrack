@@ -1,7 +1,7 @@
 import { revalidatePath } from "next/cache";
 import { NextResponse, type NextRequest } from "next/server";
 import { getActiveTargets } from "@/lib/adaptive";
-import { coachDisabled, coachQuotaError, recordAiUsage } from "@/lib/ai-usage";
+import { aiSpendExceeded, coachDisabled, coachQuotaError, recordAiUsage } from "@/lib/ai-usage";
 import { getProfile } from "@/lib/auth";
 import { isPremium } from "@/lib/entitlements";
 import { buildCoachContext } from "@/lib/coach/context";
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
   if (!claims?.claims) return fail("signIn", 401);
   const { userId, profile } = await getProfile();
 
-  if (coachDisabled()) return fail("unavailable", 503);
+  if (coachDisabled() || (await aiSpendExceeded(supabase))) return fail("unavailable", 503);
 
   // The under-18 gate is enforced here, not just in the page UI.
   if (!profile.birth_date) return fail("onboarding", 400);

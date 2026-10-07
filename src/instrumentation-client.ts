@@ -5,8 +5,11 @@ import * as Sentry from "@sentry/nextjs";
  * NEXT_PUBLIC_SENTRY_DSN.
  */
 const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
+// Consent-gated like analytics: starts on the first page load after the
+// user accepts in the banner.
+const consented = typeof document !== "undefined" && /(?:^|; )so3ra_consent=granted/.test(document.cookie);
 
-if (dsn) {
+if (dsn && consented) {
   Sentry.init({
     dsn,
     tracesSampleRate: 0.1,

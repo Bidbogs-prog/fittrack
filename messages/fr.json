@@ -382,7 +382,9 @@
     "logWeightFor": "+ Enregistrer le poids du {date}",
     "loggedWeightEdit": "Enregistré {value} {unit} · modifier",
     "saveMealButton": "Enregistrer le repas",
-    "saveMealTitle": "Enregistrer ce repas ({meal}) pour le réutiliser"
+    "saveMealTitle": "Enregistrer ce repas ({meal}) pour le réutiliser",
+    "syncCta": "Synchroniser avec Apple Santé / Health Connect",
+    "syncDone": "Arrive avec l'app mobile — nous vous préviendrons."
   },
   "common": {
     "close": "Fermer",
@@ -657,7 +659,10 @@
     "thinkingWriting": "Rédaction de la réponse…",
     "sources": "Sources",
     "offline": "Vous êtes hors ligne. Le message n'a pas été envoyé ; réessayez à la reconnexion.",
-    "disclaimer": "Le coach est une IA, pas un médecin. Rien ici n'est un avis médical, et il peut se tromper : vérifiez les chiffres dans votre journal. Pour tout souci de santé, consultez un professionnel. Le coach est réservé aux adultes (18+)."
+    "disclaimer": "Le coach est une IA, pas un médecin. Rien ici n'est un avis médical, et il peut se tromper : vérifiez les chiffres dans votre journal. Pour tout souci de santé, consultez un professionnel. Le coach est réservé aux adultes (18+).",
+    "premiumNudge": "Premium vous donne 50 messages au coach par jour.",
+    "premiumCta": "Passer Premium — 59 MAD/mois",
+    "intentDone": "Bientôt disponible — vous êtes sur la liste."
   },
   "history": {
     "title": "Historique",
@@ -819,7 +824,15 @@
     "imperial": "Impérial",
     "account": "Compte",
     "coachChats": "Mémoire et discussions du coach",
-    "export": "Exporter (CSV)"
+    "export": "Exporter (CSV)",
+    "premiumTitle": "So3ra Premium",
+    "premiumBody": "50 messages au coach par jour, saisie IA illimitée, rapports hebdo détaillés et plans personnalisés.",
+    "premiumCta": "Passer Premium — 59 MAD/mois",
+    "intentDone": "Bientôt disponible — vous êtes sur la liste. Vous serez prévenu en premier.",
+    "syncTitle": "Synchronisation santé",
+    "syncBody": "Importez automatiquement pas, entraînements et poids depuis Apple Santé ou Health Connect.",
+    "syncCta": "Synchroniser avec Apple Santé / Health Connect",
+    "syncDone": "Arrive avec l'app mobile — nous vous préviendrons à sa sortie."
   },
   "landing": {
     "nav": {
@@ -931,6 +944,60 @@
       "privacy": "Confidentialité",
       "terms": "Conditions",
       "refunds": "Remboursements"
+    }
+  },
+  "consent": {
+    "title": "Choix des cookies",
+    "body": "Nous utilisons des statistiques respectueuses de la vie privée et des rapports de plantage pour améliorer So3ra. Pas de publicité, aucune revente de données. Les autoriser ?",
+    "learnMore": "Politique de confidentialité",
+    "accept": "Autoriser",
+    "decline": "Non merci",
+    "change": "Choix des cookies"
+  },
+  "invite": {
+    "eyebrow": "Bêta privée",
+    "title": "Entrez votre code d'invitation",
+    "body": "So3ra est en bêta privée pendant que nous l'affinons avec les premiers utilisateurs. Entrez le code reçu pour accéder à l'app — il débloque aussi Premium membre fondateur.",
+    "codeLabel": "Code d'invitation",
+    "submit": "Débloquer So3ra",
+    "noCode": "Pas de code ? Inscrivez {email} sur la liste d'attente — une fois admis, vous entrerez automatiquement avec ce compte.",
+    "joinWaitlist": "Rejoindre la liste d'attente",
+    "signOut": "Se déconnecter",
+    "errors": {
+      "invalid": "Ce code n'existe pas. Vérifiez-le et réessayez.",
+      "expired": "Ce code a expiré.",
+      "full": "Ce code a déjà été entièrement utilisé.",
+      "generic": "Une erreur s'est produite. Réessayez."
+    }
+  },
+  "waitlist": {
+    "eyebrow": "Bêta privée",
+    "title": "Accès anticipé",
+    "body": "Nous ouvrons l'accès chaque semaine. Inscrivez-vous et avancez dans la file pour chaque ami qui s'inscrit avec votre lien.",
+    "email": "E-mail",
+    "city": "Ville",
+    "cityPlaceholder": "Casablanca",
+    "phone": "Votre téléphone",
+    "choose": "Choisir",
+    "other": "Autre",
+    "healthApp": "App santé utilisée aujourd'hui",
+    "none": "Aucune",
+    "submit": "Rejoindre la liste d'attente",
+    "joining": "Inscription…",
+    "haveCode": "Vous avez un code d'invitation ? Créez votre compte",
+    "legal": "Nous vous écrirons uniquement au sujet de votre accès. <privacy>Politique de confidentialité</privacy>.",
+    "joinedTitle": "Vous êtes sur la liste",
+    "alreadyTitle": "Vous êtes déjà sur la liste",
+    "position": "Vous êtes n°{position} dans la file.",
+    "referBody": "Chaque ami qui s'inscrit avec votre lien vous fait avancer.",
+    "share": "Partager mon lien",
+    "copied": "Copié",
+    "shareText": "Je rejoins la bêta de So3ra — le coach nutrition IA qui parle darija. Rejoins-moi avec mon lien :",
+    "errors": {
+      "email": "Entrez une adresse e-mail valide.",
+      "captcha": "Veuillez compléter la vérification et réessayer.",
+      "rate": "Trop de tentatives. Patientez quelques minutes.",
+      "generic": "Une erreur s'est produite. Réessayez."
     }
   }
 }

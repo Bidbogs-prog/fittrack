@@ -177,6 +177,7 @@ export default async function CoachPage({
             conversationId={conversation?.id ?? null}
             initialMessages={chatMessages}
             initialPrompt={initialPrompt}
+            premium={premium}
           />
         </div>
 

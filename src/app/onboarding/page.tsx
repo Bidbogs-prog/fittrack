@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { StatusMessage } from "@/components/status-message";
 import { getProfile } from "@/lib/auth";
+import { ensureBetaAccess } from "@/lib/beta";
 import { OnboardingForm } from "./onboarding-form";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -15,7 +16,8 @@ export default async function OnboardingPage({
 }: {
   searchParams: Promise<{ error?: string; edit?: string }>;
 }) {
-  const [{ profile }, { error, edit }] = await Promise.all([getProfile(), searchParams]);
+  const [{ supabase, userId, profile }, { error, edit }] = await Promise.all([getProfile(), searchParams]);
+  if (!(await ensureBetaAccess(supabase, userId))) redirect("/invite");
 
   const editing = edit === "1" && profile.onboarded;
   if (profile.onboarded && !editing) redirect("/dashboard");

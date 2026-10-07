@@ -7,7 +7,7 @@ import type { LlmUsage } from "@/lib/llm";
  *
  *   AI_COACH_DISABLED=1               global kill switch for the coach
  *   COACH_DAILY_MESSAGE_LIMIT           free: replies per UTC day (default 10, 0 = unlimited)
- *   COACH_MONTHLY_MESSAGE_LIMIT         free: replies per UTC month (default 30, 0 = unlimited)
+ *   COACH_MONTHLY_MESSAGE_LIMIT         free: replies per UTC month (default 10, 0 = unlimited)
  *   COACH_PREMIUM_DAILY_MESSAGE_LIMIT   premium: replies per UTC day (default 50, 0 = unlimited);
  *                                       premium has no monthly cap
  *
@@ -16,6 +16,8 @@ import type { LlmUsage } from "@/lib/llm";
  *   DAY_INSIGHTS_DAILY_LIMIT / DAY_INSIGHTS_PREMIUM_DAILY_LIMIT    default 5 / 20
  *   WEEK_REPORT_DAILY_LIMIT / WEEK_REPORT_PREMIUM_DAILY_LIMIT      default 3 / 10
  *   PLAN_GENERATE_DAILY_LIMIT / PLAN_GENERATE_PREMIUM_DAILY_LIMIT  default 2 / 10
+ *
+ *   AI_DAILY_SPEND_LIMIT_USD            global: all AI off once today's recorded cost reaches this (default 5, 0 = off)
  *
  * Defaults are the free-tier allowance, so a deploy that forgets the env
  * vars stays cheap rather than open-ended.
@@ -76,7 +78,7 @@ export async function getCoachAllowance(
   const daily = premium
     ? limit("COACH_PREMIUM_DAILY_MESSAGE_LIMIT", 50)
     : limit("COACH_DAILY_MESSAGE_LIMIT", 10);
-  const monthly = premium ? null : limit("COACH_MONTHLY_MESSAGE_LIMIT", 30);
+  const monthly = premium ? null : limit("COACH_MONTHLY_MESSAGE_LIMIT", 10);
   const base = { premium, daily, monthly, usedToday: 0, usedMonth: 0 };
   if (daily == null && monthly == null) return { ...base, known: true };
 
@@ -111,6 +113,26 @@ const CAP_MESSAGES: Partial<Record<AiFeature, string>> = {
   meal_log: "You've reached today's AI logging limit. You can still log from the food search, or try again tomorrow.",
 };
 
+let spendCache: { at: number; over: boolean } | null = null;
+
+/**
+ * Global kill switch (GTM G1): true once today's total recorded AI cost
+ * (UTC) reaches AI_DAILY_SPEND_LIMIT_USD. Cached for a minute per instance;
+ * fails open. Complements the gateway key's own spend cap.
+ */
+export async function aiSpendExceeded(supabase: Supabase): Promise<boolean> {
+  const raw = process.env.AI_DAILY_SPEND_LIMIT_USD;
+  const cap = raw == null || raw === "" ? 5 : Number(raw);
+  if (!(cap > 0)) return false;
+  if (spendCache && Date.now() - spendCache.at < 60_000) return spendCache.over;
+  const { data, error } = await supabase.rpc("ai_spend_today");
+  if (error) return false;
+  const over = Number(data) >= cap;
+  if (over) console.warn(`[ai_usage] daily spend ${Number(data).toFixed(2)} USD reached the ${cap} USD limit`);
+  spendCache = { at: Date.now(), over };
+  return over;
+}
+
 /** Null when within the feature's daily cap, otherwise a user-facing reason. Fails open. */
 export async function featureQuotaError(
   supabase: Supabase,
@@ -118,6 +140,7 @@ export async function featureQuotaError(
   feature: AiFeature,
   premium: boolean
 ): Promise<string | null> {
+  if (await aiSpendExceeded(supabase)) return "AI features are temporarily unavailable. Try again later.";
   const cap = DAILY_CAPS[feature];
   if (!cap) return null;
   const [prefix, free, paid] = cap;
