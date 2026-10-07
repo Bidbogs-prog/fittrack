@@ -3,6 +3,7 @@
 import Script from "next/script";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { GoogleLogo } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
 import { useClientValue } from "@/lib/use-client-clock";
 
@@ -62,12 +63,15 @@ export function GoogleSignIn({
   locale,
   context,
   failedLabel,
+  label,
   fallback,
 }: {
   next?: string;
   locale: string;
   context: "signin" | "signup";
   failedLabel: string;
+  /** Text of our styled button, matching the redirect-flow button. */
+  label: string;
   fallback: React.ReactNode;
 }) {
   const router = useRouter();
@@ -114,9 +118,10 @@ export function GoogleSignIn({
         theme: "filled_black",
         size: "large",
         shape: "rectangular",
+        // Invisible (see render): only its click target matters.
         text: context === "signup" ? "signup_with" : "continue_with",
         logo_alignment: "center",
-        width: Math.min(400, slot.current.clientWidth || 320),
+        width: Math.max(200, Math.min(400, slot.current.clientWidth || 320)),
         locale: locale === "ar-MA" ? "ar" : locale,
       });
     });
@@ -135,11 +140,28 @@ export function GoogleSignIn({
         onReady={() => setReady(true)}
         onError={() => setBroken(true)}
       />
+      {/*
+        Google's button is a cross-origin iframe we can't restyle. Our own
+        button is drawn underneath and Google's sits on top at ~0 opacity, so
+        the click (and keyboard focus) lands on Google's real button while
+        the user sees one that matches the site.
+      */}
       <div
-        ref={slot}
         aria-busy={busy}
-        className={`flex min-h-11 w-full justify-center transition-opacity ${busy ? "pointer-events-none opacity-50" : ""}`}
-      />
+        className={`group relative w-full rounded-xl transition-opacity has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-flame/60 ${busy ? "pointer-events-none opacity-50" : ""}`}
+      >
+        <span
+          aria-hidden
+          className="flex w-full items-center justify-center gap-2.5 rounded-xl border border-ink-700 bg-ink-900 py-3 text-sm font-medium text-paper transition-colors group-hover:border-ink-600 group-hover:text-flame"
+        >
+          <GoogleLogo className="size-5" weight="bold" />
+          {label}
+        </span>
+        <div
+          ref={slot}
+          className="absolute inset-0 flex items-center justify-center overflow-hidden rounded-xl opacity-[0.01] [&_iframe]:!m-0"
+        />
+      </div>
       {error && (
         <p role="alert" className="text-center text-sm text-danger">
           {failedLabel}

@@ -39,6 +39,7 @@ export async function OAuthButtons({ next, context = "signin" }: { next?: string
           locale={locale}
           context={context}
           failedLabel={t("googleFailed")}
+          label={t("continueWithGoogle")}
           fallback={redirectButton}
         />
       </div>
