@@ -135,7 +135,10 @@ export function CoachChat({
         );
         track("coach_message_sent", { restricted: ev.restricted });
         for (const flag of ev.flags) track("coach_guardrail_triggered", { flag });
+        // /api/coach is a route handler, so its revalidatePath does not purge the
+        // client router cache; refresh so a revisit within staleTimes shows this reply.
         if (isNew) router.replace(`/coach?c=${ev.conversationId}`, { scroll: false });
+        else router.refresh();
       }
     };
 
