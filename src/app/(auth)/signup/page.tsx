@@ -60,7 +60,7 @@ export default async function SignupPage({
       </form>
 
       <div data-reveal>
-        <OAuthButtons />
+        <OAuthButtons context="signup" />
       </div>
 
       <p data-reveal className="mt-4 text-xs leading-relaxed text-paper-mute">

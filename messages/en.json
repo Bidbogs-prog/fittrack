@@ -38,7 +38,8 @@
     "newPassword": "New password",
     "setPassword": "Set password",
     "or": "or",
-    "continueWithGoogle": "Continue with Google"
+    "continueWithGoogle": "Continue with Google",
+    "googleFailed": "Google sign-in didn't go through. Try again, or use your email."
   },
   "account": {
     "title": "Account",

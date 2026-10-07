@@ -38,7 +38,8 @@
     "newPassword": "كلمة مرور جديدة",
     "setPassword": "تعيين كلمة المرور",
     "or": "أو",
-    "continueWithGoogle": "المتابعة عبر جوجل"
+    "continueWithGoogle": "المتابعة عبر جوجل",
+    "googleFailed": "تعذّر تسجيل الدخول عبر Google. أعد المحاولة أو استعمل بريدك الإلكتروني."
   },
   "account": {
     "title": "الحساب",
