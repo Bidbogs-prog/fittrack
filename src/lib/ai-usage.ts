@@ -13,7 +13,7 @@ import type { LlmUsage } from "@/lib/llm";
  *
  *   MEAL_LOG_DAILY_LIMIT                free: AI meal parses per UTC day (default 30, 0 = unlimited)
  *   MEAL_LOG_PREMIUM_DAILY_LIMIT        premium: AI meal parses per UTC day (default 100, 0 = unlimited)
- *   DAY_INSIGHTS_DAILY_LIMIT / DAY_INSIGHTS_PREMIUM_DAILY_LIMIT    default 5 / 20
+ *   DAY_INSIGHTS_DAILY_LIMIT / DAY_INSIGHTS_PREMIUM_DAILY_LIMIT    default 3 / 20
  *   WEEK_REPORT_DAILY_LIMIT / WEEK_REPORT_PREMIUM_DAILY_LIMIT      default 3 / 10
  *   PLAN_GENERATE_DAILY_LIMIT / PLAN_GENERATE_PREMIUM_DAILY_LIMIT  default 2 / 10
  *
@@ -112,7 +112,7 @@ export async function getCoachAllowance(
 /** Per-feature daily caps: [env prefix, free default, premium default]. */
 const DAILY_CAPS: Partial<Record<AiFeature, [string, number, number]>> = {
   meal_log: ["MEAL_LOG", 30, 100],
-  day_insights: ["DAY_INSIGHTS", 5, 20],
+  day_insights: ["DAY_INSIGHTS", 3, 20],
   week_report: ["WEEK_REPORT", 3, 10],
   plan_generate: ["PLAN_GENERATE", 2, 10],
   // Premium-only feature: free 0 (also gated by isPremium); regenerations are rare.

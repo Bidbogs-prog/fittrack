@@ -1,4 +1,6 @@
 import { CaretLeft, CaretRight } from "@phosphor-icons/react/dist/ssr";
+import { getProfile } from "@/lib/auth";
+import { isPremium } from "@/lib/entitlements";
 import Link from "next/link";
 import { getFormatter, getTranslations } from "next-intl/server";
 import { AiInsights } from "@/components/ai-insights";
@@ -32,6 +34,8 @@ export default async function DashboardPage({
     getFormatter(),
   ]);
   const { profile, targets, eaten, entries, isToday, remaining, kcalTarget, burned, adaptive } = data;
+  const { supabase, userId } = await getProfile();
+  const premium = await isPremium(supabase, userId);
 
   const day = new Date(date + "T12:00:00");
   const dateLabel = format.dateTime(day, { weekday: "long", day: "numeric", month: "long" });
@@ -226,6 +230,8 @@ export default async function DashboardPage({
               key={date}
               date={date}
               hasEntries={entries.length > 0}
+              isToday={isToday}
+              premium={premium}
               initial={data.savedInsight?.payload ?? null}
               generatedAt={data.savedInsight?.updatedAt ?? null}
             />

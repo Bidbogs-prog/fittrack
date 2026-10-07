@@ -478,15 +478,23 @@
     "showAllFoods": "Voir tous les aliments"
   },
   "insights": {
-    "title": "Coach IA",
-    "subtitle": "Une lecture de diététicien de tout ce que vous avez enregistré",
-    "regenerate": "Régénérer l'analyse",
-    "readingDay": "Lecture de votre journée…",
-    "savedOn": "Enregistré le {date} — régénérez si la journée a changé.",
-    "disclaimer": "Généré par Gemini — conseils généraux, pas un avis médical.",
-    "pitch": "Obtenez points forts, alertes et conseils par aliment à partir des repas du jour et de vos objectifs.",
+    "title": "L'avis du coach",
+    "regenerate": "Actualiser l'avis",
+    "savedOn": "Du {date}",
+    "disclaimer": "Conseils généraux, pas un avis médical.",
+    "pitch": "L'avis du coach sur cette journée : ce qui compte et quoi ajuster.",
     "needsEntries": "Enregistrez d'abord un repas — le coach a besoin de quelque chose dans l'assiette.",
-    "analyseDay": "Analyser cette journée"
+    "analyseDay": "Analyser ma journée",
+    "thinking1": "Lecture de votre journée…",
+    "thinking2": "Ce qui compte vraiment…",
+    "thinking3": "Préparation de la suite…",
+    "pitchPremium": "L'avis du coach sur votre journée, et votre prochain repas planifié avec vos propres aliments.",
+    "nextTitle": "Ensuite : {meal}",
+    "logThis": "Enregistrer ce repas",
+    "nextTeaser": "Premium planifie votre prochain repas avec vos propres aliments, selon ce qu'il vous reste aujourd'hui.",
+    "unlock": "Débloquer avec Premium",
+    "intentDone": "Bientôt disponible — vous êtes sur la liste.",
+    "continueInCoach": "Continuer avec le coach"
   },
   "micros": {
     "title": "Micros",
