@@ -82,11 +82,13 @@ export const metadata: Metadata = {
   },
 };
 
+/** Every namespace a client component reads; src/i18n/client-namespaces.test.ts enforces it. */
 const CLIENT_NAMESPACES = [
   "addFood",
   "coach",
   "common",
   "composer",
+  "consent",
   "dashboard",
   "foods",
   "habits",
@@ -102,6 +104,7 @@ const CLIENT_NAMESPACES = [
   "status",
   "thread",
   "today",
+  "waitlist",
 ] as const;
 
 export default async function RootLayout({
