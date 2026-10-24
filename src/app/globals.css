@@ -14,7 +14,8 @@
 
   --paper: #f4f1ea;
   --paper-dim: #c2b8a9;
-  --paper-mute: #857a6a;
+  /* #8f8472 (was #857a6a): ≥4.5:1 on every ink surface down to ink-800 (WCAG AA, DR-011). */
+  --paper-mute: #8f8472;
 
   --flame-glow: #ffc94d;
   --flame: #ff9d3b;

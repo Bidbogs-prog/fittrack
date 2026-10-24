@@ -55,10 +55,13 @@ export async function Pillars() {
               ).map(([k, w, v, color]) => (
                 <div key={k} className="contents">
                   <dt>{k}</dt>
-                  <span className="h-[5px] rounded-full bg-ink-800">
-                    <span className={`block h-full rounded-full ${color}`} style={{ width: `${w}%` }} />
-                  </span>
-                  <dd className="text-end text-paper-dim">{v}</dd>
+                  {/* contents: the bar and value stay separate grid cells but belong to the <dd> (valid <dl>). */}
+                  <dd className="contents">
+                    <span aria-hidden className="h-[5px] rounded-full bg-ink-800">
+                      <span className={`block h-full rounded-full ${color}`} style={{ width: `${w}%` }} />
+                    </span>
+                    <span className="text-end text-paper-dim">{v}</span>
+                  </dd>
                 </div>
               ))}
             </dl>
