@@ -1,6 +1,7 @@
 "use server";
 
 import { headers } from "next/headers";
+import { safeRedirectPath } from "@/lib/redirect";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
@@ -9,11 +10,7 @@ import { authErrorKey, statusUrl } from "@/i18n/status";
 const OAUTH_PROVIDERS = ["google"] as const;
 type OAuthProvider = (typeof OAUTH_PROVIDERS)[number];
 
-function sanitizeNext(next: unknown): string {
-  return typeof next === "string" && next.startsWith("/") && !next.startsWith("//")
-    ? next
-    : "/dashboard";
-}
+const sanitizeNext = (next: unknown): string => safeRedirectPath(next, "/dashboard");
 
 export async function login(formData: FormData) {
   const supabase = await createClient();

@@ -17,6 +17,7 @@ import { track } from "@/lib/analytics";
 import { MEAL_DEFAULT_MIN, mealForMinutes, minutesOfDate } from "@/lib/day-time";
 import { macrosForPortion, round1, type Macros } from "@/lib/nutrition";
 import { enqueue } from "@/lib/offline-queue";
+import { looksLikeQuestion } from "@/lib/intent-routing";
 import { useClientValue } from "@/lib/use-client-clock";
 import type { Food, MealType } from "@/lib/types";
 
@@ -119,24 +120,6 @@ function speechCtor(): SpeechCtor | null {
 }
 
 const SPEECH_LANG: Record<string, string> = { en: "en-US", fr: "fr-FR", "ar-MA": "ar-MA", ar: "ar-MA" };
-
-const QUESTION_PREFIXES = [
-  "why", "how", "what", "should", "can", "could", "is ", "am i", "do ", "does", "when", "which",
-  "any ", "ideas", "suggest", "pourquoi", "comment", "quoi", "que ", "quel", "est-ce", "combien",
-  "dois", "peux", "idée", "علاش", "كيفاش", "واش", "شنو", "اشنو", "هل", "لماذا", "كيف", "ماذا", "ما ",
-];
-
-/** Diary verbs: "can you remove the rice?" is a request, not a question for the coach. */
-const DIARY_VERBS =
-  /\b(add|log|remove|delete|undo|change|move|replace|swap|edit|update|ajoute|enl[eè]ve|supprime|retire|modifie|change|d[ée]place|remplace|zid|7yed|bddel|bdl)\b|احذف|امسح|حيد|زيد|بدل|غيّر|أضف/;
-
-/** Rough intent split for the composer: questions go to the coach. */
-export function looksLikeQuestion(text: string): boolean {
-  const t = text.trim().toLowerCase();
-  if (DIARY_VERBS.test(t)) return false;
-  if (/[?؟]\s*$/.test(t)) return true;
-  return QUESTION_PREFIXES.some((p) => t.startsWith(p));
-}
 
 interface LogContextValue {
   entryDate: string;

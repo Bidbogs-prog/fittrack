@@ -4,6 +4,7 @@ import Script from "next/script";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { GoogleLogo } from "@phosphor-icons/react";
+import { safeRedirectPath } from "@/lib/redirect";
 import { createClient } from "@/lib/supabase/client";
 import { useClientValue } from "@/lib/use-client-clock";
 
@@ -48,8 +49,7 @@ async function sha256Hex(text: string): Promise<string> {
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-const safeNext = (next: string | undefined) =>
-  next && next.startsWith("/") && !next.startsWith("//") && !next.startsWith("/\\") ? next : "/dashboard";
+const safeNext = (next: string | undefined) => safeRedirectPath(next, "/dashboard");
 
 /**
  * Google sign-in without the Supabase redirect: Google Identity Services runs
