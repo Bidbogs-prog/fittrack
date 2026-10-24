@@ -1,0 +1,38 @@
+# Quality gate (docs/qa/test-strategy.md §6): every push and pull request
+# runs static analysis, the automated test suite and a production build.
+# The paid, live-model coach safety eval runs on demand only (eval.yml).
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      # Placeholders: the build never talks to Supabase or the AI provider.
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ci-placeholder
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Static analysis — lint
+        run: npm run lint
+      - name: Static analysis — type check
+        run: npx tsc --noEmit -p .
+      - name: Unit and component tests
+        run: npm test
+      - name: Production build
+        run: npm run build
