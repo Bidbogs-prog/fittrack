@@ -10,6 +10,8 @@
     "import:off": "node scripts/import-off.ts",
     "import:usda": "node scripts/import-usda.ts",
     "test": "vitest run",
+    "test:db": "vitest run tests/db",
+    "test:e2e": "playwright test",
     "eval:coach": "vitest run --config vitest.eval.config.ts src/lib/coach/coach.eval.ts",
     "eval:compare": "COACH_COMPARE=1 vitest run --config vitest.eval.config.ts src/lib/coach/compare.eval.ts"
   },
@@ -28,7 +30,10 @@
     "react-dom": "19.2.4"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@electric-sql/pglite": "^0.5.11",
     "@formatjs/icu-messageformat-parser": "3.5.16",
+    "@playwright/test": "^1.64.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

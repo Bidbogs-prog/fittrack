@@ -14,16 +14,20 @@ So3ra is a Morocco-first nutrition tracker with an AI coach (Next.js, Supabase, 
 
 **Current numbers**
 
-- Automated tests: 18 files, ~1,080 test cases (Vitest), run on every push by [CI](../../.github/workflows/ci.yml): lint → type check → tests → production build.
-- Coach safety eval: 28 cases against the live model, 28/28 on the last two runs per candidate model ([eval workflow](../../.github/workflows/eval.yml), manual trigger).
-- Defects recorded: 10 defect reports + 1 observation, all with a fix and a regression check.
+- Component and integration tests: 20 files, ~1,120 cases (Vitest), including 35 database tests that run the real migrations, RLS policies and SQL functions in an in-process Postgres (PGlite).
+- System tests: Playwright on mobile and desktop Chrome — public pages, security headers, accessibility (axe-core); signed-in flows with the AI mocked when a test project is configured.
+- [CI](../../.github/workflows/ci.yml) on every push: lint → type check → component/integration tests → build → system tests.
+- Coach safety eval: 31 cases against the live model (28 baseline at 28/28 on two runs per candidate + 3 memory-injection cases), [manual workflow](../../.github/workflows/eval.yml).
+- Defects recorded: 11 defect reports + 2 observations, all with a fix or a decision, most with a regression test.
 
 **Commands**
 
 ```bash
 npm run lint             # static analysis
 npx tsc --noEmit -p .    # static analysis (types)
-npm test                 # unit + component + contract tests
+npm test                 # component + contract + database tests
+npm run test:db          # database tests only (RLS, invite/waitlist states)
+npm run test:e2e         # Playwright system tests (builds the app, mocks the AI)
 npm run eval:coach       # live-model coach safety eval (needs LLMGATEWAY_API_KEY)
 npm run eval:compare     # blind A/B model comparison sheet
 ```

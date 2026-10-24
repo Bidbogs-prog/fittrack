@@ -54,3 +54,7 @@ supabase/.temp/
 eval-results/
 .empryo
 designs/
+
+# Playwright
+/test-results/
+/playwright-report/

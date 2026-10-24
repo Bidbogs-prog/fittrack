@@ -95,4 +95,4 @@ full / expired --redeem--> rejected ("full" / "expired"), no state change
 | ST-7 | waitlist `waiting` | user signs up | sent to `/invite` |
 | ST-8 | user already premium longer than code grants | redeem | access granted, premium end date not shortened |
 
-These run in SQL (`redeem_invite`, `claim_waitlist_access`, `admit_waitlist`); they are executed manually against the beta database today and are the first candidates for database-level automated tests.
+Automated in `tests/db/beta-access.test.ts` against the real SQL functions (`redeem_invite`, `claim_waitlist_access`, `admit_waitlist`, `join_waitlist`), plus: code-format boundaries (3/4 and 32/33 characters), referral queue ordering, admin-only admission, and an unconfirmed email trying to claim an admitted spot.

@@ -68,8 +68,18 @@ Real defects found during development and the closed beta. Severity = impact on 
 - **Severity / priority:** Low / Medium · **Type:** Content · **Found by:** static review of the system prompt
 - **Actual:** "You are the FitTrack coach" while the product is So3ra. **Fix:** prompt updated (`b4ec72c`).
 
+### DR-011 — Landing page fails WCAG AA contrast and has invalid list markup
+- **Severity / priority:** Medium / Medium · **Type:** Non-functional (accessibility) · **Found by:** automated axe-core scan (`e2e/a11y.spec.ts`)
+- **Actual:** 7 serious colour-contrast violations — muted text (`--paper-mute` #857a6a) at 4.41:1 on dark cards and food calories in the marquee at 1.78:1 (WCAG AA needs 4.5:1); and a `<dl>` in the "system" section containing a bare `<span>` between `<dt>` and `<dd>`, which breaks the list for screen readers.
+- **Fix:** `--paper-mute` → #8f8472 (≥ 4.5:1 on every surface down to ink-800, barely visible change); marquee calories use the muted text colour; the macro bar moved inside its `<dd>`.
+- **Regression test:** `e2e/a11y.spec.ts` fails on any serious or critical violation on /, /login, /signup, /privacy.
+
 ---
 
 ### OBS-1 — Free daily coach cap can never trigger with default settings
 - **Found by:** BVA on `coachQuotaError` with both defaults (`src/lib/ai-usage.test.ts`).
 - With the free monthly cap at 10 and the daily cap at 10, the monthly cap is always reached first, so the daily cap is dead configuration. Not a user-facing defect; decision for the product owner: lower the daily cap (e.g. 5) or drop it for free users.
+
+### OBS-2 — Signed-out visits to /coach lose the return path
+- **Found by:** code review while writing system tests.
+- `/coach` and `/invite` aren't in the middleware's protected list, so a signed-out visitor is redirected to `/login` by the page itself, without `?next=/coach`; after logging in they land on the dashboard instead of the coach. Low impact; fix is one line (add them to `PROTECTED_PREFIXES`) — left for the product owner to schedule.
