@@ -123,7 +123,7 @@
     "height": "Taille",
     "weight": "Poids",
     "sectionTraining": "Fréquence d'entraînement",
-    "sectionTrainingHint": "Définit le multiplicateur du TDEE.",
+    "sectionTrainingHint": "Définit le multiplicateur de la DEJ — vos entraînements sont comptés ici.",
     "sectionGoal": "Votre objectif",
     "sectionMacros": "Répartition des macros",
     "sectionMacrosHint": "Comment vos calories se répartissent entre protéines, glucides et lipides. Choisissez ce qui correspond à votre façon de manger — modifiable à tout moment.",
@@ -226,7 +226,8 @@
     "target": "Objectif",
     "floor": "plancher {kcal}",
     "orbitSummary": "Votre orbite : {kcal} kcal par jour.",
-    "orbitEmpty": "Votre orbite se remplit au fil de vos réponses."
+    "orbitEmpty": "Votre orbite se remplit au fil de vos réponses.",
+    "trainingCounted": "Comptez ici vos séances de sport. Votre objectif les inclut déjà : les entraînements enregistrés ensuite n'ajoutent pas de calories. Si votre rythme change, mettez ce choix à jour — ou continuez à vous peser et vos objectifs s'adapteront à votre dépense réelle en 2 à 4 semaines."
   },
   "macros": {
     "protein": "Protéines",
@@ -385,7 +386,7 @@
     "saveMealTitle": "Enregistrer ce repas ({meal}) pour le réutiliser",
     "syncCta": "Synchroniser avec Apple Santé / Health Connect",
     "syncDone": "Arrive avec l'app mobile — nous vous préviendrons.",
-    "burnedInActivity": "{kcal} kcal brûlées — déjà comptées dans votre niveau d'activité, votre objectif ne change donc pas"
+    "burnedInActivity": "{kcal} kcal brûlées — déjà comptées dans votre niveau d'activité, votre objectif ne change donc pas. Plus d'entraînement que d'habitude ? Mettez à jour votre niveau d'activité dans Moi."
   },
   "common": {
     "close": "Fermer",
@@ -859,7 +860,8 @@
     "memoryTeaser": "Avec Premium, le coach retient vos préférences, votre rythme et vos objectifs d'une conversation à l'autre — plus besoin de vous répéter.",
     "memoryEmpty": "Rien pour l'instant. Parlez au coach de votre rythme, des aliments que vous évitez ou de votre objectif sportif.",
     "memoryForget": "Oublier : {fact}",
-    "memoryForgetAll": "Tout oublier"
+    "memoryForgetAll": "Tout oublier",
+    "trainingHint": "Votre niveau d'activité inclut déjà vos entraînements. Vous vous entraînez plus ou moins qu'avant ? Mettez-le à jour — ou continuez à vous peser et vos objectifs s'adapteront en 2 à 4 semaines."
   },
   "landing": {
     "nav": {

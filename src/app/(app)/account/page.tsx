@@ -30,10 +30,11 @@ export default async function AccountPage({
 }: {
   searchParams: Promise<{ error?: string; message?: string }>;
 }) {
-  const [{ supabase, userId, profile }, { error, message }, t, ta, locale] = await Promise.all([
+  const [{ supabase, userId, profile }, { error, message }, t, tOnb, ta, locale] = await Promise.all([
     getProfile(),
     searchParams,
     getTranslations("me"),
+    getTranslations("onboarding"),
     getTranslations("account"),
     getLocale(),
   ]);
@@ -177,7 +178,9 @@ export default async function AccountPage({
                 [t("age"), profile.birth_date ? String(ageFromBirthDate(profile.birth_date)) : "—"],
                 [
                   t("training"),
-                  profile.activity_level ? `×${ACTIVITY_LEVELS[profile.activity_level].multiplier}` : "—",
+                  profile.activity_level
+                    ? `${tOnb(`level.${profile.activity_level}.label`)} · ×${ACTIVITY_LEVELS[profile.activity_level].multiplier}`
+                    : "—",
                 ],
               ] as const
             ).map(([label, value]) => (
@@ -193,6 +196,7 @@ export default async function AccountPage({
           >
             {t("updateBody")} <span aria-hidden className="ms-1 rtl:-scale-x-100">→</span>
           </a>
+          <p className="text-[11px] leading-relaxed text-paper-mute">{t("trainingHint")}</p>
         </section>
 
         {/* eating window */}

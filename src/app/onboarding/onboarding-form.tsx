@@ -300,6 +300,9 @@ export function OnboardingForm({ profile }: { profile?: Profile | null }) {
                     </span>
                   </button>
                 ))}
+                <p className="mt-1 rounded-xl border border-ink-800 bg-ink-900/60 px-3.5 py-2.5 text-xs leading-relaxed text-paper-mute">
+                  {t("trainingCounted")}
+                </p>
               </div>
             )}
 
