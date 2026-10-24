@@ -33,7 +33,7 @@ export default async function DashboardPage({
     getTranslations("goals"),
     getFormatter(),
   ]);
-  const { profile, targets, eaten, entries, isToday, remaining, kcalTarget, burned, adaptive } = data;
+  const { profile, targets, eaten, entries, isToday, remaining, kcalTarget } = data;
   const { supabase, userId } = await getProfile();
   const premium = await isPremium(supabase, userId);
 
@@ -197,9 +197,6 @@ export default async function DashboardPage({
                   </div>
                 ))}
               </dl>
-              {burned > 0 && !adaptive && (
-                <p className="text-xs text-paper-mute">{t("burnedNote", { kcal: burned })}</p>
-              )}
               <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-paper-mute">
                 {t("hintDesktop")}
                 <kbd className="rounded-[5px] border border-ink-700 px-1.5 py-px font-mono text-[11px] text-paper-dim">

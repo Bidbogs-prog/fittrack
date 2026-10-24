@@ -320,7 +320,6 @@
     "activity": "Activité",
     "activityHint": "Enregistrez séances et pas pour ce jour",
     "burnedAdaptive": "{kcal} kcal brûlées — déjà prises en compte dans votre dépense adaptative",
-    "burnedAddedToTarget": "{kcal} kcal brûlées, ajoutées à l'objectif du jour",
     "addWorkout": "Ajouter une séance",
     "minutesValue": "{minutes} min",
     "minutesShort": "min",
@@ -385,7 +384,8 @@
     "saveMealButton": "Enregistrer le repas",
     "saveMealTitle": "Enregistrer ce repas ({meal}) pour le réutiliser",
     "syncCta": "Synchroniser avec Apple Santé / Health Connect",
-    "syncDone": "Arrive avec l'app mobile — nous vous préviendrons."
+    "syncDone": "Arrive avec l'app mobile — nous vous préviendrons.",
+    "burnedInActivity": "{kcal} kcal brûlées — déjà comptées dans votre niveau d'activité, votre objectif ne change donc pas"
   },
   "common": {
     "close": "Fermer",
@@ -599,7 +599,6 @@
     "bmr": "MB",
     "tdee": "DEJ",
     "target": "Objectif",
-    "burnedNote": "L'objectif inclut +{kcal} kcal d'entraînement aujourd'hui.",
     "hintDesktop": "Maintenez le centre pour parler à votre coach · ou appuyez sur",
     "railLabel": "Détails du jour",
     "adaptiveNote": "DEJ adaptative : sur {days} jours, vous avez mangé en moyenne {intake} kcal et votre poids tendance a {dir, select, down {baissé} other {augmenté}} de {delta} {unit} ; votre dépense mesurée est donc de {tdee} kcal. Recalculée chaque lundi.",

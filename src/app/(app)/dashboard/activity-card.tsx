@@ -9,9 +9,9 @@ import { addExercise, deleteExercise, logSteps } from "./actions";
 
 /**
  * Activity card (roadmap 2.4): manual workouts for the viewed day plus a
- * daily step count. Burned kcal raises the day's calorie target when
- * targets are formula-based; with adaptive TDEE the burn is already in
- * the measured number, so it's shown as information only.
+ * daily step count. Burned kcal is information only — it never raises the
+ * calorie target: formula targets already include training through the
+ * activity level, and adaptive TDEE measures total burn directly.
  */
 export function ActivityCard({
   date,
@@ -78,7 +78,7 @@ export function ActivityCard({
               {burned > 0
                 ? adaptive
                   ? t("burnedAdaptive", { kcal: burned })
-                  : t("burnedAddedToTarget", { kcal: burned })
+                  : t("burnedInActivity", { kcal: burned })
                 : t("activityHint")}
             </p>
           </div>

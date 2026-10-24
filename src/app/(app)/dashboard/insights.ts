@@ -154,9 +154,9 @@ function describeDay(
       ? "EXERCISE: none logged"
       : `EXERCISE (${burned} kcal total${
           adaptive
-            ? "; already part of the adaptive TDEE, no extra calorie credit"
-            : `; the calorie target for this day is raised to ${targets.kcal + burned} kcal`
-        })
+            ? "; already part of the adaptive TDEE"
+            : "; already covered by their activity level in the TDEE"
+        } — the calorie target is NOT raised for exercise; never suggest eating back workout calories)
 ${exercises
   .map((e) => `- ${e.name}${e.minutes != null ? `, ${e.minutes} min` : ""}: ${e.kcal} kcal`)
   .join("\n")}`;

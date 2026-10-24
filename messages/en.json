@@ -320,7 +320,6 @@
     "activity": "Activity",
     "activityHint": "Log workouts and steps for this day",
     "burnedAdaptive": "{kcal} kcal burned — already reflected in your adaptive burn",
-    "burnedAddedToTarget": "{kcal} kcal burned, added to today's target",
     "addWorkout": "Add workout",
     "minutesValue": "{minutes} min",
     "minutesShort": "min",
@@ -385,7 +384,8 @@
     "saveMealButton": "Save meal",
     "saveMealTitle": "Save this {meal} to reuse it",
     "syncCta": "Sync with Apple Health / Health Connect",
-    "syncDone": "Coming with the mobile app — we'll notify you."
+    "syncDone": "Coming with the mobile app — we'll notify you.",
+    "burnedInActivity": "{kcal} kcal burned — already counted in your activity level, so your target stays the same"
   },
   "common": {
     "close": "Close",
@@ -599,7 +599,6 @@
     "bmr": "BMR",
     "tdee": "TDEE",
     "target": "Target",
-    "burnedNote": "Target includes +{kcal} kcal from today's training.",
     "hintDesktop": "Hold the centre to talk to your coach · or press",
     "railLabel": "Day details",
     "adaptiveNote": "Adaptive TDEE: over {days} days you averaged {intake} kcal while your trend weight went {dir, select, down {down} other {up}} {delta} {unit}, so your measured burn is {tdee} kcal. It recalibrates every Monday.",

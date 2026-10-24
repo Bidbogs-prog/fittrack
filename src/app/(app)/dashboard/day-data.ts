@@ -90,12 +90,14 @@ export const getDayData = cache(async (date: string) => {
   const eaten = sumMacros(entries.map(entryMacros));
   const microTotals = sumMicros(entries.map(entryMicros));
 
-  // Exercise raises the day's target only for formula targets: adaptive
-  // TDEE already measures total burn, so crediting workouts would
-  // double-count them.
+  // Logged exercise never raises the day's target. Formula targets already
+  // include training through the activity multiplier ("Gym 3-5 times a
+  // week" = ×1.55), and adaptive TDEE measures total burn from intake vs
+  // weight trend — adding workout calories on top would count them twice,
+  // and per-workout estimates are inflated anyway. Burn is shown as info.
   const exercises = (exerciseData ?? []) as ExerciseLog[];
   const burned = exercises.reduce((sum, e) => sum + e.kcal, 0);
-  const kcalTarget = adaptive ? targets.kcal : targets.kcal + burned;
+  const kcalTarget = targets.kcal;
   const remaining = Math.round(kcalTarget - eaten.kcal);
 
   const trendPoints = weightTrend((weightData ?? []) as WeightLog[]);

@@ -234,7 +234,7 @@ This is a living document. Check items off as they ship, add notes/links to PRs,
 - [x] Language switcher reflects the tapped radio via `has-[:checked]`, not the saved cookie — the `sr-only` input previously made selection invisible until save, so the control read as dead (this is what "can't switch back from Arabic" was)
 
 ### 2.4 Exercise & integrations
-- [x] Manual workout logging (`exercise_logs`, activity card on the dashboard); burned kcal raises the day's target for formula targets only — adaptive TDEE already measures total burn, so no double credit. Exercise is also fed to the AI coach prompt
+- [x] Manual workout logging (`exercise_logs`, activity card on the dashboard); burned kcal is informational only (changed 2026-10-11): formula targets already include training via the activity multiplier and adaptive TDEE measures total burn, so adding it would double-count. Exercise is also fed to the AI coach prompt
 - [x] Steps: manual daily count (`step_logs`), informational
 - [ ] Apple Health / Google Fit sync — needs the native wrapper (see 3.2); schedule together
 

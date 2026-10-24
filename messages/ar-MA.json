@@ -320,7 +320,6 @@
     "activity": "النشاط",
     "activityHint": "سجّل التمارين والخطوات لهذا اليوم",
     "burnedAdaptive": "{kcal} سعرة محروقة — محتسبة أصلاً في حرقك التكيّفي",
-    "burnedAddedToTarget": "{kcal} سعرة محروقة، أُضيفت إلى هدف اليوم",
     "addWorkout": "إضافة تمرين",
     "minutesValue": "{minutes} د",
     "minutesShort": "د",
@@ -385,7 +384,8 @@
     "saveMealButton": "حفظ الوجبة",
     "saveMealTitle": "احفظ هذه الوجبة ({meal}) لإعادة استخدامها",
     "syncCta": "مزامنة مع Apple Health / Health Connect",
-    "syncDone": "غادي تجي مع تطبيق الهاتف — غادي نعلموك."
+    "syncDone": "غادي تجي مع تطبيق الهاتف — غادي نعلموك.",
+    "burnedInActivity": "{kcal} سعرة محروقة — محسوبة ديجا فمستوى النشاط ديالك، داكشي علاش الهدف ما كيتبدلش"
   },
   "common": {
     "close": "إغلاق",
@@ -599,7 +599,6 @@
     "bmr": "الأيض الأساسي",
     "tdee": "الإنفاق اليومي",
     "target": "الهدف",
-    "burnedNote": "يشمل الهدف +{kcal} سعرة من تمرين اليوم.",
     "hintDesktop": "اضغط مطوّلاً على المركز للتحدث مع مدربك · أو اضغط",
     "railLabel": "تفاصيل اليوم",
     "adaptiveNote": "الإنفاق التكيّفي: خلال {days} يوماً كان متوسط استهلاكك {intake} سعرة و{dir, select, down {انخفض} other {ارتفع}} وزنك الاتجاهي {delta} {unit}، فإنفاقك المقاس هو {tdee} سعرة. يُعاد حسابه كل اثنين.",
