@@ -83,3 +83,10 @@ Real defects found during development and the closed beta. Severity = impact on 
 ### OBS-2 — Signed-out visits to /coach lose the return path
 - **Found by:** code review while writing system tests.
 - `/coach` and `/invite` aren't in the middleware's protected list, so a signed-out visitor is redirected to `/login` by the page itself, without `?next=/coach`; after logging in they land on the dashboard instead of the coach. Low impact; fix is one line (add them to `PROTECTED_PREFIXES`) — left for the product owner to schedule.
+
+### DR-012 — Invite codes don't grant Premium to existing users
+- **Severity / priority:** High / High · **Type:** Functional · **Found by:** product owner (support case: a user given a 90-day code stayed on Free)
+- **Steps:** 1. Account exists before the beta gate (or was admitted from the waitlist). 2. Open `/signup?code=X` for a code with Premium days. **Expected:** the code's Premium days are added. **Actual:** nothing happens and no error is shown.
+- **Root cause (two parts):** (a) a signed-in user opening `/signup?code=X` was redirected to `/dashboard` with the query string dropped, so the code never reached the app; (b) `redeem_invite` returned `already` for anyone with beta access before even reading the code, so Premium days were never granted.
+- **Fix:** migration `20260819000000_invite_redemptions.sql` — members can redeem codes for their Premium days, once per user per code (`invite_redemptions`, backfilled); codes with 0 Premium days don't burn a use for members. Signed-in visitors to `/signup?code=X` go to `/invite?code=X`; Me has a "Have an invite code?" link; members land on Me with a confirmation.
+- **Regression tests:** `tests/db/beta-access.test.ts` → "invite codes for existing members (DR-012)" (5 cases); ST-5 updated (`used`).

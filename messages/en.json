@@ -108,7 +108,9 @@
     "savedMealEmpty": "This saved meal has no items left.",
     "mealEmpty": "Nothing logged in this meal yet.",
     "workoutNameRequired": "Give the workout a name.",
-    "mealNameRequired": "Give the meal a name."
+    "mealNameRequired": "Give the meal a name.",
+    "codePremium": "Code redeemed — Premium days added to your account.",
+    "codeNothing": "You already have access, and that code has no Premium days to add."
   },
   "onboarding": {
     "eyebrowEditing": "Update your stats",
@@ -861,7 +863,8 @@
     "memoryEmpty": "Nothing yet. Tell the coach about your routine, foods you avoid or what you're training for.",
     "memoryForget": "Forget: {fact}",
     "memoryForgetAll": "Forget everything",
-    "trainingHint": "Your activity level already includes your workouts. Training more or less than before? Update it — or keep weighing in and your targets adapt within 2–4 weeks."
+    "trainingHint": "Your activity level already includes your workouts. Training more or less than before? Update it — or keep weighing in and your targets adapt within 2–4 weeks.",
+    "haveCode": "Have an invite code? Redeem it"
   },
   "landing": {
     "nav": {
@@ -996,8 +999,13 @@
       "invalid": "That code doesn't exist. Check it and try again.",
       "expired": "That code has expired.",
       "full": "That code has been fully used.",
+      "used": "You've already redeemed this code.",
       "generic": "Something went wrong. Try again."
-    }
+    },
+    "memberTitle": "Redeem your code",
+    "memberBody": "You're already in. Codes with Premium days add them to your account.",
+    "memberSubmit": "Redeem code",
+    "backToApp": "Back to So3ra"
   },
   "waitlist": {
     "eyebrow": "Private beta",

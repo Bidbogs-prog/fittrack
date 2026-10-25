@@ -108,7 +108,9 @@
     "savedMealEmpty": "Ce repas enregistré n'a plus d'éléments.",
     "mealEmpty": "Rien n'est encore enregistré dans ce repas.",
     "workoutNameRequired": "Donnez un nom à la séance.",
-    "mealNameRequired": "Donnez un nom au repas."
+    "mealNameRequired": "Donnez un nom au repas.",
+    "codePremium": "Code utilisé — les jours Premium ont été ajoutés à votre compte.",
+    "codeNothing": "Vous avez déjà accès, et ce code n'ajoute pas de jours Premium."
   },
   "onboarding": {
     "eyebrowEditing": "Mettre à jour vos données",
@@ -861,7 +863,8 @@
     "memoryEmpty": "Rien pour l'instant. Parlez au coach de votre rythme, des aliments que vous évitez ou de votre objectif sportif.",
     "memoryForget": "Oublier : {fact}",
     "memoryForgetAll": "Tout oublier",
-    "trainingHint": "Votre niveau d'activité inclut déjà vos entraînements. Vous vous entraînez plus ou moins qu'avant ? Mettez-le à jour — ou continuez à vous peser et vos objectifs s'adapteront en 2 à 4 semaines."
+    "trainingHint": "Votre niveau d'activité inclut déjà vos entraînements. Vous vous entraînez plus ou moins qu'avant ? Mettez-le à jour — ou continuez à vous peser et vos objectifs s'adapteront en 2 à 4 semaines.",
+    "haveCode": "Vous avez un code d'invitation ? Utilisez-le"
   },
   "landing": {
     "nav": {
@@ -996,8 +999,13 @@
       "invalid": "Ce code n'existe pas. Vérifiez-le et réessayez.",
       "expired": "Ce code a expiré.",
       "full": "Ce code a déjà été entièrement utilisé.",
+      "used": "Vous avez déjà utilisé ce code.",
       "generic": "Une erreur s'est produite. Réessayez."
-    }
+    },
+    "memberTitle": "Utiliser votre code",
+    "memberBody": "Vous avez déjà accès. Les codes avec des jours Premium les ajoutent à votre compte.",
+    "memberSubmit": "Utiliser le code",
+    "backToApp": "Retour à So3ra"
   },
   "waitlist": {
     "eyebrow": "Bêta privée",

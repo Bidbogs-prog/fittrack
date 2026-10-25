@@ -51,9 +51,17 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (claims && isAuthPage) {
+    // A signed-in user opening an invite link (/signup?code=X) still gets to
+    // redeem it — for its premium days — instead of losing the code (DR-012).
+    const code = request.nextUrl.searchParams.get("code");
     const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
     url.search = "";
+    if (code && /^[A-Za-z0-9-]{4,32}$/.test(code)) {
+      url.pathname = "/invite";
+      url.searchParams.set("code", code.toUpperCase());
+    } else {
+      url.pathname = "/dashboard";
+    }
     return NextResponse.redirect(url);
   }
 

@@ -48,6 +48,9 @@ export const STATUS_KEYS = [
   "mealEmpty",
   "workoutNameRequired",
   "mealNameRequired",
+  // invite codes
+  "codePremium",
+  "codeNothing",
   // onboarding
   "checkYourDetails",
   "couldNotSave",

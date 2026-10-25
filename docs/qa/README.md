@@ -18,7 +18,7 @@ So3ra is a Morocco-first nutrition tracker with an AI coach (Next.js, Supabase, 
 - System tests: Playwright on mobile and desktop Chrome — public pages, security headers, accessibility (axe-core); signed-in flows with the AI mocked when a test project is configured.
 - [CI](../../.github/workflows/ci.yml) on every push: lint → type check → component/integration tests → build → system tests.
 - Coach safety eval: 31 cases against the live model (28 baseline at 28/28 on two runs per candidate + 3 memory-injection cases), [manual workflow](../../.github/workflows/eval.yml).
-- Defects recorded: 11 defect reports + 2 observations, all with a fix or a decision, most with a regression test.
+- Defects recorded: 12 defect reports + 2 observations, all with a fix or a decision, most with a regression test.
 
 **Commands**
 

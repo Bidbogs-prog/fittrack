@@ -52,11 +52,11 @@ describe("invite codes", () => {
     expect(await hasAccess(u)).toBe(false);
   });
 
-  it("ST-5 a user who already has access doesn't consume a use", async () => {
+  it("ST-5 re-redeeming the same code doesn't consume a use (now used, DR-012)", async () => {
     const u = await t.user("u@example.com");
     await code("TWO-2", 2);
     await redeem(u, "TWO-2");
-    expect(await redeem(u, "TWO-2")).toBe("already");
+    expect(await redeem(u, "TWO-2")).toBe("used");
     expect(await uses("TWO-2")).toBe(1);
   });
 
@@ -172,5 +172,58 @@ describe("waitlist", () => {
     const squatter = await t.user("victim@example.com");
     await t.admin(() => t.rows("update auth.users set email_confirmed_at = null where id = $1", [squatter]));
     expect(await t.as(squatter, async () => (await t.rows<{ ok: boolean }>("select public.claim_waitlist_access(null) as ok"))[0].ok)).toBe(false);
+  });
+});
+
+/**
+ * DR-012 — existing members (grandfathered or admitted via the waitlist)
+ * redeeming a code must get its premium days, once per code.
+ */
+describe("invite codes for existing members (DR-012)", () => {
+  const member = async (email: string) => {
+    const u = await t.user(email);
+    await t.admin(() => t.rows("insert into public.beta_access (user_id, via) values ($1, 'grandfathered')", [u]));
+    return u;
+  };
+
+  it("grants the code's premium days to a member who had none", async () => {
+    const u = await member("amina@example.com");
+    await code("PROMO-30", 10, 30);
+    expect(await redeem(u, "PROMO-30")).toBe("premium");
+    const days = ((await premiumEnd(u))!.getTime() - Date.now()) / 86_400_000;
+    expect(days).toBeGreaterThan(29.9);
+    expect(await uses("PROMO-30")).toBe(1);
+  });
+
+  it("the same member can't redeem the same code twice", async () => {
+    const u = await member("twice@example.com");
+    await code("PROMO-2X", 10, 30);
+    await redeem(u, "PROMO-2X");
+    expect(await redeem(u, "PROMO-2X")).toBe("used");
+    expect(await uses("PROMO-2X")).toBe(1);
+  });
+
+  it("a code with 0 premium days doesn't burn a use for a member", async () => {
+    const u = await member("zero@example.com");
+    await code("ACCESS-ONLY", 10, 0);
+    expect(await redeem(u, "ACCESS-ONLY")).toBe("already");
+    expect(await uses("ACCESS-ONLY")).toBe(0);
+  });
+
+  it("full and expired codes are still rejected for members", async () => {
+    const [u1, u2] = [await member("m1@example.com"), await member("m2@example.com")];
+    await code("ONE-SPOT", 1, 30);
+    await code("STALE-1", 10, 30, new Date(Date.now() - 1000).toISOString());
+    expect(await redeem(u1, "ONE-SPOT")).toBe("premium");
+    expect(await redeem(u2, "ONE-SPOT")).toBe("full");
+    expect(await redeem(u2, "STALE-1")).toBe("expired");
+  });
+
+  it("a new user who redeemed at the gate can't reuse the code later for more premium", async () => {
+    const u = await t.user("gate@example.com");
+    await code("GATE-1", 10, 30);
+    expect(await redeem(u, "GATE-1")).toBe("ok");
+    expect(await redeem(u, "GATE-1")).toBe("used");
+    expect(await uses("GATE-1")).toBe(1);
   });
 });

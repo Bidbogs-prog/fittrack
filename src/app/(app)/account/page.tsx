@@ -7,6 +7,7 @@ import { getCoachAllowance } from "@/lib/ai-usage";
 import { getProfile, isAdmin } from "@/lib/auth";
 import { isPremium } from "@/lib/entitlements";
 import { FeatureInterest } from "@/components/feature-interest";
+import { toStatusKey } from "@/i18n/status";
 import { IntentButton } from "@/components/intent-button";
 import { loadMemories } from "@/lib/coach/memory";
 import { MemoryList } from "./memory-list";
@@ -30,13 +31,14 @@ export default async function AccountPage({
 }: {
   searchParams: Promise<{ error?: string; message?: string }>;
 }) {
-  const [{ supabase, userId, profile }, { error, message }, t, tOnb, ta, locale] = await Promise.all([
+  const [{ supabase, userId, profile }, { error, message }, t, tOnb, ta, locale, tStatus] = await Promise.all([
     getProfile(),
     searchParams,
     getTranslations("me"),
     getTranslations("onboarding"),
     getTranslations("account"),
     getLocale(),
+    getTranslations("status"),
   ]);
 
   // Entry point only — every /admin page and action re-verifies membership.
@@ -99,7 +101,7 @@ export default async function AccountPage({
       {message && (
         <p role="status" className="flex max-w-xl items-start gap-2 rounded-xl border border-fibre/30 bg-fibre/10 px-3.5 py-3 text-sm text-fibre">
           <Info className="mt-0.5 size-4 shrink-0" weight="bold" />
-          <span className="min-w-0 break-words">{message}</span>
+          <span className="min-w-0 break-words">{toStatusKey(message) ? tStatus(toStatusKey(message)!) : message}</span>
         </p>
       )}
       {error && (
@@ -133,6 +135,9 @@ export default async function AccountPage({
               </li>
             ))}
           </ul>
+          <a href="/invite?redeem=1" className="text-xs text-paper-mute underline-offset-2 hover:text-paper hover:underline">
+            {t("haveCode")}
+          </a>
           {!premium && (
             <IntentButton
               kind="premium"

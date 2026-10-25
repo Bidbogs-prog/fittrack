@@ -11,13 +11,15 @@ export async function redeemInvite(formData: FormData) {
   const code = String(formData.get("code") ?? "")
     .trim()
     .toUpperCase();
-  if (!/^[A-Z0-9-]{4,32}$/.test(code)) redirect("/invite?error=invalid");
+  const back = (err: string) => redirect(`/invite?error=${err}&code=${encodeURIComponent(code)}`);
+  if (!/^[A-Z0-9-]{4,32}$/.test(code)) back("invalid");
 
   const { data, error } = await supabase.rpc("redeem_invite", { p_code: code, p_source: await readSource() });
-  if (error) redirect("/invite?error=generic");
-  if (data === "ok" || data === "already") {
+  if (error) back("generic");
+  if (data === "ok" || data === "premium" || data === "already") {
     (await cookies()).delete(INVITE_COOKIE);
-    redirect("/onboarding");
+    // Existing members land on Me, where the Premium badge confirms the grant.
+    redirect(data === "ok" ? "/onboarding" : `/account?message=${encodeURIComponent(data === "premium" ? "codePremium" : "codeNothing")}`);
   }
-  redirect(`/invite?error=${encodeURIComponent(String(data ?? "invalid"))}`);
+  back(String(data ?? "invalid"));
 }

@@ -14,18 +14,27 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t("title") };
 }
 
-const ERRORS = ["invalid", "expired", "full", "generic"] as const;
+const ERRORS = ["invalid", "expired", "full", "used", "generic"] as const;
 
-/** The beta gate: signed in, but no invite redeemed and not admitted yet. */
-export default async function InvitePage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
-  const [{ supabase, userId, claims }, { error }, t, jar] = await Promise.all([
+/**
+ * The beta gate (no access yet: an invite code is required) and, for users
+ * who already have access, the place to redeem a code for its premium days
+ * (DR-012). Existing users only see the form when they bring a code.
+ */
+export default async function InvitePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string; code?: string; redeem?: string }>;
+}) {
+  const [{ supabase, userId, claims }, { error, code: codeParam, redeem }, t, jar] = await Promise.all([
     requireUser(),
     searchParams,
     getTranslations("invite"),
     cookies(),
   ]);
-  if (await ensureBetaAccess(supabase, userId)) redirect("/onboarding");
-  const prefill = jar.get(INVITE_COOKIE)?.value ?? "";
+  const prefill = (codeParam ?? jar.get(INVITE_COOKIE)?.value ?? "").toUpperCase().slice(0, 32);
+  const member = await ensureBetaAccess(supabase, userId);
+  if (member && !prefill && !error && redeem !== "1") redirect("/onboarding");
   const err = ERRORS.find((e) => e === error);
 
   return (
@@ -33,8 +42,10 @@ export default async function InvitePage({ searchParams }: { searchParams: Promi
       <Logo href="/" size="sm" />
       <div className="mt-16 flex flex-col gap-3">
         <p className="text-xs font-semibold tracking-[0.14em] text-flame uppercase">{t("eyebrow")}</p>
-        <h1 className="font-display text-3xl font-bold tracking-[-0.03em] text-paper">{t("title")}</h1>
-        <p className="text-sm leading-relaxed text-paper-dim">{t("body")}</p>
+        <h1 className="font-display text-3xl font-bold tracking-[-0.03em] text-paper">
+          {member ? t("memberTitle") : t("title")}
+        </h1>
+        <p className="text-sm leading-relaxed text-paper-dim">{member ? t("memberBody") : t("body")}</p>
       </div>
 
       {err && (
@@ -61,22 +72,30 @@ export default async function InvitePage({ searchParams }: { searchParams: Promi
           />
         </div>
         <button type="submit" className="btn-press btn-flame w-full rounded-xl px-5 py-3 text-sm font-semibold">
-          {t("submit")}
+          {member ? t("memberSubmit") : t("submit")}
         </button>
       </form>
 
-      <div className="mt-8 rounded-2xl border border-ink-800 bg-ink-900 p-4 text-sm text-paper-dim">
-        <p>{t("noCode", { email: String(claims.email ?? "") })}</p>
-        <Link href="/#waitlist" className="mt-2 inline-flex min-h-9 items-center font-medium text-flame hover:text-flame-glow">
-          {t("joinWaitlist")} <span aria-hidden className="ms-1 rtl:-scale-x-100">→</span>
+      {member ? (
+        <Link href="/dashboard" className="mt-6 inline-flex min-h-9 items-center text-sm text-paper-mute hover:text-paper">
+          {t("backToApp")}
         </Link>
-      </div>
+      ) : (
+        <>
+          <div className="mt-8 rounded-2xl border border-ink-800 bg-ink-900 p-4 text-sm text-paper-dim">
+            <p>{t("noCode", { email: String(claims.email ?? "") })}</p>
+            <Link href="/#waitlist" className="mt-2 inline-flex min-h-9 items-center font-medium text-flame hover:text-flame-glow">
+              {t("joinWaitlist")} <span aria-hidden className="ms-1 rtl:-scale-x-100">→</span>
+            </Link>
+          </div>
 
-      <form action={signout} className="mt-auto pt-10">
-        <button type="submit" className="text-xs text-paper-mute hover:text-paper">
-          {t("signOut")}
-        </button>
-      </form>
+          <form action={signout} className="mt-auto pt-10">
+            <button type="submit" className="text-xs text-paper-mute hover:text-paper">
+              {t("signOut")}
+            </button>
+          </form>
+        </>
+      )}
     </div>
   );
 }
