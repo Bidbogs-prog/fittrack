@@ -210,6 +210,107 @@ export async function assignPlanToRequest(formData: FormData) {
   redirect(back);
 }
 
+/**
+ * Accept a request: open (or reuse) a private DRAFT plan for that person
+ * and go to the builder, which shows their brief. Nothing reaches the user
+ * until sendPlanForRequest.
+ */
+export async function startPlanForRequest(formData: FormData) {
+  const { supabase } = await requireAdmin();
+  const back = "/admin/requests";
+  const requestId = String(formData.get("request_id") ?? "");
+  if (!requestId) fail(back, "Missing request.");
+
+  const { data: request } = await supabase
+    .from("plan_requests")
+    .select("id, status, plan_id, full_name, email, goal")
+    .eq("id", requestId)
+    .maybeSingle();
+  if (!request || request.status !== "pending") fail(back, "That request is no longer open.");
+
+  if (request.plan_id) {
+    const { data: existing } = await supabase
+      .from("meal_plans")
+      .select("id, draft")
+      .eq("id", request.plan_id)
+      .maybeSingle();
+    if (existing?.draft) redirect(`/admin/plans/${existing.id}`);
+  }
+
+  const who = (request.full_name as string | null)?.split(" ")[0] || (request.email as string).split("@")[0];
+  const goal = GOAL_VALUES.includes(request.goal as Goal) ? (request.goal as Goal) : "maintain";
+  const { data: plan, error } = await supabase
+    .from("meal_plans")
+    .insert({ name: `Plan for ${who}`, goal, description: null, draft: true })
+    .select("id")
+    .single();
+  if (error || !plan) fail(back, error?.message ?? "Could not start the plan.");
+
+  const { error: linkError } = await supabase
+    .from("plan_requests")
+    .update({ plan_id: plan.id })
+    .eq("id", requestId)
+    .eq("status", "pending");
+  if (linkError) fail(back, linkError.message);
+
+  revalidatePath(back);
+  redirect(`/admin/plans/${plan.id}`);
+}
+
+/** Rename / describe a plan (used on drafts before sending). */
+export async function updatePlanDetails(formData: FormData) {
+  const { supabase } = await requireAdmin();
+  const planId = String(formData.get("plan_id") ?? "");
+  const back = `/admin/plans/${planId}`;
+  const name = String(formData.get("name") ?? "").trim().slice(0, 120);
+  const description = String(formData.get("description") ?? "").trim().slice(0, 1000) || null;
+  if (!planId) fail("/admin/plans", "Missing plan.");
+  if (!name) fail(back, "Give the plan a name.");
+
+  const { error } = await supabase.from("meal_plans").update({ name, description }).eq("id", planId);
+  if (error) fail(back, error.message);
+  revalidatePath(back);
+  redirect(`${back}?message=${encodeURIComponent("Plan details saved.")}`);
+}
+
+/** Confirm: the draft becomes the requester's private plan and the request is fulfilled. */
+export async function sendPlanForRequest(formData: FormData) {
+  const { supabase } = await requireAdmin();
+  const planId = String(formData.get("plan_id") ?? "");
+  const back = `/admin/plans/${planId}`;
+  if (!planId) fail("/admin/plans", "Missing plan.");
+
+  const [{ data: plan }, { data: request }] = await Promise.all([
+    supabase.from("meal_plans").select("id, draft, items:meal_plan_items(count)").eq("id", planId).maybeSingle(),
+    supabase
+      .from("plan_requests")
+      .select("id, user_id, status")
+      .eq("plan_id", planId)
+      .eq("status", "pending")
+      .maybeSingle(),
+  ]);
+  if (!plan || !plan.draft) fail(back, "This plan isn't a draft for an open request.");
+  if (!request) fail(back, "The request was cancelled or already fulfilled.");
+  const itemCount = (plan.items as { count: number }[] | null)?.[0]?.count ?? 0;
+  if (itemCount === 0) fail(back, "Add at least one item before sending the plan.");
+
+  const { error } = await supabase
+    .from("meal_plans")
+    .update({ draft: false, assigned_to: request.user_id })
+    .eq("id", planId);
+  if (error) fail(back, error.message);
+
+  const { error: requestError } = await supabase
+    .from("plan_requests")
+    .update({ status: "fulfilled", resolved_at: new Date().toISOString() })
+    .eq("id", request.id);
+  if (requestError) fail(back, requestError.message);
+
+  revalidatePath("/admin/requests");
+  revalidatePath("/plans");
+  redirect(`/admin/requests?sent=${encodeURIComponent(planId)}`);
+}
+
 export async function dismissPlanRequest(formData: FormData) {
   const { supabase } = await requireAdmin();
   const id = String(formData.get("id") ?? "");

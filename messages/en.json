@@ -729,7 +729,7 @@
     "generate": "Generate plan",
     "requestPending": "Your coach has your request. The plan lands here when it's ready.",
     "cancelRequest": "Cancel request",
-    "requestHint": "Ask your coach for a custom day of eating. It lands here when it's done.",
+    "requestHint": "Ask your coach for a custom day of eating. To build it, your coach sees your profile, targets and a summary of your recent eating. It lands here when it's done.",
     "requestPlaceholder": "Foods you love or avoid, schedule, budget…",
     "sendRequest": "Request a plan",
     "back": "Plans",

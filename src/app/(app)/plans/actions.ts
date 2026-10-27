@@ -10,6 +10,7 @@ import { type GeminiSchema } from "@/lib/gemini";
 import { generateJson, LlmError } from "@/lib/llm";
 import { macrosForPortion, sumMacros } from "@/lib/nutrition";
 import { MEAL_TYPES, type Food, type MealPlanItem, type MealType } from "@/lib/types";
+import { buildPlanBrief } from "@/lib/plan-brief";
 
 /**
  * Actionable plans (roadmap 1.4): any visible plan can be logged into the
@@ -74,6 +75,8 @@ export async function requestPlan(formData: FormData) {
       full_name: profile.full_name,
       goal: profile.goal,
       note,
+      // The coach builds the plan from this brief (profile, targets, recent eating, safety flags).
+      snapshot: await buildPlanBrief(supabase, userId, profile),
     });
   }
 

@@ -325,8 +325,10 @@ export interface PlanRequest {
   goal: Goal | null;
   note: string | null;
   status: PlanRequestStatus;
-  /** The plan assigned in response (null until fulfilled, or if since deleted). */
+  /** The plan assigned in response; while pending, the admin's draft for this request. */
   plan_id: string | null;
+  /** Requester brief captured at request time (src/lib/plan-brief.ts); null for old requests. */
+  snapshot: import("./plan-brief").PlanBrief | null;
   created_at: string;
   resolved_at: string | null;
 }

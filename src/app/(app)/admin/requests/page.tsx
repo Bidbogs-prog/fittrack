@@ -3,7 +3,8 @@ import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { GOALS } from "@/lib/nutrition";
 import type { Goal, PlanRequest } from "@/lib/types";
-import { assignPlanToRequest, dismissPlanRequest, unassignPlanRequest } from "../actions";
+import { assignPlanToRequest, dismissPlanRequest, startPlanForRequest, unassignPlanRequest } from "../actions";
+import { PlanBriefCard } from "./brief";
 
 export const metadata = { title: "Admin · Plan requests" };
 
@@ -24,11 +25,11 @@ function requestDate(iso: string) {
 export default async function AdminRequestsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; sent?: string }>;
 }) {
-  const [{ supabase }, { error }] = await Promise.all([requireAdmin(), searchParams]);
+  const [{ supabase }, { error, sent }] = await Promise.all([requireAdmin(), searchParams]);
 
-  const [{ data: requestData }, { data: planData }, { data: assignedPlanData }] =
+  const [{ data: requestData }, { data: planData }, { data: assignedPlanData }, { data: draftData }] =
     await Promise.all([
       supabase
         .from("plan_requests")
@@ -41,6 +42,7 @@ export default async function AdminRequestsPage({
         .select("id, name, goal")
         .is("owner_id", null)
         .is("assigned_to", null)
+        .eq("draft", false)
         .order("created_at", { ascending: false }),
       // For naming the plan on fulfilled rows.
       supabase
@@ -48,7 +50,9 @@ export default async function AdminRequestsPage({
         .select("id, name, goal")
         .is("owner_id", null)
         .not("assigned_to", "is", null),
+      supabase.from("meal_plans").select("id").eq("draft", true),
     ]);
+  const draftIds = new Set(((draftData ?? []) as { id: string }[]).map((d) => d.id));
 
   const requests = (requestData ?? []) as PlanRequest[];
   const pending = requests.filter((r) => r.status === "pending");
@@ -73,13 +77,15 @@ export default async function AdminRequestsPage({
           <span className="font-mono text-sm text-paper-mute tabular">({pending.length})</span>
         </h2>
         <p className="mb-4 text-xs text-paper-mute">
-          Assigning a plan makes it private to that user and shows it under &ldquo;From your
-          coach&rdquo; on their Meal plans tab. Need a fresh one? Build it in{" "}
-          <Link href="/admin/plans" className="text-flame underline underline-offset-4">
-            Meal plans
-          </Link>{" "}
-          first, then assign it here.
+          Each request carries the person&rsquo;s brief. <strong className="text-paper-dim">Accept &amp; build</strong>{" "}
+          opens a private draft next to their brief; they only see it once you confirm and send it — it then appears
+          under &ldquo;From your coach&rdquo; on their Meal plans tab.
         </p>
+        {sent && (
+          <p className="mb-4 rounded-lg border border-fibre/30 bg-fibre/10 px-3.5 py-3 text-sm text-fibre">
+            Plan sent. It&rsquo;s now on their Meal plans tab.
+          </p>
+        )}
 
         {pending.length === 0 ? (
           <p className="rounded-2xl border border-dashed border-ink-700 px-6 py-14 text-center text-sm text-paper-mute">
@@ -114,15 +120,35 @@ export default async function AdminRequestsPage({
                   </form>
                 </div>
 
-                {request.note && (
-                  <p className="mt-3 rounded-lg bg-ink-800/60 px-3.5 py-2.5 text-xs leading-relaxed text-paper-dim">
-                    {request.note}
-                  </p>
-                )}
+                <div className="mt-4">
+                  <PlanBriefCard brief={request.snapshot} note={request.note} compact />
+                </div>
 
+                <div className="mt-4 flex flex-wrap items-center gap-3">
+                  {request.plan_id && draftIds.has(request.plan_id) ? (
+                    <Link
+                      href={`/admin/plans/${request.plan_id}`}
+                      className="btn-press inline-flex items-center rounded-xl btn-flame px-5 py-2.5 text-sm font-semibold"
+                    >
+                      Continue the draft →
+                    </Link>
+                  ) : (
+                    <form action={startPlanForRequest}>
+                      <input type="hidden" name="request_id" value={request.id} />
+                      <button type="submit" className="btn-press rounded-xl btn-flame px-5 py-2.5 text-sm font-semibold">
+                        Accept & build plan
+                      </button>
+                    </form>
+                  )}
+                </div>
+
+                <details className="mt-3">
+                  <summary className="cursor-pointer text-xs text-paper-mute hover:text-paper">
+                    Or assign an existing plan
+                  </summary>
                 <form
                   action={assignPlanToRequest}
-                  className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center"
+                  className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center"
                 >
                   <input type="hidden" name="request_id" value={request.id} />
                   <select
@@ -151,6 +177,7 @@ export default async function AdminRequestsPage({
                     Assign
                   </button>
                 </form>
+                </details>
               </li>
             ))}
           </ul>

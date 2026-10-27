@@ -729,7 +729,7 @@
     "generate": "Générer le plan",
     "requestPending": "Votre coach a reçu la demande. Le plan arrivera ici une fois prêt.",
     "cancelRequest": "Annuler la demande",
-    "requestHint": "Demandez à votre coach une journée sur mesure. Elle arrivera ici une fois prête.",
+    "requestHint": "Demandez à votre coach une journée sur mesure. Pour la préparer, il voit votre profil, vos objectifs et un résumé de votre alimentation récente. Elle arrivera ici une fois prête.",
     "requestPlaceholder": "Aliments aimés ou évités, horaires, budget…",
     "sendRequest": "Demander un plan",
     "back": "Plans",

@@ -87,6 +87,8 @@ export default async function PlansPage({
       .select("*, items:meal_plan_items(*, food:foods(*))")
       .eq("goal", goal)
       .is("assigned_to", null)
+      // Admins can read coach drafts (RLS); they're never shelf plans.
+      .eq("draft", false)
       .order("created_at", { ascending: false }),
     // Plans the coach assigned to this user — shown regardless of goal filter.
     supabase

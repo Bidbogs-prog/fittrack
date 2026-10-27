@@ -5,8 +5,16 @@ import { FoodPicker } from "@/components/food-picker";
 import { MacroInline } from "@/components/macros";
 import { requireAdmin } from "@/lib/auth";
 import { GOALS, macrosForPortion, sumMacros } from "@/lib/nutrition";
-import { MEAL_TYPES, type MealPlan } from "@/lib/types";
-import { addPlanItem, addSavedMealToPlan, deletePlan, deletePlanItem } from "../../actions";
+import { MEAL_TYPES, type MealPlan, type PlanRequest } from "@/lib/types";
+import {
+  addPlanItem,
+  addSavedMealToPlan,
+  deletePlan,
+  deletePlanItem,
+  sendPlanForRequest,
+  updatePlanDetails,
+} from "../../actions";
+import { PlanBriefCard } from "../../requests/brief";
 
 export const metadata = { title: "Admin · Plan builder" };
 
@@ -29,22 +37,32 @@ export default async function PlanBuilderPage({
     searchParams,
   ]);
 
-  const [{ data: planData }, { data: savedMealData }] = await Promise.all([
+  const [{ data: planData }, { data: savedMealData }, { data: requestData }] = await Promise.all([
     supabase
       .from("meal_plans")
       .select("*, items:meal_plan_items(*, food:foods(*))")
       .eq("id", id)
       .maybeSingle(),
+    // A draft built for a coach request (startPlanForRequest) shows that person's brief.
     // The admin's own dashboard-saved meals, for bulk-adding into the plan.
     supabase
       .from("saved_meals")
       .select("id, name, items:saved_meal_items(food_id, grams)")
       .eq("user_id", userId)
       .order("created_at", { ascending: false }),
+    supabase
+      .from("plan_requests")
+      .select("*")
+      .eq("plan_id", id)
+      .eq("status", "pending")
+      .maybeSingle(),
   ]);
 
   if (!planData) notFound();
-  const plan = planData as MealPlan;
+  const plan = planData as MealPlan & { draft?: boolean };
+  const request = (requestData as PlanRequest | null) ?? null;
+  const forRequest = plan.draft === true && request != null;
+  const who = request?.full_name || request?.email || "them";
 
   // Only meals with at least one real food portion can feed a plan.
   const savedMeals = ((savedMealData ?? []) as SavedMealOption[])
@@ -52,6 +70,7 @@ export default async function PlanBuilderPage({
     .filter((m) => m.foodCount > 0);
 
   const dayTotal = sumMacros(plan.items.map((it) => macrosForPortion(it.food, it.grams)));
+  const targets = forRequest ? (request.snapshot?.targets ?? null) : null;
 
   return (
     <div className="space-y-7">
@@ -107,6 +126,93 @@ export default async function PlanBuilderPage({
           <WarningCircle className="mt-0.5 size-4 shrink-0" weight="bold" />
           {error}
         </p>
+      )}
+
+      {plan.draft && !request && (
+        <p className="rounded-lg border border-ink-700 px-3.5 py-3 text-sm text-paper-dim">
+          Draft — its request was cancelled or resolved. Delete it, or keep building and assign it from Plan requests.
+        </p>
+      )}
+
+      {forRequest && (
+        <section className="grid gap-5 rounded-2xl border border-flame/30 bg-[linear-gradient(135deg,rgba(255,157,59,.08),rgba(242,112,31,.02))] p-6 lg:grid-cols-[1.3fr_1fr]">
+          <div className="min-w-0">
+            <p className="text-xs font-semibold tracking-[0.16em] text-flame uppercase">Draft for {who}</p>
+            <p className="mt-1 mb-4 text-xs text-paper-mute">
+              {request.email} · requested {new Date(request.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+            </p>
+            <PlanBriefCard brief={request.snapshot} note={request.note} />
+          </div>
+
+          <div className="flex min-w-0 flex-col gap-4">
+            {targets && (
+              <div className="rounded-xl border border-ink-800 bg-ink-950/50 p-4">
+                <p className="text-[11px] tracking-wide text-paper-mute uppercase">This plan vs their targets</p>
+                <dl className="mt-2 grid grid-cols-[auto_1fr_auto] items-center gap-x-3 gap-y-1.5 font-mono text-xs tabular">
+                  {(
+                    [
+                      ["kcal", dayTotal.kcal, targets.kcal],
+                      ["Protein g", dayTotal.protein, targets.protein],
+                      ["Carbs g", dayTotal.carbs, targets.carbs],
+                      ["Fat g", dayTotal.fat, targets.fat],
+                      ["Fibre g", dayTotal.fibre, targets.fibre],
+                    ] as const
+                  ).map(([label, have, want]) => {
+                    const off = want > 0 ? (have - want) / want : 0;
+                    return (
+                      <div key={label} className="contents">
+                        <dt className="text-paper-mute">{label}</dt>
+                        <dd className="text-paper">
+                          {Math.round(have)} / {want}
+                        </dd>
+                        <dd className={Math.abs(off) <= 0.1 ? "text-fibre" : "text-flame"}>
+                          {off >= 0 ? "+" : "−"}
+                          {Math.abs(Math.round(off * 100))}%
+                        </dd>
+                      </div>
+                    );
+                  })}
+                </dl>
+                <p className="mt-2 text-[11px] text-paper-mute">Green = within 10% of their target.</p>
+              </div>
+            )}
+
+            <form action={updatePlanDetails} className="flex flex-col gap-2">
+              <input type="hidden" name="plan_id" value={plan.id} />
+              <label htmlFor="plan-name" className="field-label">Plan name</label>
+              <input id="plan-name" name="name" required defaultValue={plan.name} maxLength={120} className="field" />
+              <label htmlFor="plan-desc" className="field-label">Message to {who} (optional)</label>
+              <textarea
+                id="plan-desc"
+                name="description"
+                rows={3}
+                maxLength={1000}
+                defaultValue={plan.description ?? ""}
+                placeholder="How to use the plan, swaps, timing…"
+                className="field resize-none"
+              />
+              <button type="submit" className="btn-press self-start rounded-lg border border-ink-700 px-3.5 py-2 text-xs font-semibold text-paper-dim hover:text-paper">
+                Save details
+              </button>
+            </form>
+
+            <form action={sendPlanForRequest} className="mt-auto">
+              <input type="hidden" name="plan_id" value={plan.id} />
+              <button
+                type="submit"
+                disabled={plan.items.length === 0}
+                className="btn-press w-full rounded-xl btn-flame px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Confirm &amp; send to {who}
+              </button>
+              <p className="mt-1.5 text-[11px] text-paper-mute">
+                {plan.items.length === 0
+                  ? "Add at least one item first."
+                  : "They'll see it under “From your coach” on their Meal plans tab. You can unassign it later."}
+              </p>
+            </form>
+          </div>
+        </section>
       )}
 
       {/* add item */}
