@@ -99,6 +99,31 @@ describe("invite codes", () => {
   });
 });
 
+describe("deleting invite codes", () => {
+  it("admin deletes a used code: link stops working, granted access and premium stay", async () => {
+    const admin = await t.user("admin@example.com");
+    await t.admin(() => t.rows("insert into public.admins (user_id) values ($1)", [admin]));
+    const u = await t.user("used@example.com");
+    await code("GONE-1", 5, 30);
+    expect(await redeem(u, "GONE-1")).toBe("ok");
+
+    await t.as(admin, () => t.rows("delete from public.invite_codes where code = 'GONE-1'"));
+    expect(await t.admin(() => t.rows("select 1 from public.invite_codes where code = 'GONE-1'"))).toHaveLength(0);
+    expect(await hasAccess(u)).toBe(true);
+    expect(await premiumEnd(u)).toBeTruthy();
+
+    const late = await t.user("late@example.com");
+    expect(await redeem(late, "GONE-1")).toBe("invalid");
+  });
+
+  it("non-admins can't delete codes", async () => {
+    const u = await t.user("u@example.com");
+    await code("KEEP-1");
+    await t.as(u, () => t.rows("delete from public.invite_codes where code = 'KEEP-1'"));
+    expect(await t.admin(() => t.rows("select 1 from public.invite_codes where code = 'KEEP-1'"))).toHaveLength(1);
+  });
+});
+
 describe("waitlist", () => {
   const join = (email: string, ref: string | null = null) =>
     t.as(null, async () =>

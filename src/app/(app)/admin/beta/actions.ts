@@ -31,6 +31,22 @@ export async function createInviteCode(formData: FormData) {
   back(`created=${encodeURIComponent(code)}`);
 }
 
+/**
+ * Delete an invite code: its link stops working. Access and Premium already
+ * granted through it are kept (beta_access / entitlements don't reference
+ * the code); its redemption history goes with it.
+ */
+export async function deleteInviteCode(formData: FormData) {
+  const { supabase } = await requireAdmin();
+  const code = String(formData.get("code") ?? "").trim().toUpperCase();
+  if (!/^[A-Z0-9-]{4,32}$/.test(code)) back("error=Invalid code.");
+  const { error, count } = await supabase.from("invite_codes").delete({ count: "exact" }).eq("code", code);
+  if (error) back(`error=${encodeURIComponent(error.message)}`);
+  if (!count) back("error=That code no longer exists.");
+  revalidatePath("/admin/beta");
+  back(`removed=${encodeURIComponent(code)}`);
+}
+
 /** Admit the next N waitlist entries in queue order (referrals first). */
 export async function admitWaitlist(formData: FormData) {
   const { supabase } = await requireAdmin();

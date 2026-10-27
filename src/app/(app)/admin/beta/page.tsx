@@ -1,6 +1,6 @@
 import { requireAdmin } from "@/lib/auth";
 import { SITE_URL } from "@/lib/site";
-import { admitWaitlist, createInviteCode } from "./actions";
+import { admitWaitlist, createInviteCode, deleteInviteCode } from "./actions";
 
 export const metadata = { title: "Admin · Beta" };
 
@@ -35,7 +35,7 @@ const field = "field h-10 text-sm";
 export default async function AdminBetaPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; created?: string; admitted?: string; s?: string }>;
+  searchParams: Promise<{ error?: string; created?: string; removed?: string; admitted?: string; s?: string }>;
 }) {
   const [{ supabase }, q] = await Promise.all([requireAdmin(), searchParams]);
   const [{ data: waitData }, { data: codeData }, { count: accessCount }] = await Promise.all([
@@ -61,6 +61,7 @@ export default async function AdminBetaPage({
     <div className="space-y-8">
       {q.error && <p role="alert" className="rounded-xl border border-danger/30 bg-danger/[0.08] px-3.5 py-3 text-sm text-danger">{q.error}</p>}
       {q.created && <p role="status" className="rounded-xl border border-fibre/30 bg-fibre/10 px-3.5 py-3 text-sm text-fibre">Created {q.created}.</p>}
+      {q.removed && <p role="status" className="rounded-xl border border-fibre/30 bg-fibre/10 px-3.5 py-3 text-sm text-fibre">Deleted {q.removed}.</p>}
       {q.admitted && <p role="status" className="rounded-xl border border-fibre/30 bg-fibre/10 px-3.5 py-3 text-sm text-fibre">Admitted {q.admitted}. Send them the email list below — they get in automatically when they sign up with that address.</p>}
 
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-5">
@@ -112,10 +113,10 @@ export default async function AdminBetaPage({
         <div className="overflow-x-auto rounded-2xl border border-ink-800">
           <table className="w-full text-sm">
             <thead className="bg-ink-900 text-start text-xs text-paper-mute">
-              <tr>{["Code", "Label", "Uses", "Premium", "Expires", "Share link"].map((h) => <th key={h} className="px-3 py-2 text-start font-medium">{h}</th>)}</tr>
+              <tr>{["Code", "Label", "Uses", "Premium", "Expires", "Share link", ""].map((h, i) => <th key={i} className="px-3 py-2 text-start font-medium">{h}</th>)}</tr>
             </thead>
             <tbody>
-              {codes.length === 0 && <tr><td colSpan={6} className="px-3 py-4 text-paper-mute">No codes yet.</td></tr>}
+              {codes.length === 0 && <tr><td colSpan={7} className="px-3 py-4 text-paper-mute">No codes yet.</td></tr>}
               {codes.map((c) => (
                 <tr key={c.code} className="border-t border-ink-800">
                   <td className="px-3 py-2 font-mono text-paper">{c.code}</td>
@@ -124,6 +125,23 @@ export default async function AdminBetaPage({
                   <td className="px-3 py-2 font-mono tabular">{c.premium_days} d</td>
                   <td className="px-3 py-2">{day(c.expires_at)}</td>
                   <td className="px-3 py-2 font-mono text-xs text-paper-mute">{SITE_URL}/signup?code={c.code}</td>
+                  <td className="px-3 py-2 text-end">
+                    {/* Two-step: open, then confirm. Access and Premium already granted are kept. */}
+                    <details className="relative inline-block">
+                      <summary className="cursor-pointer list-none text-xs text-paper-mute hover:text-danger [&::-webkit-details-marker]:hidden">
+                        Remove
+                      </summary>
+                      <form action={deleteInviteCode} className="absolute end-0 top-6 z-10 w-56 rounded-xl border border-ink-700 bg-ink-850 p-3 text-start shadow-float">
+                        <input type="hidden" name="code" value={c.code} />
+                        <p className="text-xs text-paper-dim">
+                          Delete <span className="font-mono text-paper">{c.code}</span>? The link stops working. People who already used it keep their access and Premium.
+                        </p>
+                        <button type="submit" className="btn-press mt-2 rounded-lg bg-danger/15 px-3 py-1.5 text-xs font-semibold text-danger hover:bg-danger/25">
+                          Delete code
+                        </button>
+                      </form>
+                    </details>
+                  </td>
                 </tr>
               ))}
             </tbody>
