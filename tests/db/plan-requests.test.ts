@@ -48,6 +48,21 @@ describe("brief", () => {
   });
 });
 
+describe("admin read access to requesters (20260821000000)", () => {
+  it("admin reads a pending requester's profile and diary; not other users'", async () => {
+    await t.admin(() =>
+      t.rows("insert into public.diary_entries (user_id, entry_date, meal, quick_name, quick_kcal) values ($1, current_date, 'lunch', 'Tagine', 600), ($2, current_date, 'lunch', 'Secret', 500)", [requester, other])
+    );
+    const profiles = await t.as(admin, () => t.rows<{ id: string }>("select id from public.profiles where id in ($1, $2)", [requester, other]));
+    expect(profiles.map((p) => p.id)).toEqual([requester]);
+    const diary = await t.as(admin, () => t.rows<{ quick_name: string }>("select quick_name from public.diary_entries where user_id in ($1, $2)", [requester, other]));
+    expect(diary.map((d) => d.quick_name)).toEqual(["Tagine"]);
+  });
+  it("non-admins get nothing extra", async () => {
+    expect(await t.as(other, () => t.rows("select 1 from public.profiles where id = $1", [requester]))).toHaveLength(0);
+  });
+});
+
 describe("draft visibility", () => {
   it("while drafting: admin sees it, requester and others don't", async () => {
     expect(await sees(admin)).toBe(true);
@@ -75,6 +90,10 @@ describe("draft visibility", () => {
     await t.as(admin, () => t.rows("update public.plan_requests set status = 'fulfilled' where id = $1", [requestId]));
     expect(await sees(requester)).toBe(true);
     expect(await sees(other)).toBe(false);
+  });
+
+  it("once fulfilled, the admin loses read access to the requester's data", async () => {
+    expect(await t.as(admin, () => t.rows("select 1 from public.profiles where id = $1", [requester]))).toHaveLength(0);
   });
 
   it("a requester can't flip their own request to fulfilled", async () => {

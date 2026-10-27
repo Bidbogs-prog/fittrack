@@ -27,8 +27,8 @@ export function PlanBriefCard({
   if (!brief) {
     return (
       <p className="rounded-lg bg-ink-800/60 px-3.5 py-2.5 text-xs text-paper-mute">
-        No brief for this request (sent before briefs existed). Ask them to cancel and request again to share their
-        profile and targets.
+        No brief yet — it&rsquo;s built from their live data when you open the draft (Accept &amp; build). If it stays
+        empty, their profile couldn&rsquo;t be read.
       </p>
     );
   }

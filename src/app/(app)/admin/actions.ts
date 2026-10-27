@@ -4,6 +4,7 @@ import { randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
+import { refreshRequestBrief } from "@/lib/plan-brief";
 import {
   FOOD_CATEGORIES,
   MEAL_TYPES,
@@ -255,6 +256,24 @@ export async function startPlanForRequest(formData: FormData) {
 
   revalidatePath(back);
   redirect(`/admin/plans/${plan.id}`);
+}
+
+/** Rebuild the requester's brief from their current data (open requests only). */
+export async function refreshPlanBrief(formData: FormData) {
+  const { supabase } = await requireAdmin();
+  const planId = String(formData.get("plan_id") ?? "");
+  const back = `/admin/plans/${planId}`;
+  const { data: request } = await supabase
+    .from("plan_requests")
+    .select("id, user_id")
+    .eq("plan_id", planId)
+    .eq("status", "pending")
+    .maybeSingle();
+  if (!request) fail(back, "No open request for this plan.");
+  const brief = await refreshRequestBrief(supabase, request.id as string, request.user_id as string);
+  if (!brief) fail(back, "Couldn't read their profile. Apply migration 20260821000000 and try again.");
+  revalidatePath(back);
+  redirect(`${back}?message=${encodeURIComponent("Brief refreshed.")}`);
 }
 
 /** Rename / describe a plan (used on drafts before sending). */

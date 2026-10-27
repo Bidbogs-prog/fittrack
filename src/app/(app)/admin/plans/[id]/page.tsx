@@ -11,9 +11,11 @@ import {
   addSavedMealToPlan,
   deletePlan,
   deletePlanItem,
+  refreshPlanBrief,
   sendPlanForRequest,
   updatePlanDetails,
 } from "../../actions";
+import { refreshRequestBrief } from "@/lib/plan-brief";
 import { PlanBriefCard } from "../../requests/brief";
 
 export const metadata = { title: "Admin · Plan builder" };
@@ -62,6 +64,10 @@ export default async function PlanBuilderPage({
   const plan = planData as MealPlan & { draft?: boolean };
   const request = (requestData as PlanRequest | null) ?? null;
   const forRequest = plan.draft === true && request != null;
+  // Requests sent before briefs existed: build it now from their live data.
+  if (forRequest && !request.snapshot) {
+    request.snapshot = await refreshRequestBrief(supabase, request.id, request.user_id);
+  }
   const who = request?.full_name || request?.email || "them";
 
   // Only meals with at least one real food portion can feed a plan.
@@ -142,6 +148,12 @@ export default async function PlanBuilderPage({
               {request.email} · requested {new Date(request.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
             </p>
             <PlanBriefCard brief={request.snapshot} note={request.note} />
+            <form action={refreshPlanBrief} className="mt-3">
+              <input type="hidden" name="plan_id" value={plan.id} />
+              <button type="submit" className="text-xs text-paper-mute underline-offset-2 hover:text-paper hover:underline">
+                Refresh with their latest data
+              </button>
+            </form>
           </div>
 
           <div className="flex min-w-0 flex-col gap-4">

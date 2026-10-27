@@ -29,6 +29,24 @@ export interface PlanBrief {
   context: string | null;
 }
 
+/**
+ * Admin side: rebuild a pending request's brief from the requester's live
+ * data and save it on the request. Works through the admin read policies
+ * (migration 20260821000000), which only cover people with an open request.
+ * Returns null if their profile isn't readable.
+ */
+export async function refreshRequestBrief(
+  supabase: SupabaseClient,
+  requestId: string,
+  requesterId: string
+): Promise<PlanBrief | null> {
+  const { data: profile } = await supabase.from("profiles").select("*").eq("id", requesterId).maybeSingle();
+  if (!profile) return null;
+  const brief = await buildPlanBrief(supabase, requesterId, profile as Profile);
+  await supabase.from("plan_requests").update({ snapshot: brief }).eq("id", requestId).eq("status", "pending");
+  return brief;
+}
+
 export async function buildPlanBrief(supabase: SupabaseClient, userId: string, profile: Profile): Promise<PlanBrief> {
   const base: PlanBrief = {
     version: 1,
