@@ -42,9 +42,14 @@ export async function readSource(): Promise<Record<string, string> | null> {
  * True when the user may use the app. Tries the admitted-waitlist path on
  * the way (no code needed for admitted emails). Cached per request.
  */
+/** The user's beta_access row, read once per request (layout + gate share it). */
+const betaRow = cache(async (supabase: Supabase, userId: string) =>
+  supabase.from("beta_access").select("via, invite_code, source").eq("user_id", userId).maybeSingle()
+);
+
 export const ensureBetaAccess = cache(async (supabase: Supabase, userId: string): Promise<boolean> => {
   if (!betaGateOn()) return true;
-  const { data, error } = await supabase.from("beta_access").select("user_id").eq("user_id", userId).maybeSingle();
+  const { data, error } = await betaRow(supabase, userId);
   // Fail open if the table isn't there yet (migration not pushed).
   if (error) return true;
   if (data) return true;
@@ -59,11 +64,7 @@ export interface BetaInfo {
 }
 
 export async function getBetaInfo(supabase: Supabase, userId: string): Promise<BetaInfo> {
-  const { data } = await supabase
-    .from("beta_access")
-    .select("via, invite_code, source")
-    .eq("user_id", userId)
-    .maybeSingle();
+  const { data } = await betaRow(supabase, userId);
   return {
     via: (data?.via as string | undefined) ?? null,
     inviteCode: (data?.invite_code as string | null | undefined) ?? null,

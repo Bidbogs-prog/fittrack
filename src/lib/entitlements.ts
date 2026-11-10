@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { createClient } from "@/lib/supabase/server";
 
 type Supabase = Awaited<ReturnType<typeof createClient>>;
@@ -10,7 +11,8 @@ type Supabase = Awaited<ReturnType<typeof createClient>>;
  * Fails closed to free: if the lookup errors (e.g. the migration hasn't run
  * yet), the user just gets the free allowance.
  */
-export async function isPremium(supabase: Supabase, userId: string): Promise<boolean> {
+// cache(): layout, page and side panel all ask on the same request (audit #10a).
+export const isPremium = cache(async (supabase: Supabase, userId: string): Promise<boolean> => {
   const { data, error } = await supabase
     .from("entitlements")
     .select("status, current_period_end")
@@ -19,4 +21,4 @@ export async function isPremium(supabase: Supabase, userId: string): Promise<boo
   if (error || !data || data.status !== "active") return false;
   const end = data.current_period_end as string | null;
   return end == null || new Date(end).getTime() > Date.now();
-}
+});

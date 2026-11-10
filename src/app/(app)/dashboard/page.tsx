@@ -39,13 +39,15 @@ export default async function DashboardPage({
   // First visit to Today after onboarding, or replayed from Me (?tour=1).
   const showTour = isToday && (params.tour === "1" || !profile.tour_completed_at);
   const { supabase, userId } = await getProfile();
-  const [premium, { count: loggedCount }] = await Promise.all([
+  const [premium, { data: firstLogs }] = await Promise.all([
     isPremium(supabase, userId),
     // Reminder invitation only after a few real logs (never on first visit).
+    // Fetch at most 3 ids instead of counting the whole diary (audit #10d).
     isToday
-      ? supabase.from("diary_entries").select("id", { count: "exact", head: true }).eq("user_id", userId).limit(3)
-      : Promise.resolve({ count: 0 }),
+      ? supabase.from("diary_entries").select("id").eq("user_id", userId).limit(3)
+      : Promise.resolve({ data: [] as { id: string }[] }),
   ]);
+  const loggedCount = firstLogs?.length ?? 0;
 
   const day = new Date(date + "T12:00:00");
   const dateLabel = format.dateTime(day, { weekday: "long", day: "numeric", month: "long" });
