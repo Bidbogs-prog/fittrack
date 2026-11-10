@@ -9,7 +9,7 @@ import { PGlite } from "@electric-sql/pglite";
  * tables. Every migration in supabase/migrations is then applied in order,
  * so tests exercise the real RLS policies and SQL functions.
  */
-const SUPABASE_STUBS = `
+export const SUPABASE_STUBS = `
 create role anon nologin;
 create role authenticated nologin;
 create role service_role nologin bypassrls;

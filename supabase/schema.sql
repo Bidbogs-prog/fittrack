@@ -583,10 +583,9 @@ create policy "ai usage: read own" on public.ai_usage
   for select to authenticated
   using ((select auth.uid()) = user_id);
 
+-- No insert policy: rows are written by the server with the service role
+-- (users could otherwise forge cost and trip the global spend cap).
 drop policy if exists "ai usage: insert own" on public.ai_usage;
-create policy "ai usage: insert own" on public.ai_usage
-  for insert to authenticated
-  with check ((select auth.uid()) = user_id);
 
 -- ---------- ENTITLEMENTS (premium, roadmap 1.6 E / 3.1) ----------
 -- Provider-agnostic premium access. Users can read their own row; writes
@@ -912,8 +911,8 @@ as $$
   where created_at >= date_trunc('day', now() at time zone 'utc') at time zone 'utc';
 $$;
 
-revoke all on function public.ai_spend_today() from public, anon;
-grant execute on function public.ai_spend_today() to authenticated;
+revoke all on function public.ai_spend_today() from public, anon, authenticated;
+grant execute on function public.ai_spend_today() to service_role;
 
 -- ---------- PREMIUM COACH: memory + weekly check-in ----------
 -- ---------- coach memory ----------
@@ -1032,79 +1031,6 @@ $$;
 revoke all on function public.redeem_invite(text, jsonb) from public, anon;
 grant execute on function public.redeem_invite(text, jsonb) to authenticated;
 
--- ---------- PLAN REQUEST BRIEF + DRAFT PLANS ----------
--- Requester brief snapshotted at request time; drafts are admin-only until sent.
-alter table public.plan_requests
-  add column if not exists snapshot jsonb
-    check (snapshot is null or pg_column_size(snapshot) <= 20000);
-
-alter table public.meal_plans
-  add column if not exists draft boolean not null default false;
-
-drop policy if exists "plans: read for signed-in users" on public.meal_plans;
-create policy "plans: read for signed-in users" on public.meal_plans
-  for select to authenticated
-  using (
-    (owner_id is null and assigned_to is null and not draft)
-    or owner_id = (select auth.uid())
-    or (assigned_to = (select auth.uid()) and not draft)
-    or exists (select 1 from public.admins a where a.user_id = (select auth.uid()))
-  );
-
-drop policy if exists "plan items: read for signed-in users" on public.meal_plan_items;
-create policy "plan items: read for signed-in users" on public.meal_plan_items
-  for select to authenticated
-  using (exists (
-    select 1 from public.meal_plans p
-    where p.id = plan_id
-      and (
-        (p.owner_id is null and p.assigned_to is null and not p.draft)
-        or p.owner_id = (select auth.uid())
-        or (p.assigned_to = (select auth.uid()) and not p.draft)
-        or exists (select 1 from public.admins a where a.user_id = (select auth.uid()))
-      )
-  ));
-
--- ---------- ADMIN READ ACCESS TO OPEN PLAN REQUESTERS ----------
--- Read-only, only while the person has a pending plan request (live brief).
-create or replace function public.admin_can_view_requester(p_user uuid)
-returns boolean
-language sql
-stable
-security definer
-set search_path = public
-as $$
-  select exists (select 1 from public.admins a where a.user_id = auth.uid())
-     and exists (select 1 from public.plan_requests r where r.user_id = p_user and r.status = 'pending');
-$$;
-
-revoke all on function public.admin_can_view_requester(uuid) from public, anon;
-grant execute on function public.admin_can_view_requester(uuid) to authenticated;
-
-drop policy if exists "profiles: admins read open requesters" on public.profiles;
-create policy "profiles: admins read open requesters" on public.profiles
-  for select to authenticated using (public.admin_can_view_requester(id));
-
-drop policy if exists "diary: admins read open requesters" on public.diary_entries;
-create policy "diary: admins read open requesters" on public.diary_entries
-  for select to authenticated using (public.admin_can_view_requester(user_id));
-
-drop policy if exists "weight: admins read open requesters" on public.weight_logs;
-create policy "weight: admins read open requesters" on public.weight_logs
-  for select to authenticated using (public.admin_can_view_requester(user_id));
-
-drop policy if exists "exercise: admins read open requesters" on public.exercise_logs;
-create policy "exercise: admins read open requesters" on public.exercise_logs
-  for select to authenticated using (public.admin_can_view_requester(user_id));
-
-drop policy if exists "favorites: admins read open requesters" on public.favorite_foods;
-create policy "favorites: admins read open requesters" on public.favorite_foods
-  for select to authenticated using (public.admin_can_view_requester(user_id));
-
-drop policy if exists "foods: admins read open requesters' own foods" on public.foods;
-create policy "foods: admins read open requesters' own foods" on public.foods
-  for select to authenticated using (owner_id is not null and public.admin_can_view_requester(owner_id));
-
 -- ---------- PUSH REMINDERS (Web Push, GTM G3) ----------
 create table if not exists public.push_subscriptions (
   id uuid primary key default gen_random_uuid(),
@@ -1155,6 +1081,31 @@ create table if not exists public.reminder_log (
 
 -- Service role only (cron sender).
 alter table public.reminder_log enable row level security;
+
+-- Reminder sender: users due a check, with their local clock resolved in Postgres.
+create or replace function public.reminder_candidates()
+returns table (
+  user_id uuid, locale text, timezone text, breakfast time, lunch time, dinner time,
+  local_date date, local_minutes integer
+)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select s.user_id, s.locale, s.timezone, s.breakfast, s.lunch, s.dinner,
+         (now() at time zone tz.name)::date,
+         (extract(hour from now() at time zone tz.name) * 60 + extract(minute from now() at time zone tz.name))::integer
+  from public.reminder_settings s
+  cross join lateral (
+    select case when exists (select 1 from pg_timezone_names where name = s.timezone) then s.timezone else 'Africa/Casablanca' end as name
+  ) tz
+  where s.enabled
+    and exists (select 1 from public.push_subscriptions p where p.user_id = s.user_id);
+$$;
+
+revoke all on function public.reminder_candidates() from public, anon, authenticated;
+grant execute on function public.reminder_candidates() to service_role;
 
 -- ---------- APP TOUR ----------
 alter table public.profiles
@@ -1375,12 +1326,12 @@ create policy "plans: read for signed-in users" on public.meal_plans
 
 drop policy if exists "plans: admin insert" on public.meal_plans;
 drop policy if exists "plans: insert own or admin" on public.meal_plans;
+-- Only admins assign plans to people; users' own plans stay unassigned.
 create policy "plans: insert own or admin" on public.meal_plans
   for insert to authenticated
   with check (
-    owner_id = (select auth.uid())
-    or (owner_id is null
-        and exists (select 1 from public.admins a where a.user_id = (select auth.uid())))
+    (owner_id = (select auth.uid()) and assigned_to is null)
+    or exists (select 1 from public.admins a where a.user_id = (select auth.uid()))
   );
 
 drop policy if exists "plans: admin update" on public.meal_plans;
@@ -1392,7 +1343,7 @@ create policy "plans: update own or admin" on public.meal_plans
     or exists (select 1 from public.admins a where a.user_id = (select auth.uid()))
   )
   with check (
-    owner_id = (select auth.uid())
+    (owner_id = (select auth.uid()) and assigned_to is null)
     or exists (select 1 from public.admins a where a.user_id = (select auth.uid()))
   );
 
@@ -1519,6 +1470,81 @@ drop policy if exists "plan requests: cancel own pending" on public.plan_request
 create policy "plan requests: cancel own pending" on public.plan_requests
   for delete to authenticated
   using (user_id = (select auth.uid()) and status = 'pending');
+
+-- ---------- PLAN REQUEST BRIEF + DRAFT PLANS ----------
+-- Must follow MEAL PLANS and PLAN REQUESTS: it alters both tables and
+-- replaces their read policies with draft-aware ones.
+-- Requester brief snapshotted at request time; drafts are admin-only until sent.
+alter table public.plan_requests
+  add column if not exists snapshot jsonb
+    check (snapshot is null or pg_column_size(snapshot) <= 20000);
+
+alter table public.meal_plans
+  add column if not exists draft boolean not null default false;
+
+drop policy if exists "plans: read for signed-in users" on public.meal_plans;
+create policy "plans: read for signed-in users" on public.meal_plans
+  for select to authenticated
+  using (
+    (owner_id is null and assigned_to is null and not draft)
+    or owner_id = (select auth.uid())
+    or (assigned_to = (select auth.uid()) and not draft)
+    or exists (select 1 from public.admins a where a.user_id = (select auth.uid()))
+  );
+
+drop policy if exists "plan items: read for signed-in users" on public.meal_plan_items;
+create policy "plan items: read for signed-in users" on public.meal_plan_items
+  for select to authenticated
+  using (exists (
+    select 1 from public.meal_plans p
+    where p.id = plan_id
+      and (
+        (p.owner_id is null and p.assigned_to is null and not p.draft)
+        or p.owner_id = (select auth.uid())
+        or (p.assigned_to = (select auth.uid()) and not p.draft)
+        or exists (select 1 from public.admins a where a.user_id = (select auth.uid()))
+      )
+  ));
+
+-- ---------- ADMIN READ ACCESS TO OPEN PLAN REQUESTERS ----------
+-- Read-only, only while the person has a pending plan request (live brief).
+create or replace function public.admin_can_view_requester(p_user uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (select 1 from public.admins a where a.user_id = auth.uid())
+     and exists (select 1 from public.plan_requests r where r.user_id = p_user and r.status = 'pending');
+$$;
+
+revoke all on function public.admin_can_view_requester(uuid) from public, anon;
+grant execute on function public.admin_can_view_requester(uuid) to authenticated;
+
+drop policy if exists "profiles: admins read open requesters" on public.profiles;
+create policy "profiles: admins read open requesters" on public.profiles
+  for select to authenticated using (public.admin_can_view_requester(id));
+
+drop policy if exists "diary: admins read open requesters" on public.diary_entries;
+create policy "diary: admins read open requesters" on public.diary_entries
+  for select to authenticated using (public.admin_can_view_requester(user_id));
+
+drop policy if exists "weight: admins read open requesters" on public.weight_logs;
+create policy "weight: admins read open requesters" on public.weight_logs
+  for select to authenticated using (public.admin_can_view_requester(user_id));
+
+drop policy if exists "exercise: admins read open requesters" on public.exercise_logs;
+create policy "exercise: admins read open requesters" on public.exercise_logs
+  for select to authenticated using (public.admin_can_view_requester(user_id));
+
+drop policy if exists "favorites: admins read open requesters" on public.favorite_foods;
+create policy "favorites: admins read open requesters" on public.favorite_foods
+  for select to authenticated using (public.admin_can_view_requester(user_id));
+
+drop policy if exists "foods: admins read open requesters' own foods" on public.foods;
+create policy "foods: admins read open requesters' own foods" on public.foods
+  for select to authenticated using (owner_id is not null and public.admin_can_view_requester(owner_id));
 
 -- ---------- STORAGE: food images ----------
 insert into storage.buckets (id, name, public)
