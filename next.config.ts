@@ -24,6 +24,13 @@ const nextConfig: NextConfig = {
         source: "/:path*",
         headers: [
           { key: "X-Frame-Options", value: "DENY" },
+          // Baseline CSP (audit #9b): no framing, no <base> hijack, no plugins.
+          // script-src is left open for now (Next inline bootstrap, Turnstile,
+          // Google sign-in, PostHog) — tightening it needs nonces.
+          {
+            key: "Content-Security-Policy",
+            value: "frame-ancestors 'none'; base-uri 'self'; object-src 'none'",
+          },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           {
