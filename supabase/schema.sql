@@ -1156,6 +1156,10 @@ create table if not exists public.reminder_log (
 -- Service role only (cron sender).
 alter table public.reminder_log enable row level security;
 
+-- ---------- APP TOUR ----------
+alter table public.profiles
+  add column if not exists tour_completed_at timestamptz;
+
 -- ---------- RECIPES (multi-ingredient saved meals, per user) ----------
 create table if not exists public.recipes (
   id uuid primary key default gen_random_uuid(),

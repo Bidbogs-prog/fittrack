@@ -863,6 +863,7 @@
     "memoryEmpty": "Rien pour l'instant. Parlez au coach de votre rythme, des aliments que vous évitez ou de votre objectif sportif.",
     "memoryForget": "Oublier : {fact}",
     "memoryForgetAll": "Tout oublier",
+    "replayTour": "Revoir le guide de l'app",
     "trainingHint": "Votre niveau d'activité inclut déjà vos entraînements. Vous vous entraînez plus ou moins qu'avant ? Mettez-le à jour — ou continuez à vous peser et vos objectifs s'adapteront en 2 à 4 semaines.",
     "haveCode": "Vous avez un code d'invitation ? Utilisez-le"
   },
@@ -1081,5 +1082,20 @@
     "nudgeTitle": "N'oubliez plus aucun repas",
     "nudgeBody": "Recevez un rappel aux heures des repas — seulement si vous n'avez pas encore enregistré.",
     "nudgeLater": "Plus tard"
+  },
+  "tour": {
+    "skip": "Passer",
+    "next": "Suivant",
+    "back": "Retour",
+    "begin": "Me montrer",
+    "start": "Enregistrer mon premier repas",
+    "welcome": { "title": "Bienvenue sur So3ra, {name}", "body": "Voici comment ça marche — environ une minute. Vous pourrez revoir ce guide depuis la page Moi." },
+    "orbit": { "title": "Votre journée en une orbite", "body": "Le centre affiche les calories qu'il vous reste. Les anneaux se remplissent de protéines, glucides et lipides, et chaque repas apparaît sur le cadran à l'heure où vous l'avez mangé. Touchez l'anneau pour l'agrandir." },
+    "log": { "title": "Enregistrez comme vous voulez", "body": "Écrivez ce que vous avez mangé, maintenez le micro pour le dire, ou utilisez l'appareil photo pour une photo ou un code-barres. Toutes les langues marchent, la darija aussi. Vous vérifiez toujours avant l'enregistrement." },
+    "edit": { "title": "Corrigez en le demandant", "body": "Une erreur ? Écrivez-le simplement : « enlève le riz », « mets le poulet à 200 g » ou « ajoute mon petit-déjeuner habituel ». Vous confirmez chaque modification." },
+    "coach": { "title": "Demandez à votre coach", "body": "Les questions tapées ici vont à votre coach IA. Il connaît vos objectifs et ce que vous avez enregistré : demandez par exemple « est-ce que je mange assez de protéines ? »." },
+    "weight": { "title": "Pesez-vous, vos objectifs s'adaptent", "body": "Notez votre poids quelques fois par semaine. Après 2 à 4 semaines, vos objectifs suivent votre dépense réelle au lieu d'une formule. Vos entraînements sont déjà comptés dans votre niveau d'activité." },
+    "tabs": { "title": "Le reste", "body": "Historique montre vos tendances et bilans hebdomadaires, Plans propose des journées toutes prêtes, et Aliments sert à chercher des aliments et créer des recettes." },
+    "done": { "title": "C'est parti", "body": "Commencez par votre dernier repas — une description approximative suffit." }
   }
 }

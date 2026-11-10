@@ -106,6 +106,7 @@ const CLIENT_NAMESPACES = [
   "status",
   "thread",
   "today",
+  "tour",
   "waitlist",
 ] as const;
 

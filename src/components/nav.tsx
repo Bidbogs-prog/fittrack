@@ -37,7 +37,7 @@ export function SideNav() {
   const t = useTranslations("nav");
   const active = activeKey(usePathname());
   return (
-    <nav aria-label={t("label")} className="flex flex-col gap-1">
+    <nav aria-label={t("label")} data-tour="nav" className="flex flex-col gap-1">
       {LINKS.map(({ key, href, icon: Icon }) => {
         const on = active === key;
         return (
@@ -65,6 +65,7 @@ export function MobileTabs() {
   return (
     <nav
       aria-label={t("label")}
+      data-tour="nav"
       className="mx-3.5 mb-1.5 flex gap-1 rounded-[14px] border border-ink-800 bg-ink-900 p-1"
     >
       {LINKS.filter((l) => l.key !== "me").map(({ key, href }) => {

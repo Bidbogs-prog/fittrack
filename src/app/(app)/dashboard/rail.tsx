@@ -51,6 +51,7 @@ export async function DayRail({ data }: { data: DayData }) {
           steps={data.steps}
         />
       </div>
+      <div data-tour="weight">
       <WeightCard
         points={data.trendPoints}
         delta={data.weightDelta}
@@ -59,6 +60,7 @@ export async function DayRail({ data }: { data: DayData }) {
         defaultWeight={profile.weight_kg}
         units={profile.units}
       />
+      </div>
       <ActivityCard
         date={data.date}
         exercises={data.exercises}

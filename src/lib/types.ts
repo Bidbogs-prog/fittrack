@@ -58,6 +58,8 @@ export interface Profile {
   premium_intent_at?: string | null;
   native_intent_at?: string | null;
   native_intent_os?: "ios" | "android" | "other" | null;
+  /** First-run app tour finished or skipped (src/components/app-tour.tsx). */
+  tour_completed_at?: string | null;
 }
 
 export type Units = "metric" | "imperial";

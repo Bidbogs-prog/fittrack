@@ -209,6 +209,9 @@ export default async function AccountPage({
             {t("updateBody")} <span aria-hidden className="ms-1 rtl:-scale-x-100">→</span>
           </a>
           <p className="text-[11px] leading-relaxed text-paper-mute">{t("trainingHint")}</p>
+          <Link href="/dashboard?tour=1" className="inline-flex min-h-9 items-center text-[13px] text-paper-mute hover:text-paper">
+            {t("replayTour")}
+          </Link>
         </section>
 
         {/* eating window */}

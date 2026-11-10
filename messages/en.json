@@ -863,6 +863,7 @@
     "memoryEmpty": "Nothing yet. Tell the coach about your routine, foods you avoid or what you're training for.",
     "memoryForget": "Forget: {fact}",
     "memoryForgetAll": "Forget everything",
+    "replayTour": "Replay the app tour",
     "trainingHint": "Your activity level already includes your workouts. Training more or less than before? Update it — or keep weighing in and your targets adapt within 2–4 weeks.",
     "haveCode": "Have an invite code? Redeem it"
   },
@@ -1081,5 +1082,20 @@
     "nudgeTitle": "Never forget a meal",
     "nudgeBody": "Get a reminder at meal times — only when you haven't logged yet.",
     "nudgeLater": "Not now"
+  },
+  "tour": {
+    "skip": "Skip",
+    "next": "Next",
+    "back": "Back",
+    "begin": "Show me",
+    "start": "Log my first meal",
+    "welcome": { "title": "Welcome to So3ra, {name}", "body": "Here's how it works — about a minute. You can replay this anytime from the Me page." },
+    "orbit": { "title": "Your day in one orbit", "body": "The centre shows the calories you have left. The rings fill with protein, carbs and fat, and each meal lands on the dial at the time you ate it. Tap the ring to open it up." },
+    "log": { "title": "Log it your way", "body": "Type what you ate, hold the mic and say it, or use the camera to snap a photo or scan a barcode. Any language works — Darija too. You always check the result before it's saved." },
+    "edit": { "title": "Fix things by asking", "body": "Made a mistake? Just write it: “remove the rice”, “make the chicken 200 g”, or “add my usual breakfast”. You confirm every change." },
+    "coach": { "title": "Ask your coach", "body": "Questions typed here go to your AI coach. It knows your targets and what you've logged, so ask things like “am I eating enough protein?”." },
+    "weight": { "title": "Weigh in, and your targets adapt", "body": "Log your weight a few times a week. After 2–4 weeks your targets follow your real burn instead of a formula. Your workouts are already counted in your activity level." },
+    "tabs": { "title": "Everything else", "body": "History shows your trends and weekly reports, Plans has ready-made days of eating, and Foods is where you find foods and build recipes." },
+    "done": { "title": "You're set", "body": "Start with whatever you ate last — even a rough description is fine." }
   }
 }

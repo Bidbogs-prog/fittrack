@@ -5,6 +5,7 @@ import Link from "next/link";
 import { getFormatter, getTranslations } from "next-intl/server";
 import { AiInsights } from "@/components/ai-insights";
 import { ReminderNudge } from "@/components/reminder-settings";
+import { AppTour } from "@/components/app-tour";
 import { MacroTiles } from "@/components/macros";
 import { ComposerChip, Composer } from "@/components/orbit/composer";
 import { Greeting } from "@/components/orbit/greeting";
@@ -24,7 +25,7 @@ export const metadata = { title: "Today" };
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ d?: string }>;
+  searchParams: Promise<{ d?: string; tour?: string }>;
 }) {
   const params = await searchParams;
   const date = parseDateParam(params.d, toDateString(new Date()));
@@ -35,6 +36,8 @@ export default async function DashboardPage({
     getFormatter(),
   ]);
   const { profile, targets, eaten, entries, isToday, remaining, kcalTarget } = data;
+  // First visit to Today after onboarding, or replayed from Me (?tour=1).
+  const showTour = isToday && (params.tour === "1" || !profile.tour_completed_at);
   const { supabase, userId } = await getProfile();
   const [premium, { count: loggedCount }] = await Promise.all([
     isPremium(supabase, userId),
@@ -167,7 +170,7 @@ export default async function DashboardPage({
               {dayNav}
             </div>
 
-            <div className="self-center lg:order-first">
+            <div className="self-center lg:order-first" data-tour="orbit">
               <TodayOrbit
                 entries={entries.map((e) => ({
                   id: e.id,
@@ -242,9 +245,10 @@ export default async function DashboardPage({
             />
           </div>
 
-          <div className="lg:px-9">
+          <div className="lg:px-9" data-tour="composer">
             <Composer chips={chips} />
           </div>
+          {showTour && <AppTour firstName={firstName} />}
         </div>
 
         <DayRail data={data} />
