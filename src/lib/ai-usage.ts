@@ -1,5 +1,6 @@
 import type { createClient } from "@/lib/supabase/server";
 import type { LlmUsage } from "@/lib/llm";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 /**
  * AI metering (roadmap 1.6 D): one `ai_usage` row per model call, used for
@@ -41,7 +42,15 @@ export async function recordAiUsage(
   feature: AiFeature,
   usage: LlmUsage
 ): Promise<void> {
-  const { error } = await supabase.from("ai_usage").insert({
+  // Written with the service role: users have no insert right on ai_usage,
+  // so they can't forge cost to trip the global spend cap (security audit #1).
+  const db = createAdminClient();
+  if (!db) {
+    console.error("[ai_usage] SUPABASE_SECRET_KEY missing — usage not recorded, caps can't count this call");
+    return;
+  }
+  void supabase;
+  const { error } = await db.from("ai_usage").insert({
     user_id: userId,
     feature,
     provider: usage.provider,
@@ -135,7 +144,11 @@ export async function aiSpendExceeded(supabase: Supabase): Promise<boolean> {
   const cap = raw == null || raw === "" ? 5 : Number(raw);
   if (!(cap > 0)) return false;
   if (spendCache && Date.now() - spendCache.at < 60_000) return spendCache.over;
-  const { data, error } = await supabase.rpc("ai_spend_today");
+  // Platform-wide spend: service role only (users can't call ai_spend_today).
+  const db = createAdminClient();
+  void supabase;
+  if (!db) return false;
+  const { data, error } = await db.rpc("ai_spend_today");
   if (error) return false;
   const over = Number(data) >= cap;
   if (over) console.warn(`[ai_usage] daily spend ${Number(data).toFixed(2)} USD reached the ${cap} USD limit`);

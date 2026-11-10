@@ -100,10 +100,19 @@ describe("privilege escalation", () => {
 });
 
 describe("AI usage metering", () => {
-  it("a user can record usage but cannot delete it to reset their caps", async () => {
-    await t.as(a, () => t.rows("insert into public.ai_usage (feature, provider, model) values ('coach', 'llmgateway', 'm')"));
+  it("a user can see their usage but cannot delete it to reset their caps", async () => {
+    await t.admin(() => t.rows("insert into public.ai_usage (user_id, feature, provider, model) values ($1, 'coach', 'llmgateway', 'm')", [a]));
+    expect(await t.as(a, () => count("select 1 from public.ai_usage"))).toBe(1);
     await t.as(a, () => t.rows("delete from public.ai_usage"));
     expect(await t.admin(() => count("select 1 from public.ai_usage where user_id = $1", [a]))).toBe(1);
+  });
+  it("users cannot write usage at all — no forged cost to trip the global spend cap (audit #1)", async () => {
+    await expect(
+      t.as(a, () => t.rows("insert into public.ai_usage (feature, provider, model, cost_usd) values ('coach', 'x', 'm', 999999)"))
+    ).rejects.toThrow(/row-level security/);
+  });
+  it("users cannot read platform-wide spend", async () => {
+    await expect(t.as(a, () => t.rows("select public.ai_spend_today()"))).rejects.toThrow(/permission denied/);
   });
   it("B cannot see A's usage", async () => {
     expect(await t.as(b, () => count("select 1 from public.ai_usage"))).toBe(0);
