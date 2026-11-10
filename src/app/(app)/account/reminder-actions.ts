@@ -4,6 +4,7 @@ import { getLocale } from "next-intl/server";
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { pushConfigured, pushMessages, sendPush } from "@/lib/push-server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 const validTz = (tz: string) => {
@@ -31,8 +32,13 @@ export async function savePushSubscription(input: {
   const auth = String(input.auth ?? "").slice(0, 100);
   if (!p256dh || !auth) return { ok: false };
 
-  // A browser keeps one endpoint per origin; re-subscribing replaces it.
-  await supabase.from("push_subscriptions").delete().eq("endpoint", endpoint).eq("user_id", userId);
+  // A browser keeps one endpoint per origin; re-subscribing replaces it. On a
+  // shared device the endpoint may still belong to the previous account
+  // (it never signed out here): the device now belongs to this user, so the
+  // old owner stops receiving reminders on it (audit #6). Holding the
+  // endpoint is the proof of possession.
+  const admin = createAdminClient();
+  await (admin ?? supabase).from("push_subscriptions").delete().eq("endpoint", endpoint);
   const { error } = await supabase.from("push_subscriptions").insert({
     user_id: userId,
     endpoint,

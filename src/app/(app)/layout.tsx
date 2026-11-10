@@ -9,7 +9,7 @@ import { getProfile } from "@/lib/auth";
 import { ensureBetaAccess, getBetaInfo } from "@/lib/beta";
 import { isPremium } from "@/lib/entitlements";
 import { IdentifyUser } from "@/components/identify-user";
-import { signout } from "../(auth)/actions";
+import { SignOutForm } from "@/components/sign-out-form";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const [{ supabase, userId, profile }, t] = await Promise.all([getProfile(), getTranslations("shell")]);
@@ -42,7 +42,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
               {t("settings")}
             </Link>
           </p>
-          <form action={signout}>
+          <SignOutForm>
             <button
               type="submit"
               className="btn-press inline-flex min-h-8 items-center gap-1.5 text-xs text-paper-mute hover:text-danger"
@@ -50,7 +50,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
               <SignOut className="size-3.5" />
               {t("signOut")}
             </button>
-          </form>
+          </SignOutForm>
         </div>
       </aside>
 

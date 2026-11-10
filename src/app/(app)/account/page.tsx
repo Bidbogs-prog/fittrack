@@ -17,9 +17,9 @@ const PREMIUM_LIVE = ["checkin", "memory", "coach", "logging"] as const;
 const PREMIUM_SOON = ["menu", "weekPlan", "nutrients", "ramadan"] as const;
 import { ACTIVITY_LEVELS, ageFromBirthDate, macroSplitFromProfile } from "@/lib/nutrition";
 import { formatHeight, formatWeight } from "@/lib/units";
-import { signout } from "../../(auth)/actions";
 import { changePassword, deleteAccount, saveUnits, setLocale } from "./actions";
 import { SplitEditor, WindowEditor } from "./editors";
+import { SignOutForm } from "@/components/sign-out-form";
 
 export const metadata = { title: "Me" };
 
@@ -337,7 +337,7 @@ export default async function AccountPage({
               <span className="rounded-md border border-flame/40 px-1.5 py-px text-[11px] text-flame">ADMIN</span>
             </Link>
           )}
-          <form action={signout} className="border-t border-ink-800">
+          <SignOutForm className="border-t border-ink-800">
             <button
               type="submit"
               className="flex min-h-12 w-full items-center gap-2 px-3.5 text-start text-danger hover:bg-danger/5 lg:px-5"
@@ -345,7 +345,7 @@ export default async function AccountPage({
               <SignOut weight="bold" className="size-4" />
               {ta("signOut")}
             </button>
-          </form>
+          </SignOutForm>
         </section>
       </div>
 
