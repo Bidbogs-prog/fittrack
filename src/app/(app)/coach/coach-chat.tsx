@@ -66,11 +66,14 @@ export function CoachChat({
   conversationId,
   initialMessages,
   initialPrompt,
+  suggestedPrompt = null,
   premium = false,
 }: {
   conversationId: string | null;
   initialMessages: ChatMessage[];
   initialPrompt: string | null;
+  /** A ?q= prompt from outside the app: shown as a suggestion, never auto-sent. */
+  suggestedPrompt?: string | null;
   premium?: boolean;
 }) {
   const t = useTranslations("coach");
@@ -201,7 +204,12 @@ export function CoachChat({
     }
   }, [messages]);
 
-  const starters = [t("starter1"), t("starter2"), t("starter3")];
+  const starters = [
+    ...(suggestedPrompt ? [suggestedPrompt.slice(0, 120)] : []),
+    t("starter1"),
+    t("starter2"),
+    t("starter3"),
+  ];
 
   return (
     <>

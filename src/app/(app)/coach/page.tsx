@@ -13,6 +13,7 @@ import type { CoachConversation, CoachMessage } from "@/lib/types";
 import { getDayData, toDateString } from "../dashboard/day-data";
 import { DayRail } from "../dashboard/rail";
 import { CoachChat, type ChatMessage } from "./coach-chat";
+import { headers } from "next/headers";
 
 export const metadata = { title: "Coach" };
 
@@ -97,8 +98,14 @@ export default async function CoachPage({
   // ?c=new forces a fresh chat; otherwise the requested or latest one.
   const requested = params.c === "new" ? null : (params.c ?? conversations[0]?.id ?? null);
   const conversation = conversations.find((c) => c.id === requested) ?? null;
-  const initialPrompt =
-    params.c === "new" && params.q ? params.q.trim().slice(0, 2000) || null : null;
+  const prompt = params.c === "new" && params.q ? params.q.trim().slice(0, 2000) || null : null;
+  // Auto-send only for in-app navigation. A link from another site (or
+  // pasted) could otherwise post a message as the user and spend their
+  // allowance (audit #9c); then it's offered as a one-tap suggestion instead.
+  const fetchSite = (await headers()).get("sec-fetch-site");
+  const fromApp = fetchSite == null || fetchSite === "same-origin";
+  const initialPrompt = fromApp ? prompt : null;
+  const suggestedPrompt = fromApp ? null : prompt;
 
   let messages: CoachMessage[] = [];
   if (conversation) {
@@ -177,6 +184,7 @@ export default async function CoachPage({
             conversationId={conversation?.id ?? null}
             initialMessages={chatMessages}
             initialPrompt={initialPrompt}
+            suggestedPrompt={suggestedPrompt}
             premium={premium}
           />
         </div>
