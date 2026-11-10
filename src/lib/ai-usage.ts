@@ -8,7 +8,8 @@ import { ensureBetaAccess } from "@/lib/beta";
  * per-user caps now and for pricing from real cost data later.
  *
  *   AI_COACH_DISABLED=1               global kill switch for the coach
- *   COACH_DAILY_MESSAGE_LIMIT           free: replies per UTC day (default 10, 0 = unlimited)
+ *   COACH_DAILY_MESSAGE_LIMIT           free: replies per UTC day (default 5, 0 = unlimited) —
+ *                                       below the monthly cap so it actually spreads use (OBS-1)
  *   COACH_MONTHLY_MESSAGE_LIMIT         free: replies per UTC month (default 10, 0 = unlimited)
  *   COACH_PREMIUM_DAILY_MESSAGE_LIMIT   premium: replies per UTC day (default 50, 0 = unlimited);
  *                                       premium has no monthly cap
@@ -95,7 +96,7 @@ export async function getCoachAllowance(
 ): Promise<CoachAllowance> {
   const daily = premium
     ? limit("COACH_PREMIUM_DAILY_MESSAGE_LIMIT", 50)
-    : limit("COACH_DAILY_MESSAGE_LIMIT", 10);
+    : limit("COACH_DAILY_MESSAGE_LIMIT", 5);
   const monthly = premium ? null : limit("COACH_MONTHLY_MESSAGE_LIMIT", 10);
   const base = { premium, daily, monthly, usedToday: 0, usedMonth: 0 };
   if (daily == null && monthly == null) return { ...base, known: true };

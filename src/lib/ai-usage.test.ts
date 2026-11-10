@@ -62,17 +62,20 @@ afterEach(() => {
   }
 });
 
-describe("coach — free daily cap (default 10), monthly cap disabled to isolate it", () => {
+describe("coach — free daily cap (default 5), monthly cap disabled to isolate it", () => {
   beforeEach(() => {
     process.env.COACH_MONTHLY_MESSAGE_LIMIT = "0";
   });
-  it("9 used today → allowed", async () => expect(await coachQuotaError(stub(today(9)), "u", false)).toBeNull());
-  it("10 used today → dailyLimit", async () => expect(await coachQuotaError(stub(today(10)), "u", false)).toBe("dailyLimit"));
+  it("4 used today → allowed", async () => expect(await coachQuotaError(stub(today(4)), "u", false)).toBeNull());
+  it("5 used today → dailyLimit", async () => expect(await coachQuotaError(stub(today(5)), "u", false)).toBe("dailyLimit"));
 });
 
-describe("coach — free defaults together (OBS-1 in docs/qa/defects.md)", () => {
-  it("with both defaults at 10, the monthly cap is reached first and the daily cap never fires", async () => {
-    expect(await coachQuotaError(stub(today(10)), "u", false)).toBe("monthlyLimit");
+describe("coach — free defaults together (OBS-1 resolved)", () => {
+  it("the daily cap (5) now fires before the monthly cap (10)", async () => {
+    expect(await coachQuotaError(stub(today(5)), "u", false)).toBe("dailyLimit");
+  });
+  it("monthly cap still applies across days", async () => {
+    expect(await coachQuotaError(stub(earlierThisMonth(10)), "u", false)).toBe("monthlyLimit");
   });
 });
 
