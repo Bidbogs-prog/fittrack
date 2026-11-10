@@ -576,6 +576,9 @@ create table if not exists public.ai_usage (
 create index if not exists ai_usage_user_feature_idx
   on public.ai_usage (user_id, feature, created_at desc);
 
+-- Daily platform spend (ai_spend_today) scans by time.
+create index if not exists ai_usage_created_idx on public.ai_usage (created_at);
+
 alter table public.ai_usage enable row level security;
 
 drop policy if exists "ai usage: read own" on public.ai_usage;
@@ -1539,29 +1542,45 @@ $$;
 revoke all on function public.admin_can_view_requester(uuid) from public, anon;
 grant execute on function public.admin_can_view_requester(uuid) to authenticated;
 
+-- (select public.is_admin()) runs once per query, so normal users never pay
+-- the per-row requester check.
+create or replace function public.is_admin()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (select 1 from public.admins a where a.user_id = auth.uid());
+$$;
+
+revoke all on function public.is_admin() from public, anon;
+grant execute on function public.is_admin() to authenticated;
+
 drop policy if exists "profiles: admins read open requesters" on public.profiles;
 create policy "profiles: admins read open requesters" on public.profiles
-  for select to authenticated using (public.admin_can_view_requester(id));
+  for select to authenticated using ((select public.is_admin()) and public.admin_can_view_requester(id));
 
 drop policy if exists "diary: admins read open requesters" on public.diary_entries;
 create policy "diary: admins read open requesters" on public.diary_entries
-  for select to authenticated using (public.admin_can_view_requester(user_id));
+  for select to authenticated using ((select public.is_admin()) and public.admin_can_view_requester(user_id));
 
 drop policy if exists "weight: admins read open requesters" on public.weight_logs;
 create policy "weight: admins read open requesters" on public.weight_logs
-  for select to authenticated using (public.admin_can_view_requester(user_id));
+  for select to authenticated using ((select public.is_admin()) and public.admin_can_view_requester(user_id));
 
 drop policy if exists "exercise: admins read open requesters" on public.exercise_logs;
 create policy "exercise: admins read open requesters" on public.exercise_logs
-  for select to authenticated using (public.admin_can_view_requester(user_id));
+  for select to authenticated using ((select public.is_admin()) and public.admin_can_view_requester(user_id));
 
 drop policy if exists "favorites: admins read open requesters" on public.favorite_foods;
 create policy "favorites: admins read open requesters" on public.favorite_foods
-  for select to authenticated using (public.admin_can_view_requester(user_id));
+  for select to authenticated using ((select public.is_admin()) and public.admin_can_view_requester(user_id));
 
 drop policy if exists "foods: admins read open requesters' own foods" on public.foods;
 create policy "foods: admins read open requesters' own foods" on public.foods
-  for select to authenticated using (owner_id is not null and public.admin_can_view_requester(owner_id));
+  for select to authenticated
+  using (owner_id is not null and (select public.is_admin()) and public.admin_can_view_requester(owner_id));
 
 -- ---------- STORAGE: food images ----------
 insert into storage.buckets (id, name, public)

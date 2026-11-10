@@ -26,6 +26,7 @@ const CATALOG = {
     "select tablename || ': ' || policyname || ' [' || cmd || '] ' || coalesce(qual, '') || ' | ' || coalesce(with_check, '') as k from pg_policies where schemaname = 'public' order by 1",
   functions:
     "select p.proname as k from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' order by 1",
+  indexes: "select indexname as k from pg_indexes where schemaname = 'public' order by 1",
 } as const;
 
 async function keys(db: PGlite, sql: string): Promise<string[]> {
