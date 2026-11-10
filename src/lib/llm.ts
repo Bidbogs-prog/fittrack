@@ -184,8 +184,21 @@ async function gatewayFetch(req: LlmRequest, stream: boolean): Promise<{ res: Re
 }
 
 /** Streams reply text as it is generated, then one usage event at the end. */
+/**
+ * The direct-Gemini fallback uses the free-tier key, whose terms allow
+ * Google to use prompts — incompatible with the privacy policy's "we don't
+ * use your data to train AI models". Allowed in development/tests only, or
+ * explicitly with ALLOW_GEMINI_FALLBACK=1 (audit #11d).
+ */
+function assertFallbackAllowed(): void {
+  if (process.env.NODE_ENV !== "production" || process.env.ALLOW_GEMINI_FALLBACK === "1") return;
+  console.error("[llm] LLMGATEWAY_API_KEY missing in production; refusing the free-tier Gemini fallback");
+  throw new LlmError("AI features are temporarily unavailable. Try again later.");
+}
+
 export async function* streamText(req: LlmRequest): AsyncGenerator<LlmEvent> {
   if (!gatewayEnabled()) {
+    assertFallbackAllowed();
     const model = modelFor(req.tier ?? "premium");
     let text: string;
     try {
@@ -246,6 +259,7 @@ export async function* streamText(req: LlmRequest): AsyncGenerator<LlmEvent> {
 /** Whole-reply generation (summaries, evals). */
 export async function generateText(req: LlmRequest): Promise<{ text: string; usage: LlmUsage }> {
   if (!gatewayEnabled()) {
+    assertFallbackAllowed();
     let text = "";
     let usage: LlmUsage | null = null;
     for await (const ev of streamText(req)) {
@@ -274,6 +288,7 @@ export async function generateJson<T>(
   req: Omit<LlmRequest, "schema" | "turns"> & { userPrompt: string; schema: GeminiSchema }
 ): Promise<{ data: T; usage: LlmUsage }> {
   if (!gatewayEnabled()) {
+    assertFallbackAllowed();
     try {
       const data = await geminiGenerateJson<T>({
         systemPrompt: req.systemPrompt,
