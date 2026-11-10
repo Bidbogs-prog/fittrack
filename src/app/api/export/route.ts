@@ -3,22 +3,13 @@ import { entryAmountLabel, entryMacros, entryName } from "@/lib/diary";
 import { round1 } from "@/lib/nutrition";
 import { createClient } from "@/lib/supabase/server";
 import type { DiaryEntry, WeightLog } from "@/lib/types";
+import { toCsv } from "@/lib/csv";
 
 /**
  * Data export (roadmap 2.5): the user's diary or weight history as CSV or
  * JSON, streamed as a download. Macros are derived through the usual diary
  * helpers so exported numbers match what the app shows.
  */
-
-function csvCell(value: string | number | null): string {
-  if (value == null) return "";
-  const s = String(value);
-  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-}
-
-function toCsv(headers: string[], rows: (string | number | null)[][]): string {
-  return [headers.join(","), ...rows.map((r) => r.map(csvCell).join(","))].join("\n") + "\n";
-}
 
 function entryKind(e: DiaryEntry): string {
   if (e.food_id) return "food";
