@@ -62,11 +62,12 @@ export function toMinutes(time: string | null): number | null {
  */
 export function dueSlots(
   schedule: ReminderSchedule,
-  now: Date,
+  /** A Date (converted with Intl) or the local clock already resolved, e.g. by Postgres. */
+  now: Date | { date: string; minutes: number },
   loggedMeals: ReadonlySet<string>,
   sentToday: ReadonlySet<string>
 ): { date: string; slots: ReminderSlot[] } {
-  const { date, minutes } = localNow(now, schedule.timezone);
+  const { date, minutes } = now instanceof Date ? localNow(now, schedule.timezone) : now;
   const slots = REMINDER_SLOTS.filter((slot) => {
     const at = toMinutes(schedule[slot]);
     if (at == null) return false;

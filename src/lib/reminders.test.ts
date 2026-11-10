@@ -66,6 +66,17 @@ describe("suppression", () => {
   });
 });
 
+describe("pre-resolved local clock (from Postgres)", () => {
+  it("uses the given local time, ignoring the runtime's timezone data", () => {
+    // Lunch is 13:30 here: 15:00 is 90 min later (window closed), 13:38 is inside it.
+    expect(dueSlots(schedule, { date: "2026-11-10", minutes: 15 * 60 }, none, none).slots).toEqual([]);
+    expect(dueSlots(schedule, { date: "2026-11-10", minutes: 13 * 60 + 38 }, none, none)).toEqual({
+      date: "2026-11-10",
+      slots: ["lunch"],
+    });
+  });
+});
+
 describe("toMinutes", () => {
   it.each([
     ["00:00", 0],

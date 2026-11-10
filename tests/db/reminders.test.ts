@@ -41,6 +41,16 @@ describe("push reminders RLS", () => {
     expect(await t.as(a, () => t.rows("select 1 from public.reminder_log"))).toHaveLength(0);
   });
 
+  it("reminder_candidates resolves local time in Postgres and is service-only", async () => {
+    await t.admin(() => t.rows("update public.reminder_settings set timezone = 'Not/AZone' where user_id = $1", [a]));
+    const rows = await t.admin(() =>
+      t.rows<{ timezone: string; local_minutes: number }>("select timezone, local_minutes from public.reminder_candidates()")
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0].local_minutes).toBeGreaterThanOrEqual(0);
+    await expect(t.as(a, () => t.rows("select * from public.reminder_candidates()"))).rejects.toThrow(/permission denied/);
+  });
+
   it("the send log dedupes one slot per user per local day", async () => {
     await t.admin(() => t.rows("insert into public.reminder_log (user_id, slot, local_date) values ($1, 'lunch', '2026-11-02')", [a]));
     await expect(
