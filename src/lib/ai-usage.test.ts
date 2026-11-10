@@ -27,12 +27,33 @@ const earlierThisMonth = (n: number): Rows => {
   return Array.from({ length: n }, () => ({ created_at: d.toISOString() }));
 };
 
-const ENV = ["COACH_DAILY_MESSAGE_LIMIT", "COACH_MONTHLY_MESSAGE_LIMIT", "COACH_PREMIUM_DAILY_MESSAGE_LIMIT", "MEAL_LOG_DAILY_LIMIT", "AI_DAILY_SPEND_LIMIT_USD"];
+const ENV = ["COACH_DAILY_MESSAGE_LIMIT", "COACH_MONTHLY_MESSAGE_LIMIT", "COACH_PREMIUM_DAILY_MESSAGE_LIMIT", "MEAL_LOG_DAILY_LIMIT", "AI_DAILY_SPEND_LIMIT_USD", "BETA_INVITE_ONLY"];
 const saved: Record<string, string | undefined> = {};
 beforeEach(() => {
   for (const k of ENV) saved[k] = process.env[k];
   for (const k of ENV) delete process.env[k];
   process.env.AI_DAILY_SPEND_LIMIT_USD = "0";
+  // Caps under test in isolation; the beta gate has its own block below.
+  process.env.BETA_INVITE_ONLY = "0";
+});
+
+describe("beta gate on AI endpoints (audit #5)", () => {
+  /** No beta_access row, waitlist claim refused. */
+  const outsider = () => {
+    const chain: Record<string, unknown> = {};
+    for (const m of ["select", "eq", "gte"]) chain[m] = () => chain;
+    chain.maybeSingle = async () => ({ data: null, error: null });
+    return { from: () => chain, rpc: async () => ({ data: false, error: null }) } as never;
+  };
+  beforeEach(() => {
+    process.env.BETA_INVITE_ONLY = "1";
+  });
+  it("coach refuses an account without beta access", async () => {
+    expect(await coachQuotaError(outsider(), "outsider-1", false)).toBe("invite");
+  });
+  it("other AI features refuse an account without beta access", async () => {
+    expect(await featureQuotaError(outsider(), "outsider-2", "meal_log", false)).toMatch(/beta access/);
+  });
 });
 afterEach(() => {
   for (const k of ENV) {

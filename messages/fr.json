@@ -644,7 +644,8 @@
       "monthlyLimit": "Vous avez utilisé vos messages au coach de ce mois. Ils se renouvellent le 1er.",
       "notFound": "Cette conversation n'existe plus.",
       "saveFailed": "La réponse n'a pas pu être enregistrée. Réessayez.",
-      "midReply": "Le coach s'est arrêté en cours de réponse. Réessayez."
+      "midReply": "Le coach s'est arrêté en cours de réponse. Réessayez.",
+      "invite": "Le coach nécessite un accès bêta. Utilisez d'abord un code d'invitation."
     },
     "planPremium": "Premium · {left} messages restants aujourd'hui",
     "planFree": "{left} messages gratuits restants sur {monthly} ce mois-ci",

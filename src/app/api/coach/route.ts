@@ -56,7 +56,8 @@ export type CoachErrorCode =
   | "monthlyLimit"
   | "notFound"
   | "saveFailed"
-  | "midReply";
+  | "midReply"
+  | "invite";
 
 const fail = (error: CoachErrorCode, status: number) => NextResponse.json({ error }, { status });
 
@@ -86,7 +87,7 @@ export async function POST(request: NextRequest) {
 
   const premium = await isPremium(supabase, userId);
   const quota = await coachQuotaError(supabase, userId, premium);
-  if (quota) return fail(quota, 429);
+  if (quota) return fail(quota, quota === "invite" ? 403 : 429);
 
   const active = await getActiveTargets(supabase, userId, profile);
   if (!active) return fail("onboarding", 400);

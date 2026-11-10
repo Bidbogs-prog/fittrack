@@ -18,7 +18,13 @@ export const INVITE_COOKIE = "so3ra_invite";
 
 /** First-touch attribution captured by <SourceCapture /> (utm_*, ref, landing). */
 export async function readSource(): Promise<Record<string, string> | null> {
-  const raw = (await cookies()).get(SOURCE_COOKIE)?.value;
+  let raw: string | undefined;
+  try {
+    raw = (await cookies()).get(SOURCE_COOKIE)?.value;
+  } catch {
+    // Outside a request (tests, background work): no attribution.
+    return null;
+  }
   if (!raw) return null;
   try {
     const parsed = JSON.parse(decodeURIComponent(raw)) as Record<string, unknown>;

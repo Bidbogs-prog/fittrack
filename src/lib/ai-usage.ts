@@ -1,6 +1,7 @@
 import type { createClient } from "@/lib/supabase/server";
 import type { LlmUsage } from "@/lib/llm";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { ensureBetaAccess } from "@/lib/beta";
 
 /**
  * AI metering (roadmap 1.6 D): one `ai_usage` row per model call, used for
@@ -163,6 +164,9 @@ export async function featureQuotaError(
   feature: AiFeature,
   premium: boolean
 ): Promise<string | null> {
+  // The invite-only beta is enforced here too, not only by page redirects:
+  // AI endpoints are callable directly by any signed-in account (audit #5).
+  if (!(await ensureBetaAccess(supabase, userId))) return "AI features need beta access. Redeem an invite code first.";
   if (await aiSpendExceeded(supabase)) return "AI features are temporarily unavailable. Try again later.";
   const cap = DAILY_CAPS[feature];
   if (!cap) return null;
@@ -190,7 +194,8 @@ export async function coachQuotaError(
   supabase: Supabase,
   userId: string,
   premium: boolean
-): Promise<"dailyLimit" | "monthlyLimit" | null> {
+): Promise<"dailyLimit" | "monthlyLimit" | "invite" | null> {
+  if (!(await ensureBetaAccess(supabase, userId))) return "invite";
   const a = await getCoachAllowance(supabase, userId, premium);
   // Fail open: a metering outage shouldn't lock paying users out.
   if (!a.known) return null;
