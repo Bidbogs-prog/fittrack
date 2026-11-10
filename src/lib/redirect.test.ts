@@ -1,5 +1,25 @@
+import { readFileSync, readdirSync, statSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { safeRedirectPath } from "./redirect";
+
+describe("no hand-rolled redirect checks (audit #4)", () => {
+  it("every same-origin check goes through safeRedirectPath", () => {
+    const src = join(process.cwd(), "src");
+    const offenders: string[] = [];
+    const walk = (dir: string) => {
+      for (const e of readdirSync(dir)) {
+        const p = join(dir, e);
+        if (statSync(p).isDirectory()) walk(p);
+        else if (/\.tsx?$/.test(p) && !/\.test\.tsx?$/.test(p) && !p.endsWith("lib/redirect.ts")) {
+          if (/startsWith\(["']\/\/["']\)/.test(readFileSync(p, "utf8"))) offenders.push(p.slice(src.length + 1));
+        }
+      }
+    };
+    walk(src);
+    expect(offenders).toEqual([]);
+  });
+});
 
 /**
  * Open-redirect regression suite (security, CWE-601). Equivalence partitions:
