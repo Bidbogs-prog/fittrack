@@ -4,6 +4,7 @@ import { isPremium } from "@/lib/entitlements";
 import Link from "next/link";
 import { getFormatter, getTranslations } from "next-intl/server";
 import { AiInsights } from "@/components/ai-insights";
+import { ReminderNudge } from "@/components/reminder-settings";
 import { MacroTiles } from "@/components/macros";
 import { ComposerChip, Composer } from "@/components/orbit/composer";
 import { Greeting } from "@/components/orbit/greeting";
@@ -35,7 +36,13 @@ export default async function DashboardPage({
   ]);
   const { profile, targets, eaten, entries, isToday, remaining, kcalTarget } = data;
   const { supabase, userId } = await getProfile();
-  const premium = await isPremium(supabase, userId);
+  const [premium, { count: loggedCount }] = await Promise.all([
+    isPremium(supabase, userId),
+    // Reminder invitation only after a few real logs (never on first visit).
+    isToday
+      ? supabase.from("diary_entries").select("id", { count: "exact", head: true }).eq("user_id", userId).limit(3)
+      : Promise.resolve({ count: 0 }),
+  ]);
 
   const day = new Date(date + "T12:00:00");
   const dateLabel = format.dateTime(day, { weekday: "long", day: "numeric", month: "long" });
@@ -223,6 +230,7 @@ export default async function DashboardPage({
               kcalLeft={remaining}
               weekday={weekday}
             />
+            <ReminderNudge show={(loggedCount ?? 0) >= 3} />
             <AiInsights
               key={date}
               date={date}

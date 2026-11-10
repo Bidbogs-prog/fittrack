@@ -1049,5 +1049,37 @@
     "focus": "This week:",
     "discuss": "Talk it through with the coach",
     "discussPrompt": "About my check-in focus this week: {focus} How do I make it work?"
+  },
+  "pushNotify": {
+    "title": { "breakfast": "Breakfast time", "lunch": "Lunch time", "dinner": "Dinner time" },
+    "body": {
+      "breakfast": "Log your breakfast in a few seconds: say it, snap it or scan it.",
+      "lunch": "What did you have for lunch? Log it while you remember.",
+      "dinner": "Close the day: log your dinner to keep your streak."
+    },
+    "testTitle": "Reminders are on",
+    "testBody": "This is how So3ra will nudge you at meal times."
+  },
+  "reminders": {
+    "title": "Meal reminders",
+    "body": "A gentle nudge at meal times — skipped when that meal is already logged.",
+    "enable": "Turn on reminders",
+    "enabling": "Turning on…",
+    "on": "Reminders are on for this device.",
+    "disable": "Turn off on this device",
+    "test": "Send a test",
+    "testSent": "Test sent — check your notifications.",
+    "save": "Save times",
+    "saved": "Saved",
+    "off": "Off",
+    "slot": { "breakfast": "Breakfast", "lunch": "Lunch", "dinner": "Dinner" },
+    "denied": "Notifications are blocked for So3ra. Allow them in your phone or browser settings, then try again.",
+    "unsupported": "This browser can't receive notifications.",
+    "iosInstall": "On iPhone, reminders need the app on your Home Screen: tap Share, then “Add to Home Screen”, open So3ra from there and turn reminders on.",
+    "notConfigured": "Reminders aren't available yet.",
+    "failed": "Couldn't turn on reminders. Try again.",
+    "nudgeTitle": "Never forget a meal",
+    "nudgeBody": "Get a reminder at meal times — only when you haven't logged yet.",
+    "nudgeLater": "Not now"
   }
 }

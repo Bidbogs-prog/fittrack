@@ -1049,5 +1049,37 @@
     "focus": "Cette semaine :",
     "discuss": "En parler avec le coach",
     "discussPrompt": "À propos de ma priorité de la semaine : {focus} Comment m'y prendre ?"
+  },
+  "pushNotify": {
+    "title": { "breakfast": "C'est l'heure du petit-déjeuner", "lunch": "C'est l'heure du déjeuner", "dinner": "C'est l'heure du dîner" },
+    "body": {
+      "breakfast": "Enregistrez votre petit-déjeuner en quelques secondes : dites-le, photographiez-le ou scannez-le.",
+      "lunch": "Qu'avez-vous mangé à midi ? Enregistrez-le tant que vous vous en souvenez.",
+      "dinner": "Bouclez la journée : enregistrez votre dîner pour garder votre série."
+    },
+    "testTitle": "Rappels activés",
+    "testBody": "Voici comment So3ra vous rappellera aux heures des repas."
+  },
+  "reminders": {
+    "title": "Rappels de repas",
+    "body": "Un petit rappel aux heures des repas — ignoré si le repas est déjà enregistré.",
+    "enable": "Activer les rappels",
+    "enabling": "Activation…",
+    "on": "Rappels activés sur cet appareil.",
+    "disable": "Désactiver sur cet appareil",
+    "test": "Envoyer un test",
+    "testSent": "Test envoyé — regardez vos notifications.",
+    "save": "Enregistrer les horaires",
+    "saved": "Enregistré",
+    "off": "Désactivé",
+    "slot": { "breakfast": "Petit-déjeuner", "lunch": "Déjeuner", "dinner": "Dîner" },
+    "denied": "Les notifications sont bloquées pour So3ra. Autorisez-les dans les réglages du téléphone ou du navigateur, puis réessayez.",
+    "unsupported": "Ce navigateur ne peut pas recevoir de notifications.",
+    "iosInstall": "Sur iPhone, les rappels nécessitent l'app sur l'écran d'accueil : touchez Partager, puis « Sur l'écran d'accueil », ouvrez So3ra depuis là et activez les rappels.",
+    "notConfigured": "Les rappels ne sont pas encore disponibles.",
+    "failed": "Impossible d'activer les rappels. Réessayez.",
+    "nudgeTitle": "N'oubliez plus aucun repas",
+    "nudgeBody": "Recevez un rappel aux heures des repas — seulement si vous n'avez pas encore enregistré.",
+    "nudgeLater": "Plus tard"
   }
 }

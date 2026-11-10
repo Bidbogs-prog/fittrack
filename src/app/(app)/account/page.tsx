@@ -11,6 +11,7 @@ import { toStatusKey } from "@/i18n/status";
 import { IntentButton } from "@/components/intent-button";
 import { loadMemories } from "@/lib/coach/memory";
 import { MemoryList } from "./memory-list";
+import { ReminderSettings, type ReminderTimes } from "@/components/reminder-settings";
 
 const PREMIUM_LIVE = ["checkin", "memory", "coach", "logging"] as const;
 const PREMIUM_SOON = ["menu", "weekPlan", "nutrients", "ramadan"] as const;
@@ -47,9 +48,11 @@ export default async function AccountPage({
     getActiveTargets(supabase, userId, profile),
     isPremium(supabase, userId),
   ]);
-  const [allowance, memories] = await Promise.all([
+  const [allowance, memories, { data: reminderData }, tRem] = await Promise.all([
     getCoachAllowance(supabase, userId, premium),
     premium ? loadMemories(supabase, userId) : Promise.resolve([]),
+    supabase.from("reminder_settings").select("breakfast, lunch, dinner").eq("user_id", userId).maybeSingle(),
+    getTranslations("reminders"),
   ]);
   const monthlyLeft =
     allowance.monthly != null ? Math.max(0, allowance.monthly - allowance.usedMonth) : null;
@@ -153,6 +156,10 @@ export default async function AccountPage({
           <h2 className="font-display text-base font-semibold text-paper">{t("memoryTitle")}</h2>
           <p className="text-[13px] leading-relaxed text-paper-dim">{premium ? t("memoryBody") : t("memoryTeaser")}</p>
           {premium && <MemoryList memories={memories} />}
+        </section>
+        <section className={`${card} flex flex-col gap-2.5 p-3.5 lg:p-5`}>
+          <h2 className="font-display text-base font-semibold text-paper">{tRem("title")}</h2>
+          <ReminderSettings initial={(reminderData as ReminderTimes | null) ?? null} />
         </section>
         <section className={`${card} flex flex-col gap-2.5 p-3.5 lg:p-5`}>
           <h2 className="flex items-center gap-2 font-display text-base font-semibold text-paper">

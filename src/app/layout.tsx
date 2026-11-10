@@ -102,6 +102,7 @@ const CLIENT_NAMESPACES = [
   "onboarding",
   "orbit",
   "plans",
+  "reminders",
   "status",
   "thread",
   "today",

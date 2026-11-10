@@ -56,7 +56,7 @@ This is a living document. Check items off as they ship, add notes/links to PRs,
 - [x] Install prompt tracking: `pwa_installed` event, install rate by OS
 
 ### G3 — Retention levers (weeks 1–4)
-- [ ] Web push: VAPID keys, `push_subscriptions` table, opt-in after the 3rd logged meal (not on first visit), service-worker handler
+- [x] Web push: VAPID keys, `push_subscriptions` + `reminder_settings` + `reminder_log` (migration `20260822000000`), opt-in nudge on Today after the 3rd logged meal + settings on Me, service-worker `push`/`notificationclick`, sender `/api/cron/reminders` (CRON_SECRET; skips meals already logged; once per slot per local day). Scheduler: Supabase pg_cron (see AGENTS.md) or Vercel Cron on Pro
 - [ ] Scheduled sender (Vercel Cron or Supabase scheduled function): meal reminders in the user's timezone, skipped if that meal is already logged; quiet hours; per-user frequency cap
 - [ ] Weekly email digest for users without push (most iOS users who haven't installed the PWA): week summary + one coach tip; one-click unsubscribe
 - [ ] Ramadan mode (most foundations exist — `fasting window` on profile, coach briefs and prompt already Ramadan-aware): suhoor/iftar meal labels while active, auto-suggest from the fasting window, hydration hint between iftar and suhoor, Ramadan starter prompts in the coach, landing/creator assets
@@ -214,7 +214,7 @@ This is a living document. Check items off as they ship, add notes/links to PRs,
 ### 2.1 PWA
 - [x] Manifest (`src/app/manifest.ts` + generated icons in `public/icons/`), service worker (`public/sw.js`: network-first pages with `/offline.html` fallback, cache-first static assets), registered in production by `sw-register.tsx` — installable on Android/desktop, apple-touch-icon for iOS
 - [x] Offline diary queue: failed log actions (network throw) land in localStorage (`src/lib/offline-queue.ts`); `offline-sync.tsx` on the dashboard replays them through the same server actions when the connection returns, with a visible banner
-- [ ] Push reminders: needs web-push infra outside this repo (VAPID keys, subscriptions table, scheduled sender — pair with a Supabase Edge Function cron)
+- [x] Push reminders: shipped as GTM G3 (meal reminders)
 
 ### 2.2 Units & servings
 - [x] Household serving sizes: `foods.serving_name/serving_grams` (nullable), editable on user foods, ½/1/2 shortcut chips in the portion picker — grams stay the source of truth

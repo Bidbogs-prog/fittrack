@@ -76,6 +76,14 @@ export default function PrivacyPage() {
         analytics. There are no advertising cookies.
       </p>
 
+      <h2>Notifications and coach plans</h2>
+      <p>
+        If you turn on meal reminders, we store a push address for that device (from your browser or phone&rsquo;s
+        push service), your timezone and reminder times, and a record of which reminders were sent. Turn them off on
+        the Me page at any time. If you ask your coach for a meal plan, the coach can see your profile, targets and
+        recent logs while the request is open, to build the plan.
+      </p>
+
       <h2>Changes</h2>
       <p>We will update the date above and tell you in the app about significant changes.</p>
     </LegalPage>
