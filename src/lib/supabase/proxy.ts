@@ -10,6 +10,9 @@ const PROTECTED_PREFIXES = [
   "/history",
   "/recipes",
   "/account",
+  // OBS-2: these redirected from the page itself and lost the return path.
+  "/coach",
+  "/invite",
 ];
 
 export async function updateSession(request: NextRequest) {

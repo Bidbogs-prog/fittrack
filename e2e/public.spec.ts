@@ -41,10 +41,12 @@ test.describe("landing page", () => {
 });
 
 test.describe("access control", () => {
-  test("protected pages send signed-out visitors to login with a return path", async ({ page }) => {
-    await page.goto("/history");
-    await expect(page).toHaveURL(/\/login\?next=%2Fhistory/);
-  });
+  for (const path of ["/history", "/coach", "/invite"]) {
+    test(`${path} sends signed-out visitors to login with a return path (OBS-2)`, async ({ page }) => {
+      await page.goto(path);
+      await expect(page).toHaveURL(new RegExp(`/login\\?next=${encodeURIComponent(path)}`));
+    });
+  }
 
   test("signup page links the legal pages", async ({ page }) => {
     await page.goto("/signup");
