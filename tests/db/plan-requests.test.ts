@@ -63,6 +63,30 @@ describe("admin read access to requesters (20260821000000)", () => {
   });
 });
 
+describe("plan assignment is admin-only (audit #2)", () => {
+  it("a user can't create a plan assigned to someone else", async () => {
+    await expect(
+      t.as(other, () =>
+        t.rows("insert into public.meal_plans (name, goal, owner_id, assigned_to) values ('Spoof', 'lose', $1, $2)", [other, requester])
+      )
+    ).rejects.toThrow(/row-level security/);
+  });
+  it("a user can't assign their own plan to someone later", async () => {
+    const [{ id }] = await t.as(other, () =>
+      t.rows<{ id: string }>("insert into public.meal_plans (name, goal, owner_id) values ('Mine', 'lose', $1) returning id", [other])
+    );
+    await expect(
+      t.as(other, () => t.rows("update public.meal_plans set assigned_to = $1 where id = $2", [requester, id]))
+    ).rejects.toThrow(/row-level security/);
+  });
+  it("users can still create their own unassigned plans (AI plans)", async () => {
+    const rows = await t.as(other, () =>
+      t.rows("insert into public.meal_plans (name, goal, owner_id) values ('AI plan', 'lose', $1) returning id", [other])
+    );
+    expect(rows).toHaveLength(1);
+  });
+});
+
 describe("draft visibility", () => {
   it("while drafting: admin sees it, requester and others don't", async () => {
     expect(await sees(admin)).toBe(true);
