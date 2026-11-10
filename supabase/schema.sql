@@ -747,9 +747,9 @@ begin
     raise exception 'invalid_email';
   end if;
 
-  select * into v_row from public.waitlist w where lower(w.email) = v_email;
-  if found then
-    return query select v_row.referral_code, public.waitlist_position(v_row.id), true;
+  -- Existing emails get no code or position: no lookup of someone else's entry.
+  if exists (select 1 from public.waitlist w where lower(w.email) = v_email) then
+    return query select null::text, 0, true;
     return;
   end if;
 

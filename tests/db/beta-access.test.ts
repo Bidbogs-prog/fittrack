@@ -150,11 +150,11 @@ describe("waitlist", () => {
       ))[0]
     );
 
-  it("joining twice returns the same entry (already)", async () => {
+  it("joining twice says 'already' without revealing the entry (audit #9a)", async () => {
     const first = await join("Sara@Example.com");
+    expect(first.referral_code).toMatch(/^[0-9A-F]{8}$/);
     const again = await join("sara@example.com");
-    expect(again.already).toBe(true);
-    expect(again.referral_code).toBe(first.referral_code);
+    expect(again).toMatchObject({ already: true, referral_code: null, queue_position: 0 });
   });
 
   it("rejects malformed emails", async () => {
@@ -166,8 +166,10 @@ describe("waitlist", () => {
     const late = await join("late@example.com");
     expect(late.queue_position).toBe(2);
     await join("friend@example.com", late.referral_code);
-    const again = await join("late@example.com");
-    expect(again.queue_position).toBe(1);
+    const [{ pos }] = await t.admin(() =>
+      t.rows<{ pos: number }>("select public.waitlist_position(id) as pos from public.waitlist where email = 'late@example.com'")
+    );
+    expect(pos).toBe(1);
   });
 
   it("only admins can admit; admission follows queue order", async () => {

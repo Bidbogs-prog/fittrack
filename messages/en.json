@@ -1028,6 +1028,7 @@
     "legal": "We'll only email you about your access. <privacy>Privacy policy</privacy>.",
     "joinedTitle": "You're on the list",
     "alreadyTitle": "You're already on the list",
+    "alreadyBody": "We'll email you when you're in. Your referral link is in the confirmation you saw when you joined.",
     "position": "You're #{position} in line.",
     "referBody": "Every friend who joins with your link moves you up.",
     "share": "Share my link",

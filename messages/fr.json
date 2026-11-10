@@ -1028,6 +1028,7 @@
     "legal": "Nous vous écrirons uniquement au sujet de votre accès. <privacy>Politique de confidentialité</privacy>.",
     "joinedTitle": "Vous êtes sur la liste",
     "alreadyTitle": "Vous êtes déjà sur la liste",
+    "alreadyBody": "Nous vous écrirons dès que votre accès est prêt. Votre lien de parrainage était affiché lors de votre inscription.",
     "position": "Vous êtes n°{position} dans la file.",
     "referBody": "Chaque ami qui s'inscrit avec votre lien vous fait avancer.",
     "share": "Partager mon lien",

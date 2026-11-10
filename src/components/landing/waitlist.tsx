@@ -20,6 +20,18 @@ export function Waitlist() {
   }, { status: "idle" });
   const [copied, setCopied] = useState(false);
 
+  if (state.status === "joined" && state.already) {
+    return (
+      <div className="flex flex-col gap-2" role="status">
+        <p className="flex items-center gap-2 font-display text-2xl font-semibold text-paper">
+          <Check weight="bold" className="size-6 text-flame" />
+          {t("alreadyTitle")}
+        </p>
+        <p className="text-sm text-paper-dim">{t("alreadyBody")}</p>
+      </div>
+    );
+  }
+
   if (state.status === "joined" && state.code) {
     const link = `${window.location.origin}/?ref=${state.code}`;
     const canShare = typeof navigator.share === "function";

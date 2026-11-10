@@ -72,5 +72,6 @@ export async function joinWaitlist(_prev: WaitlistState, formData: FormData): Pr
     | { referral_code: string; queue_position: number; already: boolean }
     | undefined;
   if (!row) return { status: "error", error: "generic" };
-  return { status: "joined", code: row.referral_code, position: row.queue_position, already: row.already };
+  // Existing emails come back with no code/position (no lookup of other people's entries).
+  return { status: "joined", code: row.referral_code ?? "", position: row.queue_position ?? 0, already: row.already };
 }
