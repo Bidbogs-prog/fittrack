@@ -12,7 +12,7 @@
  *
  * Bump VERSION to invalidate all caches on deploy of a new strategy.
  */
-const VERSION = "v5";
+const VERSION = "v6";
 const STATIC_CACHE = `so3ra-static-${VERSION}`;
 const PAGE_CACHE = `so3ra-pages-${VERSION}`;
 const OFFLINE_URL = "/offline.html";
@@ -57,11 +57,15 @@ self.addEventListener("push", (event) => {
       body: data.body || "",
       tag: data.tag || "so3ra",
       icon: "/icons/icon-192.png",
-      badge: "/icons/icon-192.png",
+      badge: "/icons/notification-badge.png",
       data: { url: data.url || "/dashboard" },
     })
   );
 });
+
+// Use an alpha-only logo for Android's monochrome status-bar badge.
+// Source: /icons/notification-badge.svg (rasterised to 96px PNG).
+
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
