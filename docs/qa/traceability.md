@@ -8,8 +8,12 @@
 | REQ-NUT-1 | Targets: Mifflin-St Jeor × activity level, goal delta, 1,200 kcal floor | R3 | EP + BVA | `nutrition.test.ts` |
 | REQ-NUT-2 | Adaptive TDEE from intake vs weight trend, weekly | R3 | EP | `adaptive.test.ts`, `weight.test.ts` |
 | REQ-NUT-3 | Logged exercise never raises the target (DR-006) | R3 | — | Covered by code review; candidate component test on `getDayData` |
-| REQ-SEC-1 | Redirect targets stay on So3ra (DR-001) | R4 | EP | `redirect.test.ts` |
-| REQ-COST-1 | Free 10 coach msgs/day and /month; premium 50/day | R5 | BVA | `ai-usage.test.ts` |
+| REQ-SEC-1 | Redirect targets stay on So3ra (DR-001, DR-016) | R4 | EP + source scan | `redirect.test.ts` |
+| REQ-SEC-2 | Users can't forge AI usage or assign plans to others (DR-013, DR-014) | R4 | Negative RLS tests | `tests/db/rls.test.ts`, `tests/db/plan-requests.test.ts`, `tests/db/zz-audit.test.ts` |
+| REQ-SEC-3 | `schema.sql` matches the migrations (DR-015, DR-026) | R4 | Schema parity | `tests/db/schema.test.ts` |
+| REQ-SEC-4 | Invite codes rate-limited; waitlist leaks nothing (DR-019, DR-021) | R4 | BVA (10th/11th miss) | `tests/db/beta-access.test.ts` |
+| REQ-REM-1 | Reminders fire in the user's local time, once per slot per day (DR-027) | R3 | BVA on the 90-min window | `reminders.test.ts`, `tests/db/reminders.test.ts` |
+| REQ-COST-1 | Free 5 coach msgs/day, 10/month; premium 50/day; beta access required (OBS-1, DR-017) | R5 | BVA | `ai-usage.test.ts` |
 | REQ-COST-2 | AI meal logging capped 30/day free, 100 premium | R5 | BVA | `ai-usage.test.ts` |
 | REQ-PREM-1 | Premium = active entitlement with no or future end date | R6 | Decision table | `entitlements.test.ts` |
 | REQ-LOG-1 | Questions go to the coach; meals and edits to the parser (DR-005, DR-009) | R7 | EP (3 classes × 3 languages) | `intent-routing.test.ts` |
