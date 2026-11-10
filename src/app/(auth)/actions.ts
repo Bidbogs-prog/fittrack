@@ -80,10 +80,7 @@ export async function oauthSignIn(formData: FormData) {
   }
 
   const supabase = await createClient();
-  const headerStore = await headers();
-  const origin =
-    headerStore.get("origin") ??
-    `https://${headerStore.get("x-forwarded-host") ?? headerStore.get("host")}`;
+  const origin = await appOrigin();
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: provider as OAuthProvider,
@@ -106,10 +103,7 @@ export async function forgotPassword(formData: FormData) {
   }
 
   const supabase = await createClient();
-  const headerStore = await headers();
-  const origin =
-    headerStore.get("origin") ??
-    `https://${headerStore.get("x-forwarded-host") ?? headerStore.get("host")}`;
+  const origin = await appOrigin();
 
   await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${origin}/auth/confirm?next=/reset-password`,
