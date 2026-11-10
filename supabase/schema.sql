@@ -993,9 +993,19 @@ join public.invite_codes c on c.code = b.invite_code
 where b.invite_code is not null
 on conflict do nothing;
 
+-- Unknown-code attempts per user (audit #7): 10 misses per hour, then 'rate'.
+create table if not exists public.invite_attempts (
+  user_id uuid not null references auth.users (id) on delete cascade,
+  attempted_at timestamptz not null default now()
+);
+
+create index if not exists invite_attempts_user_idx on public.invite_attempts (user_id, attempted_at desc);
+
+alter table public.invite_attempts enable row level security;
+
 -- Returns: 'ok' (access granted), 'premium' (existing user, premium days
 -- granted), 'already' (existing user, nothing to add), 'invalid', 'expired',
--- 'full', 'used' (this user already redeemed this code), 'auth'.
+-- 'full', 'used' (this user already redeemed this code), 'auth', 'rate'.
 create or replace function public.redeem_invite(p_code text, p_source jsonb)
 returns text
 language plpgsql
@@ -1008,10 +1018,17 @@ declare
   v_has_access boolean;
 begin
   if v_user is null then return 'auth'; end if;
+  if (select count(*) from public.invite_attempts a
+      where a.user_id = v_user and a.attempted_at > now() - interval '1 hour') >= 10 then
+    return 'rate';
+  end if;
   v_has_access := exists (select 1 from public.beta_access b where b.user_id = v_user);
 
   select * into v_code from public.invite_codes c where c.code = upper(trim(p_code)) for update;
-  if not found then return case when v_has_access then 'already' else 'invalid' end; end if;
+  if not found then
+    insert into public.invite_attempts (user_id) values (v_user);
+    return case when v_has_access then 'already' else 'invalid' end;
+  end if;
   if exists (select 1 from public.invite_redemptions r where r.user_id = v_user and r.code = v_code.code) then
     return 'used';
   end if;

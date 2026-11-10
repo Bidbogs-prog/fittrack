@@ -1002,6 +1002,7 @@
       "expired": "That code has expired.",
       "full": "That code has been fully used.",
       "used": "You've already redeemed this code.",
+      "rate": "Too many wrong codes. Wait an hour and try again.",
       "generic": "Something went wrong. Try again."
     },
     "memberTitle": "Redeem your code",

@@ -1002,6 +1002,7 @@
       "expired": "Ce code a expiré.",
       "full": "Ce code a déjà été entièrement utilisé.",
       "used": "Vous avez déjà utilisé ce code.",
+      "rate": "Trop de codes erronés. Patientez une heure et réessayez.",
       "generic": "Une erreur s'est produite. Réessayez."
     },
     "memberTitle": "Utiliser votre code",

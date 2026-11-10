@@ -99,6 +99,23 @@ describe("invite codes", () => {
   });
 });
 
+describe("invite guessing limit (audit #7)", () => {
+  it("after 10 unknown codes in an hour, even a valid code is refused with 'rate'", async () => {
+    const u = await t.user("guesser@example.com");
+    await code("REAL-1", 5, 30);
+    for (let i = 0; i < 10; i++) expect(await redeem(u, `NOPE-${i}`)).toBe("invalid");
+    expect(await redeem(u, "REAL-1")).toBe("rate");
+    expect(await hasAccess(u)).toBe(false);
+  });
+  it("users can't read or clear their attempt log", async () => {
+    const u = await t.user("clear@example.com");
+    await redeem(u, "NOPE-X");
+    expect(await t.as(u, () => t.rows("select 1 from public.invite_attempts"))).toHaveLength(0);
+    await t.as(u, () => t.rows("delete from public.invite_attempts"));
+    expect(await t.admin(() => t.rows("select 1 from public.invite_attempts where user_id = $1", [u]))).toHaveLength(1);
+  });
+});
+
 describe("deleting invite codes", () => {
   it("admin deletes a used code: link stops working, granted access and premium stay", async () => {
     const admin = await t.user("admin@example.com");

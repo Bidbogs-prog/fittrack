@@ -14,7 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t("title") };
 }
 
-const ERRORS = ["invalid", "expired", "full", "used", "generic"] as const;
+const ERRORS = ["invalid", "expired", "full", "used", "rate", "generic"] as const;
 
 /**
  * The beta gate (no access yet: an invite code is required) and, for users
