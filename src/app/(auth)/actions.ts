@@ -12,6 +12,18 @@ type OAuthProvider = (typeof OAUTH_PROVIDERS)[number];
 
 const sanitizeNext = (next: unknown): string => safeRedirectPath(next, "/dashboard");
 
+/**
+ * Where auth emails and OAuth send people back to. The configured site URL
+ * wins; request headers are only a fallback (local dev, previews), so a
+ * forged Origin/Host can't steer reset links elsewhere (audit #9d).
+ */
+async function appOrigin(): Promise<string> {
+  const configured = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "");
+  if (configured && /^https?:\/\//.test(configured)) return configured;
+  const h = await headers();
+  return h.get("origin") ?? `https://${h.get("x-forwarded-host") ?? h.get("host")}`;
+}
+
 export async function login(formData: FormData) {
   const supabase = await createClient();
 
