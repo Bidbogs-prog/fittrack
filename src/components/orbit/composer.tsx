@@ -54,6 +54,8 @@ export function Composer({
   const [menu, setMenu] = useState(false);
   const [search, setSearch] = useState<null | "browse" | "scan" | "saved">(null);
   const [scanning, setScanning] = useState(false);
+  /** Last barcode the library didn't know: offered as "Add it now". */
+  const [missCode, setMissCode] = useState<string | null>(null);
   const [meal, setMeal] = useState<MealType>("snack");
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -120,6 +122,7 @@ export function Composer({
     } catch {
       // fall through to the miss message
     }
+    setMissCode(code);
     log.setError(t("barcodeMiss"));
   }
 
@@ -193,7 +196,20 @@ export function Composer({
               log.error ? "border-danger/30 bg-danger/[0.08] text-danger" : "border-fibre/30 bg-fibre/10 text-fibre"
             }`}
           >
-            <span className="min-w-0">{log.error ?? log.notice}</span>
+            <span className="min-w-0">
+              {log.error ?? log.notice}
+              {missCode && log.error === t("barcodeMiss") && (
+                <>
+                  {" "}
+                  <Link
+                    href={`/foods/new?barcode=${encodeURIComponent(missCode)}&from=scan`}
+                    className="font-semibold underline underline-offset-4"
+                  >
+                    {t("barcodeAdd")}
+                  </Link>
+                </>
+              )}
+            </span>
             <button
               type="button"
               onClick={log.clearMessages}

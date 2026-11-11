@@ -44,7 +44,12 @@ export default async function FoodPage({ params }: { params: Promise<{ id: strin
             {food.name}
           </h1>
           {food.brand && <p className="mt-0.5 text-sm text-paper-mute">{food.brand}</p>}
-          {food.owner_id === userId && (
+          {food.owner_id === userId && food.review_status && (
+            <p className="mt-1 text-xs text-paper-mute">
+              {t(food.review_status === "pending" ? "reviewPending" : "reviewRejected")}
+            </p>
+            )}
+            {food.owner_id === userId && (
             <Link
               href={`/foods/${food.id}/edit`}
               className="mt-1.5 inline-flex min-h-9 items-center gap-1.5 text-xs text-paper-mute hover:text-flame"

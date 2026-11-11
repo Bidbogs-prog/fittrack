@@ -52,6 +52,44 @@ async function uploadImage(
   return supabase.storage.from("food-images").getPublicUrl(path).data.publicUrl;
 }
 
+// ---------- FOOD REVIEW ----------
+
+/** Approve a user's food: it becomes a shared library food (owner_id null). */
+export async function approveFood(formData: FormData) {
+  const { supabase, userId } = await requireAdmin();
+  const back = "/admin/foods/review";
+  const id = String(formData.get("id") ?? "");
+  const { data, error } = await supabase
+    .from("foods")
+    .update({ owner_id: null, review_status: null, reviewed_by: userId, reviewed_at: new Date().toISOString() })
+    .eq("id", id)
+    .eq("review_status", "pending")
+    .select("name")
+    .maybeSingle();
+  if (error?.code === "23505") fail(back, "The library already has a food with this barcode. Reject this one or fix the barcode first.");
+  if (error || !data) fail(back, error?.message ?? "That food is no longer pending.");
+  revalidatePath("/admin/foods", "layout");
+  revalidatePath("/foods");
+  redirect(`${back}?approved=${encodeURIComponent(data.name)}`);
+}
+
+/** Reject: the food stays private to its owner; editing it resubmits it. */
+export async function rejectFood(formData: FormData) {
+  const { supabase, userId } = await requireAdmin();
+  const back = "/admin/foods/review";
+  const id = String(formData.get("id") ?? "");
+  const { data, error } = await supabase
+    .from("foods")
+    .update({ review_status: "rejected", reviewed_by: userId, reviewed_at: new Date().toISOString() })
+    .eq("id", id)
+    .eq("review_status", "pending")
+    .select("name")
+    .maybeSingle();
+  if (error || !data) fail(back, error?.message ?? "That food is no longer pending.");
+  revalidatePath("/admin/foods", "layout");
+  redirect(`${back}?rejected=${encodeURIComponent(data.name)}`);
+}
+
 // ---------- FOODS ----------
 
 export async function saveFood(formData: FormData) {

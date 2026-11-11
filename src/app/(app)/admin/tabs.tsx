@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 
 const TABS = [
   { href: "/admin/foods", label: "Food library" },
+  { href: "/admin/foods/review", label: "Food review" },
   { href: "/admin/plans", label: "Meal plans" },
   { href: "/admin/requests", label: "Plan requests" },
   { href: "/admin/beta", label: "Beta" },
@@ -21,7 +22,10 @@ export function AdminTabs() {
       aria-label="Admin sections"
     >
       {TABS.map(({ href, label }) => {
-        const active = pathname.startsWith(href);
+        // The most specific tab wins (/admin/foods/review isn't "Food library").
+        const active =
+          pathname.startsWith(href) &&
+          !TABS.some((o) => o.href.length > href.length && o.href.startsWith(href) && pathname.startsWith(o.href));
         return (
           <Link
             key={href}

@@ -74,7 +74,7 @@ export function ScanButton({ variant = "badge" }: { variant?: "badge" | "button"
             {miss ? (
               <div className="mt-4 space-y-3 text-sm text-paper-dim">
                 <p>{t("scanMiss", { code: miss })}</p>
-                <Link href="/foods/new" className="btn-flame btn-press inline-flex min-h-11 items-center rounded-xl px-4">
+                <Link href={`/foods/new?barcode=${encodeURIComponent(miss)}&from=scan`} className="btn-flame btn-press inline-flex min-h-11 items-center rounded-xl px-4">
                   {t("createFood")}
                 </Link>
               </div>

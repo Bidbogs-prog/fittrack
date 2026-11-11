@@ -130,6 +130,8 @@ export interface Food extends MicroValues {
   image_url: string | null;
   /** null = global library food; set = private food visible to its owner only. */
   owner_id: string | null;
+  /** Private food submitted for sharing: pending admin review, or rejected (stays private). */
+  review_status?: "pending" | "rejected" | null;
   kcal: number;
   protein_g: number;
   carbs_g: number;

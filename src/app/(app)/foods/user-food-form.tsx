@@ -10,16 +10,20 @@ export function UserFoodForm({
   food,
   error,
   defaults,
+  from,
 }: {
   action: (formData: FormData) => Promise<void>;
   food?: Food;
   error?: string;
   /** Prefills for the create form (e.g. from a failed search or barcode miss). */
   defaults?: { name?: string; barcode?: string };
+  /** Where the form was opened from ("scan" = barcode miss: open the food after saving). */
+  from?: string;
 }) {
   return (
     <form action={action} className="max-w-xl space-y-5">
       {food && <input type="hidden" name="id" value={food.id} />}
+      {from && <input type="hidden" name="from" value={from} />}
 
       {error && (
         <p className="flex items-start gap-2 rounded-lg border border-danger/30 bg-danger/[0.08] px-3.5 py-3 text-sm text-danger">

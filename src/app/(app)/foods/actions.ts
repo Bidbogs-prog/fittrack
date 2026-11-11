@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireUser } from "@/lib/auth";
+import { isAdmin, requireUser } from "@/lib/auth";
 import { FOOD_CATEGORIES, type FoodCategory } from "@/lib/types";
 
 interface UserFoodValues {
@@ -76,21 +76,39 @@ function parseUserFood(formData: FormData): { values: UserFoodValues } | { error
   };
 }
 
+/**
+ * Admins add straight to the shared library. Everyone else gets a private
+ * food they can log right away, submitted for admin review; approved, it
+ * becomes shared with every user.
+ */
 export async function createUserFood(formData: FormData) {
   const { supabase, userId } = await requireUser();
+  const fromScan = formData.get("from") === "scan";
+  const back = `/foods/new${fromScan ? "?from=scan&" : "?"}`;
 
   const parsed = parseUserFood(formData);
   if ("error" in parsed) {
-    redirect(`/foods/new?error=${encodeURIComponent(parsed.error)}`);
+    redirect(`${back}error=${encodeURIComponent(parsed.error)}`);
   }
 
-  const { error } = await supabase
+  const admin = await isAdmin(supabase, userId);
+  const { data, error } = await supabase
     .from("foods")
-    .insert({ ...parsed.values, owner_id: userId, source: "manual" });
-  if (error) redirect(`/foods/new?error=${encodeURIComponent(error.message)}`);
+    .insert(
+      admin
+        ? { ...parsed.values, owner_id: null, source: "manual" }
+        : { ...parsed.values, owner_id: userId, source: "manual", review_status: "pending" }
+    )
+    .select("id")
+    .single();
+  if (error || !data) {
+    const msg = error?.code === "23505" ? "A food with this barcode is already in the library." : (error?.message ?? "Couldn't save.");
+    redirect(`${back}error=${encodeURIComponent(msg)}`);
+  }
 
   revalidatePath("/foods");
-  redirect("/foods?mine=1");
+  // From a barcode miss: straight to the food so it can be logged.
+  redirect(fromScan ? `/foods/${data.id}` : admin ? "/foods" : "/foods?mine=1");
 }
 
 export async function updateUserFood(formData: FormData) {
@@ -107,7 +125,8 @@ export async function updateUserFood(formData: FormData) {
   // RLS also enforces ownership; the filter keeps intent explicit.
   const { error } = await supabase
     .from("foods")
-    .update({ ...parsed.values, updated_at: new Date().toISOString() })
+    // Edited facts go back to the review queue (also resubmits a rejected food).
+    .update({ ...parsed.values, review_status: "pending", updated_at: new Date().toISOString() })
     .eq("id", id)
     .eq("owner_id", userId);
   if (error) redirect(`/foods/${id}/edit?error=${encodeURIComponent(error.message)}`);
