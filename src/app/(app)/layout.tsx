@@ -10,6 +10,7 @@ import { ensureBetaAccess, getBetaInfo } from "@/lib/beta";
 import { isPremium } from "@/lib/entitlements";
 import { IdentifyUser } from "@/components/identify-user";
 import { SignOutForm } from "@/components/sign-out-form";
+import { ReminderClockSync } from "@/components/reminder-settings";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const [{ supabase, userId, profile }, t] = await Promise.all([getProfile(), getTranslations("shell")]);
@@ -80,6 +81,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           ...Object.fromEntries(Object.entries(beta.source ?? {}).map(([k, v]) => [`src_${k}`, v])),
         }}
       />
+      <ReminderClockSync />
       <MainFrame>
         <RouteFx>{children}</RouteFx>
       </MainFrame>

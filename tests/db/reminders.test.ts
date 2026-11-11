@@ -51,6 +51,22 @@ describe("push reminders RLS", () => {
     await expect(t.as(a, () => t.rows("select * from public.reminder_candidates()"))).rejects.toThrow(/permission denied/);
   });
 
+  it("the device's UTC offset wins over the zone's tz data", async () => {
+    // Postgres said Casablanca was +01 while phones showed +00: reminders fired an hour early.
+    await t.admin(() => t.rows("update public.reminder_settings set timezone = 'Africa/Casablanca', utc_offset_min = 0 where user_id = $1", [a]));
+    const [utc] = await t.admin(() =>
+      t.rows<{ m: number }>("select (extract(hour from now() at time zone 'UTC') * 60 + extract(minute from now() at time zone 'UTC'))::int as m")
+    );
+    const [zero] = await t.admin(() => t.rows<{ local_minutes: number }>("select local_minutes from public.reminder_candidates()"));
+    expect(zero.local_minutes).toBe(utc.m);
+    await t.admin(() => t.rows("update public.reminder_settings set utc_offset_min = 90 where user_id = $1", [a]));
+    const [plus] = await t.admin(() => t.rows<{ local_minutes: number }>("select local_minutes from public.reminder_candidates()"));
+    expect(plus.local_minutes).toBe((utc.m + 90) % 1440);
+    await expect(
+      t.admin(() => t.rows("update public.reminder_settings set utc_offset_min = 900 where user_id = $1", [a]))
+    ).rejects.toThrow(/check/);
+  });
+
   it("the send log dedupes one slot per user per local day", async () => {
     await t.admin(() => t.rows("insert into public.reminder_log (user_id, slot, local_date) values ($1, 'lunch', '2026-11-02')", [a]));
     await expect(

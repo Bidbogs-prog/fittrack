@@ -1080,8 +1080,13 @@ create table if not exists public.reminder_settings (
   breakfast time default '09:00',
   lunch time default '13:30',
   dinner time default '20:30',
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  -- Device-reported UTC offset; wins over the zone name (Postgres tz data can lag the phone).
+  utc_offset_min smallint check (utc_offset_min between -840 and 840)
 );
+
+alter table public.reminder_settings
+  add column if not exists utc_offset_min smallint check (utc_offset_min between -840 and 840);
 
 alter table public.reminder_settings enable row level security;
 
@@ -1114,12 +1119,19 @@ security definer
 set search_path = public
 as $$
   select s.user_id, s.locale, s.timezone, s.breakfast, s.lunch, s.dinner,
-         (now() at time zone tz.name)::date,
-         (extract(hour from now() at time zone tz.name) * 60 + extract(minute from now() at time zone tz.name))::integer
+         lt.t::date,
+         (extract(hour from lt.t) * 60 + extract(minute from lt.t))::integer
   from public.reminder_settings s
   cross join lateral (
     select case when exists (select 1 from pg_timezone_names where name = s.timezone) then s.timezone else 'Africa/Casablanca' end as name
   ) tz
+  -- The device's own offset wins: it is the clock the user actually sees.
+  cross join lateral (
+    select case
+      when s.utc_offset_min is not null then (now() at time zone 'UTC') + make_interval(mins => s.utc_offset_min)
+      else now() at time zone tz.name
+    end as t
+  ) lt
   where s.enabled
     and exists (select 1 from public.push_subscriptions p where p.user_id = s.user_id);
 $$;

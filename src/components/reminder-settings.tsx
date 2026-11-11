@@ -8,6 +8,7 @@ import {
   savePushSubscription,
   saveReminderTimes,
   sendTestReminder,
+  syncReminderClock,
 } from "@/app/(app)/account/reminder-actions";
 import { track } from "@/lib/analytics";
 import { useClientValue } from "@/lib/use-client-clock";
@@ -51,6 +52,7 @@ export function useEnableReminders(surface: string) {
         p256dh: res.p256dh,
         auth: res.auth,
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        utcOffsetMin: -new Date().getTimezoneOffset(),
         userAgent: navigator.userAgent,
       });
       if (!saved.ok) return setError("failed");
@@ -135,6 +137,7 @@ export function ReminderSettings({ initial }: { initial: ReminderTimes | null })
         <form
           action={(fd) =>
             startSave(async () => {
+              fd.set("offset", String(-new Date().getTimezoneOffset()));
               const res = await saveReminderTimes(fd);
               setNote(res.ok ? t("saved") : t("failed"));
             })
@@ -203,4 +206,27 @@ export function ReminderNudge({ show }: { show: boolean }) {
       </div>
     </section>
   );
+}
+
+
+/**
+ * App shell: when notifications are on, tell the server this device's UTC
+ * offset whenever it changes (DST, travel, a tz-data update), so reminders
+ * follow the clock the user actually sees.
+ */
+export function ReminderClockSync() {
+  useEffect(() => {
+    if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
+    const offset = -new Date().getTimezoneOffset();
+    const key = "so3ra_reminder_offset";
+    try {
+      if (localStorage.getItem(key) === String(offset)) return;
+    } catch {
+      return;
+    }
+    syncReminderClock({ timezone: Intl.DateTimeFormat().resolvedOptions().timeZone, utcOffsetMin: offset })
+      .then(() => localStorage.setItem(key, String(offset)))
+      .catch(() => {});
+  }, []);
+  return null;
 }
