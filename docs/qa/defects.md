@@ -230,6 +230,31 @@ Found by a full code review (static testing); DR-013 to DR-015 were confirmed by
 - **Fix:** `src/lib/push-endpoint.ts`: only FCM, Apple, Mozilla and Windows push hosts on port 443 without credentials; keys must be a 65-byte P-256 point and a 16-byte secret. Stored rows that fail the check are never requested and are removed. An existing endpoint moves to another account only with the same keys (same browser), as an update, never delete-first. Settings errors now fail the action.
 - **Regression test:** `src/lib/push-endpoint.test.ts` (allowed services, metadata IP, localhost, http, port, credentials, look-alike hosts, key sizes).
 
+### DR-034 — Offline meals replayed into whichever account signed in next (AUD-03)
+- **Severity / priority:** High / High · **Type:** Privacy / data integrity · **Found by:** code review, reproduced in a unit test
+- **Steps:** 1. Account A logs a meal while offline. 2. A signs out, B signs in on the same phone. 3. Back online. **Actual:** A's meal is saved in B's diary. **Expected:** it stays A's.
+- **Root cause:** one device-wide queue (`fittrack-offline-queue`) with no owner; sign-out didn't touch it.
+- **Fix:** one queue per account (`so3ra-offline-queue:<user>`), owner set by the app shell and cleared on sign-out; each entry carries its owner and the server refuses a replay into another account (`wrongAccount`). Entries from the old shared queue are never replayed automatically: Today asks "Add to my diary" or "Discard".
+- **Regression tests:** `src/lib/offline-queue.test.ts` → "offline queue is per account (AUD-03)".
+
+### DR-035 — Offline meals could be lost or doubled without notice (AUD-04)
+- **Severity / priority:** High / High · **Type:** Data integrity · **Found by:** code review, reproduced in unit tests
+- **Actual:** (a) when storage was full or blocked the app still said "saved on this device"; (b) the 101st entry silently evicted the 1st; (c) an entry the server rejected (e.g. a deleted recipe) was dropped; (d) a replay whose response was lost was logged again on the next attempt.
+- **Fix:** `enqueue` reports whether the entry was stored (with a read-back); a full queue refuses new entries and the UI says the meal was NOT saved; rejected entries stay listed with the reason (Retry / Discard); each entry has a `client_id` and `diary_entries (user_id, client_id)` is unique (migration `20260901000000_diary_client_id.sql`), so a repeat replay counts as already logged.
+- **Regression tests:** `src/lib/offline-queue.test.ts` → "never loses entries silently (AUD-04)"; `tests/db/offline-replay.test.ts`.
+
+### DR-036 — Food review could be skipped or faked with direct writes (AUD-05)
+- **Severity / priority:** Medium / Medium · **Type:** Security (integrity) · **Found by:** code review, reproduced in the test database
+- **Actual:** inserting a food without `review_status` kept it out of the queue; users could set `reviewed_by`/`reviewed_at` to anyone. (The food stayed private; this was not a publishing bypass.)
+- **Fix:** trigger `foods_enforce_review` (migration `20260902000000_food_review_enforced.sql`): a non-admin's food is always `pending` on create and after any change to its facts; reviewer fields are kept from the previous row. Admin and service-role writes are untouched; a rejected food stays editable and an edit resubmits it.
+- **Regression tests:** `tests/db/food-review.test.ts` → "review is enforced by the database (AUD-05)".
+
+### DR-037 — Exports cut off at 1,000 rows, or empty on a database error (AUD-14)
+- **Severity / priority:** Medium / Medium · **Type:** Functional · **Found by:** code review
+- **Actual:** `/api/export` read the diary in one request; PostgREST returns at most 1,000 rows, so long-time users got a truncated file that looked complete; a failed read produced an empty file.
+- **Fix:** `fetchAll` (`src/lib/fetch-all.ts`) pages through with a stable order (date, time, id) and fails the request (503, nothing downloaded) on any page error.
+- **Regression test:** `src/lib/fetch-all.test.ts` (0, 999, 1,000, 1,001, 2,500 rows; error on page 2).
+
 ### Accepted risks (not fixed)
 - **Open Food Facts names in AI prompts:** third-party text reaches the model (prompt injection, CWE-1427). Low impact: output is structured and confirmed by the user. Revisit before bulk imports.
 - **Coach loads up to 400 library foods per message:** token cost, not correctness. Revisit when the library grows.
