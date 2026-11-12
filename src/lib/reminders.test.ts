@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { implausibleSlots } from "./reminders";
 import { dueSlots, localNow, SEND_WINDOW_MIN, toMinutes, type ReminderSchedule } from "./reminders";
 
 /**
@@ -86,4 +87,18 @@ describe("toMinutes", () => {
     ["9:30", null],
     [null, null],
   ])("%s → %s", (input, expected) => expect(toMinutes(input)).toBe(expected));
+});
+
+
+describe("implausibleSlots (DR-030)", () => {
+  it("flags an AM/PM slip: lunch 23:47 instead of 11:47", () => {
+    expect(implausibleSlots({ breakfast: "10:28", lunch: "23:47", dinner: "21:00" })).toEqual(["lunch"]);
+  });
+  it("accepts normal times, late dinners and empty slots", () => {
+    expect(implausibleSlots({ breakfast: "07:30", lunch: "13:00", dinner: "00:30" })).toEqual([]);
+    expect(implausibleSlots({ breakfast: null, lunch: "11:48", dinner: null })).toEqual([]);
+  });
+  it("flags breakfast in the evening and dinner in the morning", () => {
+    expect(implausibleSlots({ breakfast: "19:00", lunch: null, dinner: "09:00" })).toEqual(["breakfast", "dinner"]);
+  });
 });

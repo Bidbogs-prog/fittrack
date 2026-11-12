@@ -55,6 +55,24 @@ export function toMinutes(time: string | null): number | null {
   return v >= 0 && v < 24 * 60 ? v : null;
 }
 
+/** Typical local windows per meal [from, to) in minutes; dinner may run past midnight. */
+const PLAUSIBLE: Record<ReminderSlot, [number, number][]> = {
+  breakfast: [[4 * 60, 12 * 60]],
+  lunch: [[10 * 60 + 30, 17 * 60]],
+  dinner: [[16 * 60, 24 * 60], [0, 2 * 60]],
+};
+
+/**
+ * Slots whose time looks like an AM/PM slip (DR-030): on a 12-hour picker,
+ * changing only the hour of "01:00 PM" to 11 saves 23:00, not 11:00.
+ */
+export function implausibleSlots(times: Record<ReminderSlot, string | null>): ReminderSlot[] {
+  return REMINDER_SLOTS.filter((slot) => {
+    const m = toMinutes(times[slot]);
+    return m != null && !PLAUSIBLE[slot].some(([a, b]) => m >= a && m < b);
+  });
+}
+
 /**
  * Slots to remind about right now: the set time has passed by less than
  * SEND_WINDOW_MIN, it hasn't been sent today, and that meal isn't logged yet

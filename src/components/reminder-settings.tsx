@@ -13,6 +13,7 @@ import {
 import { track } from "@/lib/analytics";
 import { useClientValue } from "@/lib/use-client-clock";
 import { currentSubscription, pushSupport, subscribeDevice, type PushSupport } from "@/lib/push-client";
+import { implausibleSlots } from "@/lib/reminders";
 
 export interface ReminderTimes {
   breakfast: string | null;
@@ -139,7 +140,18 @@ export function ReminderSettings({ initial }: { initial: ReminderTimes | null })
             startSave(async () => {
               fd.set("offset", String(-new Date().getTimezoneOffset()));
               const res = await saveReminderTimes(fd);
-              setNote(res.ok ? t("saved") : t("failed"));
+              if (!res.ok) return setNote(t("failed"));
+              // Echo the saved times in 24-hour form and catch AM/PM slips (DR-030).
+              const val = (s: (typeof SLOTS)[number]) => String(fd.get(s) ?? "") || null;
+                const saved: ReminderTimes = { breakfast: val("breakfast"), lunch: val("lunch"), dinner: val("dinner") };
+              const list = SLOTS.filter((s) => saved[s]).map((s) => `${t(`slot.${s}`)} ${saved[s]}`).join(" · ");
+              const odd = implausibleSlots(saved);
+              setNote(
+                [
+                  list ? t("savedTimes", { list }) : t("saved"),
+                  ...odd.map((s) => t("oddTime", { meal: t(`slot.${s}`), time: saved[s] ?? "" })),
+                ].join(" ")
+              );
             })
           }
           className="flex flex-col gap-2"

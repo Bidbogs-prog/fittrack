@@ -204,6 +204,13 @@ Found by a full code review (static testing); DR-013 to DR-015 were confirmed by
 - **Fix:** `PUSH_OPTIONS` in `src/lib/push-server.ts`: `urgency: "high"` and `TTL` 45 min (a stale breakfast reminder is dropped instead of arriving at lunch); pg_cron job `so3ra-reminders` moved to every 5 minutes.
 - **Regression test:** `src/lib/push-server.test.ts` (fails on `urgency: "normal"`, verified before the fix). Device delivery itself: manual check with the phone locked for 15+ minutes.
 
+### DR-030 — Reminder time saved 12 hours off (AM/PM slip)
+- **Severity / priority:** Medium / Medium · **Type:** Usability / functional · **Found by:** product owner (Android)
+- **Steps:** 1. Lunch is 13:00 (shown as "01:00 PM" on a 12-hour phone). 2. Change only the hour to 11 and the minutes to 47, save. **Expected:** reminder at 11:47. **Actual:** saved `23:47` (`reminder_settings.updated_at` 11:46 UTC); the 11:50–12:05 cron runs correctly found nothing due, so no notification.
+- **Root cause:** the phone's time picker keeps the PM half-day when only the hour is edited; the app accepted the value silently and only said "Saved", so the slip wasn't visible. Sending was correct.
+- **Fix:** after saving, the Me page echoes the times in 24-hour form ("Saved: Breakfast 10:28 · Lunch 23:47") and warns when a slot is outside its usual window (`implausibleSlots` in `src/lib/reminders.ts`: breakfast 04:00–12:00, lunch 10:30–17:00, dinner 16:00–02:00).
+- **Regression test:** `src/lib/reminders.test.ts` → "implausibleSlots (DR-030)".
+
 ### Accepted risks (not fixed)
 - **Open Food Facts names in AI prompts:** third-party text reaches the model (prompt injection, CWE-1427). Low impact: output is structured and confirmed by the user. Revisit before bulk imports.
 - **Coach loads up to 400 library foods per message:** token cost, not correctness. Revisit when the library grows.

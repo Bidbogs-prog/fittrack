@@ -1079,6 +1079,8 @@
     "testSent": "Test sent — check your notifications.",
     "save": "Save times",
     "saved": "Saved",
+    "savedTimes": "Saved: {list}.",
+    "oddTime": "{meal} is set to {time}. That looks unusual: check AM/PM on the time picker.",
     "off": "Off",
     "slot": { "breakfast": "Breakfast", "lunch": "Lunch", "dinner": "Dinner" },
     "denied": "Notifications are blocked for So3ra. Allow them in your phone or browser settings, then try again.",

@@ -1079,6 +1079,8 @@
     "testSent": "Test envoyé — regardez vos notifications.",
     "save": "Enregistrer les horaires",
     "saved": "Enregistré",
+    "savedTimes": "Enregistré : {list}.",
+    "oddTime": "{meal} est réglé à {time}. Cela semble inhabituel : vérifiez AM/PM dans le sélecteur.",
     "off": "Désactivé",
     "slot": { "breakfast": "Petit-déjeuner", "lunch": "Déjeuner", "dinner": "Dîner" },
     "denied": "Les notifications sont bloquées pour So3ra. Autorisez-les dans les réglages du téléphone ou du navigateur, puis réessayez.",
