@@ -101,16 +101,17 @@ export default async function AccountPage({
         </div>
       </header>
 
-      {message && (
+      {/* Keys only (AUD-17): unknown values are attacker-controlled text and are never echoed. */}
+      {message && toStatusKey(message) && (
         <p role="status" className="flex max-w-xl items-start gap-2 rounded-xl border border-fibre/30 bg-fibre/10 px-3.5 py-3 text-sm text-fibre">
           <Info className="mt-0.5 size-4 shrink-0" weight="bold" />
-          <span className="min-w-0 break-words">{toStatusKey(message) ? tStatus(toStatusKey(message)!) : message}</span>
+          <span className="min-w-0 break-words">{tStatus(toStatusKey(message)!)}</span>
         </p>
       )}
       {error && (
         <p role="alert" className="flex max-w-xl items-start gap-2 rounded-xl border border-danger/30 bg-danger/[0.08] px-3.5 py-3 text-sm text-danger">
           <WarningCircle className="mt-0.5 size-4 shrink-0" weight="bold" />
-          <span className="min-w-0 break-words">{error}</span>
+          <span className="min-w-0 break-words">{tStatus(toStatusKey(error) ?? "generic")}</span>
         </p>
       )}
 

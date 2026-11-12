@@ -3,28 +3,14 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
-
-function parseRecipeFields(formData: FormData): { error: string } | {
-  name: string;
-  description: string | null;
-  servings: number;
-} {
-  const name = String(formData.get("name") ?? "").trim().slice(0, 120);
-  const description = String(formData.get("description") ?? "").trim().slice(0, 500) || null;
-  const servings = Number(formData.get("servings"));
-
-  if (name.length < 2) return { error: "Give the recipe a name (at least 2 characters)." };
-  if (!(servings > 0 && servings <= 100)) {
-    return { error: "Servings must be between 0.5 and 100." };
-  }
-  return { name, description, servings: Math.round(servings * 10) / 10 };
-}
+import { statusUrl } from "@/i18n/status";
+import { parseRecipeFields } from "@/lib/recipe-form";
 
 export async function createRecipe(formData: FormData) {
   const { supabase, userId } = await requireUser();
 
   const parsed = parseRecipeFields(formData);
-  if ("error" in parsed) redirect(`/recipes/new?error=${encodeURIComponent(parsed.error)}`);
+  if ("error" in parsed) redirect(statusUrl("/recipes/new", "error", parsed.error));
 
   const { data, error } = await supabase
     .from("recipes")
@@ -32,7 +18,7 @@ export async function createRecipe(formData: FormData) {
     .select("id")
     .single();
   if (error || !data) {
-    redirect(`/recipes/new?error=${encodeURIComponent(error?.message ?? "Could not create recipe.")}`);
+    redirect(statusUrl("/recipes/new", "error", "couldNotSave"));
   }
 
   revalidatePath("/recipes");
@@ -46,14 +32,14 @@ export async function updateRecipe(formData: FormData) {
   if (!id) redirect("/recipes");
 
   const parsed = parseRecipeFields(formData);
-  if ("error" in parsed) redirect(`/recipes/${id}?error=${encodeURIComponent(parsed.error)}`);
+  if ("error" in parsed) redirect(statusUrl(`/recipes/${id}`, "error", parsed.error));
 
   const { error } = await supabase
     .from("recipes")
     .update({ ...parsed, updated_at: new Date().toISOString() })
     .eq("id", id)
     .eq("user_id", userId);
-  if (error) redirect(`/recipes/${id}?error=${encodeURIComponent(error.message)}`);
+  if (error) redirect(statusUrl(`/recipes/${id}`, "error", "couldNotSave"));
 
   revalidatePath("/recipes");
   revalidatePath(`/recipes/${id}`);
@@ -83,10 +69,10 @@ export async function addRecipeItem(formData: FormData) {
 
   if (!recipeId) redirect("/recipes");
   if (!foodId) {
-    redirect(`/recipes/${recipeId}?error=${encodeURIComponent("Pick a food to add.")}`);
+    redirect(statusUrl(`/recipes/${recipeId}`, "error", "pickFood"));
   }
   if (!(grams > 0 && grams <= 5000)) {
-    redirect(`/recipes/${recipeId}?error=${encodeURIComponent("Grams must be between 1 and 5000.")}`);
+    redirect(statusUrl(`/recipes/${recipeId}`, "error", "gramsRange"));
   }
 
   // Confirm ownership explicitly (RLS backs this up).
@@ -101,7 +87,7 @@ export async function addRecipeItem(formData: FormData) {
   const { error } = await supabase
     .from("recipe_items")
     .insert({ recipe_id: recipeId, food_id: foodId, grams });
-  if (error) redirect(`/recipes/${recipeId}?error=${encodeURIComponent(error.message)}`);
+  if (error) redirect(statusUrl(`/recipes/${recipeId}`, "error", "couldNotSave"));
 
   await supabase
     .from("recipes")

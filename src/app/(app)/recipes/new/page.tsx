@@ -1,7 +1,7 @@
-import { WarningCircle } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { createRecipe } from "../actions";
+import { StatusMessage } from "@/components/status-message";
 
 export const metadata = { title: "New recipe" };
 
@@ -31,12 +31,7 @@ export default async function NewRecipePage({
       </header>
 
       <form action={createRecipe} className="max-w-xl space-y-5">
-        {error && (
-          <p className="flex items-start gap-2 rounded-lg border border-danger/30 bg-danger/[0.08] px-3.5 py-3 text-sm text-danger">
-            <WarningCircle className="mt-0.5 size-4 shrink-0" weight="bold" />
-            <span className="min-w-0 break-words">{error}</span>
-          </p>
-        )}
+        <StatusMessage error={error} className="" />
         <div className="space-y-2">
           <label htmlFor="name" className="field-label">Name</label>
           <input

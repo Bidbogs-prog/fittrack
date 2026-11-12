@@ -6,6 +6,12 @@ import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { LOCALES, LOCALE_COOKIE } from "@/i18n/request";
 import { MACRO_PCT_MAX, MACRO_PCT_MIN } from "@/lib/nutrition";
+import { authErrorKey, statusUrl } from "@/i18n/status";
+
+// Status keys, never prose or database error text (AUD-17): the page
+// translates them and refuses anything else.
+const fail = (key: Parameters<typeof statusUrl>[2]): never => redirect(statusUrl("/account", "error", key));
+const done = (key: Parameters<typeof statusUrl>[2]): never => redirect(statusUrl("/account", "message", key));
 
 /** Switch the app language (roadmap 2.3) — cookie-based, per device. */
 export async function setLocale(formData: FormData) {
@@ -26,15 +32,13 @@ export async function changePassword(formData: FormData) {
 
   const password = String(formData.get("password") ?? "");
   if (password.length < 8) {
-    redirect(
-      `/account?error=${encodeURIComponent("Password must be at least 8 characters.")}`
-    );
+    fail("passwordTooShort");
   }
 
   const { error } = await supabase.auth.updateUser({ password });
-  if (error) redirect(`/account?error=${encodeURIComponent(error.message)}`);
+  if (error) fail(authErrorKey(error));
 
-  redirect(`/account?message=${encodeURIComponent("Password updated.")}`);
+  done("passwordUpdated");
 }
 
 /** Switch display units (roadmap 2.2). Storage stays metric everywhere. */
@@ -43,21 +47,17 @@ export async function saveUnits(formData: FormData) {
 
   const units = String(formData.get("units") ?? "");
   if (units !== "metric" && units !== "imperial") {
-    redirect(`/account?error=${encodeURIComponent("Pick metric or imperial.")}`);
+    fail("unitsInvalid");
   }
 
   const { error } = await supabase
     .from("profiles")
     .update({ units, updated_at: new Date().toISOString() })
     .eq("id", userId);
-  if (error) redirect(`/account?error=${encodeURIComponent(error.message)}`);
+  if (error) fail("couldNotSave");
 
   revalidatePath("/", "layout");
-  redirect(
-    `/account?message=${encodeURIComponent(
-      units === "imperial" ? "Showing imperial units (lb, ft/in)." : "Showing metric units."
-    )}`
-  );
+  done(units === "imperial" ? "unitsImperial" : "unitsMetric");
 }
 
 /** Save or clear the optional intermittent-fasting eating window (roadmap 1.5). */
@@ -69,10 +69,10 @@ export async function saveFastingWindow(formData: FormData) {
   const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 
   if ((start === "") !== (end === "")) {
-    redirect(`/account?error=${encodeURIComponent("Set both times, or clear both to disable.")}`);
+    fail("fastingBothTimes");
   }
   if (start !== "" && (!TIME_RE.test(start) || !TIME_RE.test(end) || start === end)) {
-    redirect(`/account?error=${encodeURIComponent("The eating window needs two different times.")}`);
+    fail("fastingDifferentTimes");
   }
 
   const { error } = await supabase
@@ -83,14 +83,10 @@ export async function saveFastingWindow(formData: FormData) {
       updated_at: new Date().toISOString(),
     })
     .eq("id", userId);
-  if (error) redirect(`/account?error=${encodeURIComponent(error.message)}`);
+  if (error) fail("couldNotSave");
 
   revalidatePath("/dashboard");
-  redirect(
-    `/account?message=${encodeURIComponent(
-      start ? `Eating window set: ${start} to ${end}.` : "Fasting window disabled."
-    )}`
-  );
+  done(start ? "fastingSaved" : "fastingDisabled");
 }
 
 /**
@@ -115,7 +111,7 @@ export async function saveMacroSplit(formData: FormData) {
     const carbs = pct("carbs_pct");
     const fat = pct("fat_pct");
     if ([protein, carbs, fat].some(Number.isNaN) || protein + carbs + fat !== 100) {
-      redirect(`/account?error=${encodeURIComponent("Macro split must add up to 100%.")}`);
+      fail("macroSplitSum");
     }
     split = { protein_pct: protein, carbs_pct: carbs, fat_pct: fat };
   }
@@ -124,16 +120,10 @@ export async function saveMacroSplit(formData: FormData) {
     .from("profiles")
     .update({ ...split, updated_at: new Date().toISOString() })
     .eq("id", userId);
-  if (error) redirect(`/account?error=${encodeURIComponent(error.message)}`);
+  if (error) fail("couldNotSave");
 
   revalidatePath("/", "layout");
-  redirect(
-    `/account?message=${encodeURIComponent(
-      split.protein_pct == null
-        ? "Macros back on the coach formula."
-        : `Macro split saved: P ${split.protein_pct}% · C ${split.carbs_pct}% · F ${split.fat_pct}%.`
-    )}`
-  );
+  done(split.protein_pct == null ? "macroSplitAuto" : "macroSplitSaved");
 }
 
 /**
@@ -145,15 +135,13 @@ export async function deleteAccount(formData: FormData) {
   const { supabase } = await requireUser();
 
   if (String(formData.get("confirm") ?? "").trim().toLowerCase() !== "delete") {
-    redirect(
-      `/account?error=${encodeURIComponent('Type "delete" to confirm deleting your account.')}`
-    );
+    fail("confirmDelete");
   }
 
   const { error } = await supabase.rpc("delete_account");
-  if (error) redirect(`/account?error=${encodeURIComponent(error.message)}`);
+  if (error) fail("couldNotSave");
 
   await supabase.auth.signOut();
   revalidatePath("/", "layout");
-  redirect(`/login?message=${encodeURIComponent("Your account and all its data are gone.")}`);
+  redirect(statusUrl("/login", "message", "accountDeleted"));
 }

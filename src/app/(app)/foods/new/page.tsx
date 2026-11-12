@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { isAdmin, requireUser } from "@/lib/auth";
 import { createUserFood } from "../actions";
 import { UserFoodForm } from "../user-food-form";
@@ -10,7 +11,7 @@ export default async function NewFoodPage({
 }: {
   searchParams: Promise<{ error?: string; name?: string; barcode?: string; from?: string }>;
 }) {
-  const [{ supabase, userId }, params] = await Promise.all([requireUser(), searchParams]);
+  const [{ supabase, userId }, params, t] = await Promise.all([requireUser(), searchParams, getTranslations("foodForm")]);
   const admin = await isAdmin(supabase, userId);
   const fromScan = params.from === "scan";
 
@@ -21,16 +22,13 @@ export default async function NewFoodPage({
           href="/foods"
           className="text-xs font-medium text-paper-mute underline-offset-4 hover:text-paper hover:underline"
         >
-          ← Food library
+          {t("back")}
         </Link>
         <h1 className="mt-2 font-display text-3xl font-bold tracking-tighter text-paper md:text-4xl">
-          {fromScan ? "Add this product" : admin ? "Add a food to the library" : "Create your own food"}
+          {fromScan ? t("titleScan") : admin ? t("titleAdmin") : t("titleUser")}
         </h1>
         <p className="mt-2 max-w-[60ch] text-sm text-paper-dim">
-          {admin
-            ? "You're an admin: it goes straight into the shared library for everyone."
-            : "You can log it right away. It stays private to you until an admin reviews it, then it's shared with everyone."}{" "}
-          Enter the label facts per 100 grams — your diary scales them to whatever portion you log.
+          {admin ? t("introAdmin") : t("introUser")} {t("introPer100")}
         </p>
       </header>
 

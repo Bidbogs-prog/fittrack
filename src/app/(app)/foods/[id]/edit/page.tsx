@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { requireUser } from "@/lib/auth";
 import type { Food } from "@/lib/types";
 import { deleteUserFood, updateUserFood } from "../../actions";
@@ -14,10 +15,11 @@ export default async function EditFoodPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ error?: string }>;
 }) {
-  const [{ supabase, userId }, { id }, { error }] = await Promise.all([
+  const [{ supabase, userId }, { id }, { error }, t] = await Promise.all([
     requireUser(),
     params,
     searchParams,
+    getTranslations("foodForm"),
   ]);
 
   const { data } = await supabase
@@ -36,10 +38,10 @@ export default async function EditFoodPage({
           href="/foods?mine=1"
           className="text-xs font-medium text-paper-mute underline-offset-4 hover:text-paper hover:underline"
         >
-          ← Your foods
+          {t("backMine")}
         </Link>
         <h1 className="mt-2 font-display text-3xl font-bold tracking-tighter text-paper md:text-4xl">
-          Edit {food.name}
+          {t("editTitle", { name: food.name })}
         </h1>
       </header>
 
@@ -52,11 +54,11 @@ export default async function EditFoodPage({
             type="submit"
             className="btn-press rounded-lg border border-danger/40 px-4 py-2.5 text-xs font-semibold text-danger transition-colors hover:bg-danger/10"
           >
-            Delete this food
+            {t("delete")}
           </button>
         </form>
         <p className="mt-2 text-[11px] text-paper-mute">
-          Deleting also removes every diary entry that logged it.
+          {t("deleteHint")}
         </p>
       </footer>
     </div>

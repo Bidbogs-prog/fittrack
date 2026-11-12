@@ -1,4 +1,4 @@
-import { Plus, Trash, WarningCircle } from "@phosphor-icons/react/dist/ssr";
+import { Plus, Trash } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FoodPicker } from "@/components/food-picker";
@@ -7,6 +7,7 @@ import { recipePerServing, recipeTotals } from "@/lib/diary";
 import { macrosForPortion } from "@/lib/nutrition";
 import type { Recipe } from "@/lib/types";
 import { addRecipeItem, deleteRecipe, deleteRecipeItem, updateRecipe } from "../actions";
+import { StatusMessage } from "@/components/status-message";
 
 export const metadata = { title: "Edit recipe" };
 
@@ -50,12 +51,7 @@ export default async function RecipePage({
         </h1>
       </header>
 
-      {error && (
-        <p className="flex max-w-xl items-start gap-2 rounded-lg border border-danger/30 bg-danger/[0.08] px-3.5 py-3 text-sm text-danger">
-          <WarningCircle className="mt-0.5 size-4 shrink-0" weight="bold" />
-          <span className="min-w-0 break-words">{error}</span>
-        </p>
-      )}
+      <StatusMessage error={error} className="" />
 
       {/* details */}
       <form action={updateRecipe} className="max-w-xl space-y-4">
