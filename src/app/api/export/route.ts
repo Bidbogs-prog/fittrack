@@ -4,6 +4,7 @@ import { round1 } from "@/lib/nutrition";
 import { createClient } from "@/lib/supabase/server";
 import type { DiaryEntry, WeightLog } from "@/lib/types";
 import { toCsv } from "@/lib/csv";
+import { fetchAll } from "@/lib/fetch-all";
 
 /**
  * Data export (roadmap 2.5): the user's diary or weight history as CSV or
@@ -15,6 +16,11 @@ function entryKind(e: DiaryEntry): string {
   if (e.food_id) return "food";
   if (e.recipe_id) return "recipe";
   return "quick-add";
+}
+
+/** Never a partial file that looks complete (AUD-14). */
+function exportFailed(): Response {
+  return Response.json({ error: "Export failed. Nothing was downloaded; try again." }, { status: 503 });
 }
 
 export async function GET(request: NextRequest) {
@@ -29,12 +35,19 @@ export async function GET(request: NextRequest) {
   const today = new Date().toLocaleDateString("en-CA");
 
   if (what === "weight") {
-    const { data } = await supabase
-      .from("weight_logs")
-      .select("log_date, weight_kg")
-      .eq("user_id", userId)
-      .order("log_date");
-    const logs = (data ?? []) as Pick<WeightLog, "log_date" | "weight_kg">[];
+    let logs: Pick<WeightLog, "log_date" | "weight_kg">[];
+    try {
+      logs = await fetchAll((from, to) =>
+        supabase
+          .from("weight_logs")
+          .select("log_date, weight_kg")
+          .eq("user_id", userId)
+          .order("log_date")
+          .range(from, to)
+      );
+    } catch {
+      return exportFailed();
+    }
 
     const body =
       format === "json"
@@ -56,13 +69,22 @@ export async function GET(request: NextRequest) {
   }
 
   if (what === "diary") {
-    const { data } = await supabase
-      .from("diary_entries")
-      .select("*, food:foods(*)")
-      .eq("user_id", userId)
-      .order("entry_date")
-      .order("created_at");
-    const entries = (data ?? []) as DiaryEntry[];
+    let entries: DiaryEntry[];
+    try {
+      entries = await fetchAll<DiaryEntry>((from, to) =>
+        supabase
+          .from("diary_entries")
+          .select("*, food:foods(*)")
+          .eq("user_id", userId)
+          .order("entry_date")
+          .order("created_at")
+          // id breaks ties so pages never skip or repeat a row.
+          .order("id")
+          .range(from, to)
+      );
+    } catch {
+      return exportFailed();
+    }
 
     const shaped = entries.map((e) => {
       const m = entryMacros(e);
