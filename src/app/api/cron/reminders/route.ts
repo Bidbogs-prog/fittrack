@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { dueSlots, type ReminderSchedule } from "@/lib/reminders";
+import { blockedSlots, dueSlots, type ReminderLogRow, type ReminderSchedule } from "@/lib/reminders";
 import { pushConfigured, reminderPayload, sendPush } from "@/lib/push-server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -36,6 +36,7 @@ export async function GET(request: NextRequest) {
   const { data: settings, error } = await db.rpc("reminder_candidates");
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
+  // sent = accepted by the push service (FCM, Apple…), not proof the phone showed it.
   const stats = { users: 0, sent: 0, skipped: 0, gone: 0, failed: 0 };
   const rows = (settings ?? []) as SettingsRow[];
   stats.users = rows.length;
@@ -52,11 +53,19 @@ export async function GET(request: NextRequest) {
   // Three queries for the whole batch instead of three per user (audit #10e).
   const ids = candidates.map((c) => c.s.user_id);
   const dates = [...new Set(candidates.map((c) => c.probe.date))];
-  const [{ data: subs }, { data: logged }, { data: sent }] = await Promise.all([
+  const [subsRes, loggedRes, sentRes] = await Promise.all([
     db.from("push_subscriptions").select("user_id, endpoint, p256dh, auth").in("user_id", ids),
     db.from("diary_entries").select("user_id, entry_date, meal").in("user_id", ids).in("entry_date", dates),
-    db.from("reminder_log").select("user_id, local_date, slot").in("user_id", ids).in("local_date", dates),
+    db
+      .from("reminder_log")
+      .select("user_id, local_date, slot, status, attempts, updated_at")
+      .in("user_id", ids)
+      .in("local_date", dates),
   ]);
+  // A failed read is not "nothing logged / nothing sent" (AUD-06): stop.
+  const readError = subsRes.error ?? loggedRes.error ?? sentRes.error;
+  if (readError) return NextResponse.json({ error: readError.message }, { status: 500 });
+  const [subs, logged, sent] = [subsRes.data, loggedRes.data, sentRes.data];
   const group = <T,>(list: T[] | null, key: (r: T) => string) => {
     const m = new Map<string, T[]>();
     for (const r of list ?? []) m.set(key(r), [...(m.get(key(r)) ?? []), r]);
@@ -75,21 +84,38 @@ export async function GET(request: NextRequest) {
       s,
       now,
       new Set((loggedBy.get(key) ?? []).map((r) => r.meal as string)),
-      new Set((sentBy.get(key) ?? []).map((r) => r.slot as string))
+      blockedSlots((sentBy.get(key) ?? []) as unknown as ReminderLogRow[])
     );
     stats.skipped += probe.slots.length - slots.length;
 
     for (const slot of slots) {
       sends.push(
         (async () => {
-          // Claim the slot first so overlapping runs can't double-send.
-          const { error: claimError } = await db.from("reminder_log").insert({ user_id: s.user_id, slot, local_date: probe.date });
-          if (claimError) return;
+          // Claim the slot first so overlapping runs can't double-send;
+          // the claim only becomes final once a push service accepts it.
+          const { data: claimed, error: claimError } = await db.rpc("claim_reminder", {
+              p_user: s.user_id,
+            p_slot: slot,
+            p_date: probe.date,
+            });
+          if (claimError || claimed !== true) return;
+          let accepted = 0;
+          let failed = 0;
           for (const sub of userSubs) {
             const r = await sendPush(sub, reminderPayload(slot, s.locale));
             stats[r === "sent" ? "sent" : r === "gone" ? "gone" : "failed"]++;
+            if (r === "sent") accepted++;
+            if (r === "failed") failed++;
             if (r === "gone") await db.from("push_subscriptions").delete().eq("endpoint", sub.endpoint);
           }
+          // Retried by later runs only when something failed and nothing got through;
+          // all devices gone = nothing left to retry.
+          await db
+            .from("reminder_log")
+            .update({ status: accepted === 0 && failed > 0 ? "failed" : "sent", updated_at: new Date().toISOString() })
+            .eq("user_id", s.user_id)
+            .eq("slot", slot)
+            .eq("local_date", probe.date);
         })()
       );
     }

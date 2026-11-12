@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { blockedSlots, retryable } from "./reminders";
 import { implausibleSlots } from "./reminders";
 import { dueSlots, localNow, SEND_WINDOW_MIN, toMinutes, type ReminderSchedule } from "./reminders";
 
@@ -100,5 +101,30 @@ describe("implausibleSlots (DR-030)", () => {
   });
   it("flags breakfast in the evening and dinner in the morning", () => {
     expect(implausibleSlots({ breakfast: "19:00", lunch: null, dinner: "09:00" })).toEqual(["breakfast", "dinner"]);
+  });
+});
+
+
+describe("retry after a failed send (AUD-06)", () => {
+  const now = new Date("2026-11-12T12:00:00Z");
+  const ago = (min: number) => new Date(now.getTime() - min * 60_000).toISOString();
+  it("a sent slot is done", () => {
+    expect(retryable({ slot: "lunch", status: "sent", attempts: 1, updated_at: ago(60) }, now)).toBe(false);
+  });
+  it("a failed slot is retried after 4 minutes, up to 3 attempts", () => {
+    expect(retryable({ slot: "lunch", status: "failed", attempts: 1, updated_at: ago(3) }, now)).toBe(false);
+    expect(retryable({ slot: "lunch", status: "failed", attempts: 1, updated_at: ago(5) }, now)).toBe(true);
+    expect(retryable({ slot: "lunch", status: "failed", attempts: 3, updated_at: ago(30) }, now)).toBe(false);
+  });
+  it("a claim left by a crashed run is retried after 5 minutes", () => {
+    expect(retryable({ slot: "lunch", status: "claimed", attempts: 1, updated_at: ago(2) }, now)).toBe(false);
+    expect(retryable({ slot: "lunch", status: "claimed", attempts: 1, updated_at: ago(6) }, now)).toBe(true);
+  });
+  it("only blocked slots are excluded", () => {
+    const rows = [
+      { slot: "breakfast", status: "sent" as const, attempts: 1, updated_at: ago(200) },
+      { slot: "lunch", status: "failed" as const, attempts: 1, updated_at: ago(10) },
+    ];
+    expect([...blockedSlots(rows, now)]).toEqual(["breakfast"]);
   });
 });

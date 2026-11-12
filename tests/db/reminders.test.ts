@@ -67,6 +67,26 @@ describe("push reminders RLS", () => {
     ).rejects.toThrow(/check/);
   });
 
+  it("claim_reminder: one claim at a time, retries only failed slots, max 3 attempts (AUD-06)", async () => {
+    const claim = () =>
+      t.admin(async () => (await t.rows<{ ok: boolean }>("select public.claim_reminder($1, 'dinner', '2026-11-03') as ok", [a]))[0].ok);
+    const set = (status: string, minutesAgo: number) =>
+      t.admin(() =>
+        t.rows("update public.reminder_log set status = $2, updated_at = now() - make_interval(mins => $3) where user_id = $1 and slot = 'dinner'", [a, status, minutesAgo])
+      );
+    expect(await claim()).toBe(true);
+    expect(await claim()).toBe(false); // in flight
+    await set("failed", 5);
+    expect(await claim()).toBe(true); // attempt 2
+    await set("sent", 60);
+    expect(await claim()).toBe(false); // done
+    await set("failed", 5);
+    expect(await claim()).toBe(true); // attempt 3
+    await set("failed", 5);
+    expect(await claim()).toBe(false); // out of attempts
+    await expect(t.as(a, () => t.rows("select public.claim_reminder($1, 'lunch', '2026-11-03')", [a]))).rejects.toThrow(/permission denied/);
+  });
+
   it("the send log dedupes one slot per user per local day", async () => {
     await t.admin(() => t.rows("insert into public.reminder_log (user_id, slot, local_date) values ($1, 'lunch', '2026-11-02')", [a]));
     await expect(

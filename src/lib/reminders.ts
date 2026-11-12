@@ -55,6 +55,33 @@ export function toMinutes(time: string | null): number | null {
   return v >= 0 && v < 24 * 60 ? v : null;
 }
 
+/** A reminder_log row as the sender sees it (AUD-06). */
+export interface ReminderLogRow {
+  slot: string;
+  status: "claimed" | "sent" | "failed";
+  attempts: number;
+  updated_at: string;
+}
+
+export const MAX_REMINDER_ATTEMPTS = 3;
+
+/**
+ * Whether this run may (re)try a slot that already has a log row. Mirrors
+ * claim_reminder in SQL, which decides atomically: a failed attempt is
+ * retried after 4 minutes, a claim left by a crashed run after 5, at most
+ * three attempts; a sent slot is done.
+ */
+export function retryable(row: ReminderLogRow, now: Date = new Date()): boolean {
+  if (row.status === "sent" || row.attempts >= MAX_REMINDER_ATTEMPTS) return false;
+  const age = now.getTime() - new Date(row.updated_at).getTime();
+  return row.status === "failed" ? age > 4 * 60_000 : age > 5 * 60_000;
+}
+
+/** Slots this run must leave alone: sent, out of attempts, or not retryable yet. */
+export function blockedSlots(rows: ReminderLogRow[], now: Date = new Date()): Set<string> {
+  return new Set(rows.filter((r) => !retryable(r, now)).map((r) => r.slot));
+}
+
 /** Typical local windows per meal [from, to) in minutes; dinner may run past midnight. */
 const PLAUSIBLE: Record<ReminderSlot, [number, number][]> = {
   breakfast: [[4 * 60, 12 * 60]],
