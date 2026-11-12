@@ -29,7 +29,10 @@ const nextConfig: NextConfig = {
           // Google sign-in, PostHog) — tightening it needs nonces.
           {
             key: "Content-Security-Policy",
-            value: "frame-ancestors 'none'; base-uri 'self'; object-src 'none'",
+            // form-action: our own server actions, plus the sign-in providers a
+            // no-JS form post may be redirected to (Supabase auth → Google).
+            value:
+              "frame-ancestors 'none'; base-uri 'self'; object-src 'none'; form-action 'self' https://*.supabase.co https://accounts.google.com",
           },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },

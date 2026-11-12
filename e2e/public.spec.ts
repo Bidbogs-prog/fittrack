@@ -69,6 +69,7 @@ test.describe("security headers", () => {
     const res = await request.get("/");
     const h = res.headers();
     expect(h["x-frame-options"]).toBe("DENY");
+    expect(h["content-security-policy"]).toContain("form-action 'self'");
     expect(h["content-security-policy"]).toContain("frame-ancestors 'none'");
     expect(h["content-security-policy"]).toContain("object-src 'none'");
     expect(h["x-content-type-options"]).toBe("nosniff");
