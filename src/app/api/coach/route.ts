@@ -13,6 +13,7 @@ import { generateText, LlmError, streamText, type LlmEvent, type LlmTurn } from 
 import { ageFromBirthDate } from "@/lib/nutrition";
 import { createClient } from "@/lib/supabase/server";
 import type { CoachMessage } from "@/lib/types";
+import { foldPrompt, planFold, SUMMARY_SYSTEM_PROMPT, type TailMessage } from "@/lib/coach/rolling-summary";
 
 /**
  * Coach chat turn (roadmap 1.6), streamed. Every gate (auth, age, safety,
@@ -25,10 +26,8 @@ import type { CoachMessage } from "@/lib/types";
 
 export const maxDuration = 60;
 
-/** Turns sent verbatim; older ones live in the rolling summary. */
-const VERBATIM_TURNS = 12;
-/** Start summarising once a conversation grows past this many messages. */
-const SUMMARY_AFTER = 20;
+/** Upper bound on the unsummarised tail loaded (legacy conversations without a watermark). */
+const MAX_TAIL = 30;
 const MAX_MESSAGE_LEN = 2000;
 
 export type CoachStreamEvent =
@@ -95,35 +94,31 @@ export async function POST(request: NextRequest) {
   // Load (and verify ownership of) the conversation, or start a new one.
   let conversationId: string | null = null;
   let summary: string | null = null;
+  let summaryThrough: string | null = null;
   if (typeof body?.conversationId === "string" && body.conversationId) {
     const { data: convo } = await supabase
       .from("coach_conversations")
-      .select("id, summary")
+      .select("id, summary, summary_through")
       .eq("id", body.conversationId)
       .eq("user_id", userId)
       .maybeSingle();
     if (!convo) return fail("notFound", 404);
     conversationId = convo.id as string;
     summary = (convo.summary as string | null) ?? null;
+    summaryThrough = (convo.summary_through as string | null) ?? null;
   }
 
+  // Everything after the summary's watermark goes verbatim (AUD-10).
   const history: CoachMessage[] = [];
-  let total = 0;
   if (conversationId) {
-    const [{ data: recent }, { count }] = await Promise.all([
-      supabase
-        .from("coach_messages")
-        .select("*")
-        .eq("conversation_id", conversationId)
-        .order("created_at", { ascending: false })
-        .limit(VERBATIM_TURNS),
-      supabase
-        .from("coach_messages")
-        .select("id", { count: "exact", head: true })
-        .eq("conversation_id", conversationId),
-    ]);
+    let q = supabase.from("coach_messages").select("*").eq("conversation_id", conversationId);
+    if (summaryThrough) q = q.gt("created_at", summaryThrough);
+    const { data: recent } = await q
+      .order("created_at", { ascending: false })
+      // An exchange's rows share created_at: user sorts before assistant once reversed.
+      .order("role", { ascending: true })
+      .limit(MAX_TAIL);
     history.push(...((recent ?? []) as CoachMessage[]).reverse());
-    total = count ?? history.length;
   }
 
   const [{ context, safety }, memories] = await Promise.all([
@@ -211,7 +206,7 @@ export async function POST(request: NextRequest) {
               briefs: briefs.map((b) => b.id),
             },
           },
-        ]).select("id, role");
+        ]).select("id, role, content, created_at");
         if (insertError) {
           emit({ type: "error", error: "saveFailed" });
           return;
@@ -241,23 +236,16 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        // Rolling memory: past the threshold, refresh the summary every few
-        // turns so trimmed-off messages stay represented. Runs after "done"
-        // on the cheap tier, best-effort — it never fails the exchange.
-        total += 2;
-        if (total > SUMMARY_AFTER && total % 6 === 0) {
+        // Rolling memory (AUD-10): fold the oldest whole exchanges into the
+        // summary once the unsummarised tail is too long. After "done", on
+        // the cheap tier, best-effort: on failure the tail just stays longer.
+        const savedRows = ((inserted ?? []) as TailMessage[]).sort((x, y) => (x.role === y.role ? 0 : x.role === "user" ? -1 : 1));
+        const plan = planFold<TailMessage>([...(history as unknown as TailMessage[]), ...savedRows]);
+        if (plan) {
           try {
             const recap = await generateText({
-              systemPrompt:
-                "Summarise this coaching conversation for the coach's own memory: the user's situation, questions asked, advice given, and any commitments. Max 150 words, plain prose, no preamble.",
-              turns: [
-                {
-                  role: "user",
-                  text: `${summary ? `Previous summary:\n${summary}\n\n` : ""}Recent exchange:\n${history
-                    .map((m) => `${m.role}: ${m.content}`)
-                    .join("\n")}\nuser: ${message}\nassistant: ${reply}`,
-                },
-              ],
+              systemPrompt: SUMMARY_SYSTEM_PROMPT,
+              turns: [{ role: "user", text: foldPrompt(summary, plan.fold) }],
               tier: "economy",
               temperature: 0.3,
               // Generous: thinking tokens come out of the same budget.
@@ -266,10 +254,10 @@ export async function POST(request: NextRequest) {
             await recordAiUsage(supabase, userId, "coach_summary", recap.usage);
             await supabase
               .from("coach_conversations")
-              .update({ summary: recap.text.trim() })
+              .update({ summary: recap.text.trim(), summary_through: plan.through })
               .eq("id", conversationId);
           } catch {
-            // keep the old summary
+            // keep the old summary and watermark
           }
         }
       } catch (err) {
