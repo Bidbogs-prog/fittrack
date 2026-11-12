@@ -11,6 +11,7 @@ import { isPremium } from "@/lib/entitlements";
 import { IdentifyUser } from "@/components/identify-user";
 import { SignOutForm } from "@/components/sign-out-form";
 import { ReminderClockSync } from "@/components/reminder-settings";
+import { OfflineOwner } from "@/components/offline-owner";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const [{ supabase, userId, profile }, t] = await Promise.all([getProfile(), getTranslations("shell")]);
@@ -82,6 +83,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         }}
       />
       <ReminderClockSync />
+      <OfflineOwner userId={userId} />
       <MainFrame>
         <RouteFx>{children}</RouteFx>
       </MainFrame>

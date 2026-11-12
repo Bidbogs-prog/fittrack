@@ -7,6 +7,24 @@ import { round1 } from "@/lib/nutrition";
 import { MEAL_TYPES, type MealType, type RecipeItem } from "@/lib/types";
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Offline replays (AUD-03/04) carry the account that queued them and a
+ * client_id. A replay into another account is refused; a client_id the user
+ * already logged (the first attempt succeeded but its response was lost)
+ * counts as done instead of logging the meal twice.
+ */
+function offlineMeta(formData: FormData, userId: string): { error: "wrongAccount" } | { clientId: string | null } {
+  const owner = formData.get("owner");
+  if (owner != null && String(owner) !== userId) return { error: "wrongAccount" };
+  const raw = String(formData.get("client_id") ?? "");
+  return { clientId: UUID_RE.test(raw) ? raw.toLowerCase() : null };
+}
+
+/** Unique violation on (user_id, client_id): this offline entry is already in the diary. */
+const alreadyLogged = (error: { code?: string } | null, clientId: string | null) =>
+  clientId != null && error?.code === "23505";
 
 /** Optional macro field: "" = unknown (null), otherwise a bounded number. */
 function parseOptionalMacro(formData: FormData, name: string): number | null | "invalid" {
@@ -18,6 +36,9 @@ function parseOptionalMacro(formData: FormData, name: string): number | null | "
 
 export async function addDiaryEntry(formData: FormData) {
   const { supabase, userId } = await requireUser();
+  const meta = offlineMeta(formData, userId);
+  if ("error" in meta) return { error: meta.error };
+  const { clientId } = meta;
 
   const foodId = String(formData.get("food_id") ?? "");
   const meal = String(formData.get("meal") ?? "") as MealType;
@@ -37,9 +58,10 @@ export async function addDiaryEntry(formData: FormData) {
     meal,
     entry_date: entryDate,
     grams,
+    client_id: clientId,
   });
 
-  if (error) return { error: "generic" };
+  if (error && !alreadyLogged(error, clientId)) return { error: "generic" };
 
   revalidatePath("/dashboard");
   return { error: null };
@@ -48,6 +70,9 @@ export async function addDiaryEntry(formData: FormData) {
 /** Quick-add: log calories (and optional macros) without picking a food. */
 export async function addQuickEntry(formData: FormData) {
   const { supabase, userId } = await requireUser();
+  const meta = offlineMeta(formData, userId);
+  if ("error" in meta) return { error: meta.error };
+  const { clientId } = meta;
 
   const meal = String(formData.get("meal") ?? "") as MealType;
   const entryDate = String(formData.get("entry_date") ?? "");
@@ -75,8 +100,9 @@ export async function addQuickEntry(formData: FormData) {
     quick_name: name,
     quick_kcal: round1(kcal),
     ...macros,
+    client_id: clientId,
   });
-  if (error) return { error: "generic" };
+  if (error && !alreadyLogged(error, clientId)) return { error: "generic" };
 
   revalidatePath("/dashboard");
   return { error: null };
@@ -89,6 +115,9 @@ export async function addQuickEntry(formData: FormData) {
  */
 export async function addRecipeEntry(formData: FormData) {
   const { supabase, userId } = await requireUser();
+  const meta = offlineMeta(formData, userId);
+  if ("error" in meta) return { error: meta.error };
+  const { clientId } = meta;
 
   const recipeId = String(formData.get("recipe_id") ?? "");
   const meal = String(formData.get("meal") ?? "") as MealType;
@@ -126,8 +155,9 @@ export async function addRecipeEntry(formData: FormData) {
     quick_carbs_g: round1(per.carbs * servings),
     quick_fat_g: round1(per.fat * servings),
     quick_fibre_g: round1(per.fibre * servings),
+    client_id: clientId,
   });
-  if (error) return { error: "generic" };
+  if (error && !alreadyLogged(error, clientId)) return { error: "generic" };
 
   revalidatePath("/dashboard");
   return { error: null };
@@ -264,6 +294,9 @@ export async function saveMealAsGroup(formData: FormData) {
 /** Log all of a saved meal's items into one meal on one date. */
 export async function applySavedMeal(formData: FormData) {
   const { supabase, userId } = await requireUser();
+  const meta = offlineMeta(formData, userId);
+  if ("error" in meta) return { error: meta.error };
+  const { clientId } = meta;
 
   const id = String(formData.get("saved_meal_id") ?? "");
   const meal = String(formData.get("meal") ?? "") as MealType;
@@ -288,8 +321,17 @@ export async function applySavedMeal(formData: FormData) {
 
   const { error } = await supabase
     .from("diary_entries")
-    .insert(items.map((item) => ({ ...item, user_id: userId, meal, entry_date: entryDate })));
-  if (error) return { error: "generic" };
+    .insert(
+      items.map((item, i) => ({
+        ...item,
+        user_id: userId,
+        meal,
+        entry_date: entryDate,
+        client_id: clientId ? `${clientId}:${i}` : null,
+      }))
+    );
+  // The batch is atomic: a conflict means the whole saved meal is already in.
+  if (error && !alreadyLogged(error, clientId)) return { error: "generic" };
 
   revalidatePath("/dashboard");
   return { error: null };

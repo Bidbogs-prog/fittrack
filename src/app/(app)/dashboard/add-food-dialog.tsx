@@ -226,8 +226,9 @@ export function AddFoodDialog({
         const fields = Object.fromEntries(
           [...fd.entries()].map(([k, v]) => [k, String(v)])
         );
-        enqueue(kind, fields);
-        reset();
+        // Not stored (no space, storage blocked): say so, keep the form (AUD-04).
+        if (!enqueue(kind, fields)) setError("offlineNotSaved");
+        else reset();
       }
     });
   }

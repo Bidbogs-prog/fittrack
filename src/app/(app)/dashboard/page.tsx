@@ -225,7 +225,7 @@ export default async function DashboardPage({
             </div>
           </section>
 
-          <OfflineSync />
+          <OfflineSync userId={userId} />
 
           <div className="mt-4 flex flex-1 flex-col gap-4 lg:mt-0 lg:px-9 lg:pt-5">
             <Thread

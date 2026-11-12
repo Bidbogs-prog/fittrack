@@ -18,7 +18,7 @@ import { VOICE_MAX_SECONDS } from "@/lib/voice";
 import { track } from "@/lib/analytics";
 import { MEAL_DEFAULT_MIN, mealForMinutes, minutesOfDate } from "@/lib/day-time";
 import { macrosForPortion, round1, type Macros } from "@/lib/nutrition";
-import { enqueue } from "@/lib/offline-queue";
+import { enqueue, MAX_QUEUE, readQueue } from "@/lib/offline-queue";
 import { looksLikeQuestion } from "@/lib/intent-routing";
 import { useClientValue } from "@/lib/use-client-clock";
 import type { Food, MealType } from "@/lib/types";
@@ -563,16 +563,24 @@ export function LogProvider({
         router.refresh();
       } catch {
         // Network gone: queue each row for OfflineSync, same as the dialog.
+        // All or nothing where we can tell up front: a full queue keeps the
+        // sheet open with every item (AUD-04).
+        if (readQueue().length + items.length > MAX_QUEUE) {
+          setError(t("offlineNotSaved"));
+          return;
+        }
+        let stored = 0;
         for (const item of items) {
           if (item.food_id) {
-            enqueue("food", {
+            if (enqueue("food", {
               food_id: item.food_id,
               meal: current.meal,
               entry_date: entryDate,
               grams: String(item.grams),
-            });
+            }))
+              stored++;
           } else if (item.est) {
-            enqueue("quick", {
+            if (enqueue("quick", {
               meal: current.meal,
               entry_date: entryDate,
               quick_name: item.name,
@@ -581,11 +589,17 @@ export function LogProvider({
               quick_carbs_g: String(item.est.carbs_g),
               quick_fat_g: String(item.est.fat_g),
               quick_fibre_g: String(item.est.fibre_g),
-            });
+            }))
+              stored++;
           }
         }
+        if (stored === 0) {
+          setError(t("offlineNotSaved"));
+          return;
+        }
         setSheet(null);
-        setNotice(t("queuedOffline"));
+        if (stored < items.length) setError(t("offlinePartial", { count: items.length - stored }));
+        else setNotice(t("queuedOffline"));
       }
     });
   }, [entryDate, router, sheet, t]);

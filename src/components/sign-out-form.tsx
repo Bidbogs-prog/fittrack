@@ -2,6 +2,7 @@
 
 import { signout } from "@/app/(auth)/actions";
 import { removePushSubscription } from "@/app/(app)/account/reminder-actions";
+import { setQueueOwner } from "@/lib/offline-queue";
 
 /**
  * Before signing out, clear what this device keeps about the account
@@ -11,6 +12,9 @@ import { removePushSubscription } from "@/app/(app)/account/reminder-actions";
  * out always proceeds.
  */
 async function forgetThisDevice(): Promise<void> {
+  // Unsynced offline entries stay in this account's own queue (AUD-03) and
+  // sync on its next sign-in; nothing new can be queued while signed out.
+  setQueueOwner(null);
   try {
     if ("caches" in window) {
       const keys = await caches.keys();

@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { ActionError } from "@/components/action-error";
 import { CaretDown } from "@phosphor-icons/react";
 import { addDiaryEntry } from "@/app/(app)/dashboard/actions";
 import { LOW_DV_PCT } from "@/components/micros-shared";
@@ -66,7 +67,10 @@ export function Portion({ food }: { food: Food }) {
         }
         track("diary_entry_logged", { kind: "food" });
       } catch {
-        enqueue("food", Object.fromEntries([...fd.entries()].map(([k, v]) => [k, String(v)])));
+        if (!enqueue("food", Object.fromEntries([...fd.entries()].map(([k, v]) => [k, String(v)])))) {
+            setError("offlineNotSaved");
+          return;
+        }
       }
       router.push("/dashboard");
     });
@@ -163,7 +167,7 @@ export function Portion({ food }: { food: Food }) {
             {pending ? t("adding") : t("addToOrbit")}
           </button>
         </div>
-        {error && <p className="text-sm text-danger">{error}</p>}
+        <ActionError error={error} />
       </section>
 
       <section className="flex flex-col gap-2.5 self-start rounded-[20px] border border-ink-800 bg-ink-900 p-4 lg:mt-0 lg:rounded-3xl lg:p-5">
