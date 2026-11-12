@@ -17,7 +17,7 @@ export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://so3ra.app";
 /** Shown on the legal pages. Update once the operating entity exists. */
 export const LEGAL_OPERATOR = process.env.NEXT_PUBLIC_LEGAL_OPERATOR ?? "the So3ra team";
 export const CONTACT_EMAIL = process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "hello@so3ra.app";
-export const LEGAL_UPDATED = "2026-10-02";
+export const LEGAL_UPDATED = "2026-11-12";
 
 /**
  * The "3" mark — the Arabizi ع of So3ra, set in the same Outfit Bold glyph as

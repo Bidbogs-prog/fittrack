@@ -17,7 +17,7 @@ export default function PrivacyPage() {
         <li><strong>Account:</strong> email, name, password (stored hashed by our auth provider) or your Google sign-in.</li>
         <li><strong>Profile:</strong> birth date, sex, height, weight, activity level, goal, units, language and fasting window — used to calculate your targets.</li>
         <li><strong>Health and activity logs:</strong> meals and portions, foods and recipes you create, saved meals, weight, water, exercise and steps.</li>
-        <li><strong>AI features:</strong> text and voice transcripts you send to meal logging, meal photos you upload, and your conversations with the coach.</li>
+        <li><strong>AI features:</strong> text you send to meal logging, meal photos you upload, your conversations with the coach, and voice recordings when you use the microphone (see below).</li>
         <li><strong>Coach memory (Premium):</strong> short facts you tell the coach — for example foods you avoid or what you&rsquo;re training for — kept so it doesn&rsquo;t ask again, plus your weekly check-ins. You can see and delete every remembered fact on the Me page.</li>
         <li><strong>Usage records:</strong> for each AI request we store the feature, model and token counts (never the content) to enforce limits and track cost.</li>
         <li><strong>Product analytics and errors:</strong> pseudonymous events (for example &ldquo;meal logged&rdquo;) and crash reports. These never include what you ate, your body numbers or message content.</li>
@@ -48,11 +48,20 @@ export default function PrivacyPage() {
         international transfers.
       </p>
 
+      <h2>Voice recordings</h2>
+      <p>
+        When you tap the microphone, your phone records what you say and sends the audio to our server, which
+        passes it to our AI provider (LLM Gateway, which routes to Google Gemini) to turn it into text. We do not
+        store the recording. The text is then used like anything you type: it becomes the meal you confirm, or your
+          message to the coach. The AI provider processes the audio under its own data-processing terms; we don&rsquo;t
+        control how long it keeps request data, and we don&rsquo;t ask it to use your audio for training.
+      </p>
+
       <h2>How long we keep it</h2>
       <p>
-        Your data stays as long as your account exists. Meal photos are sent to the AI for analysis and are not
-        stored. Deleting your account permanently removes your profile, diary, logs, recipes, saved meals and coach
-        conversations.
+        Your data stays as long as your account exists. Meal photos and voice recordings are sent to the AI for
+        processing and are not stored by us. Deleting your account permanently removes your profile, diary, logs,
+        recipes, saved meals and coach conversations.
       </p>
 
       <h2>Your rights</h2>
