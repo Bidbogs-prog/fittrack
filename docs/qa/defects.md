@@ -255,6 +255,25 @@ Found by a full code review (static testing); DR-013 to DR-015 were confirmed by
 - **Fix:** `fetchAll` (`src/lib/fetch-all.ts`) pages through with a stable order (date, time, id) and fails the request (503, nothing downloaded) on any page error.
 - **Regression test:** `src/lib/fetch-all.test.ts` (0, 999, 1,000, 1,001, 2,500 rows; error on page 2).
 
+### DR-038 — AI caps could be exceeded with parallel requests; checks failed open (AUD-09)
+- **Severity / priority:** High / High · **Type:** Cost control (race condition, CWE-362) · **Found by:** code review
+- **Actual:** each AI entry point counted today's usage, then called the model, then recorded usage. N requests sent at once all saw the same count and all ran (e.g. 10 coach messages on a 5/day cap). A metering read error, or a missing service key, allowed the call; a failed spend read disabled the platform cap.
+- **Fix:** migration `20260903000000_ai_reservations.sql`: `reserve_ai_call` locks per user and feature, counts finished calls plus reservations still in flight (< 10 min), and refuses or inserts a reservation in one step; `record_ai_usage` fills that reservation with the real usage. A reservation whose call failed stops counting after 10 minutes. Reservation errors, a missing service key and failed spend reads now pause AI ("temporarily unavailable") instead of allowing it.
+- **Regression tests:** `tests/db/ai-reservations.test.ts` (cap boundaries with in-flight reservations, monthly cap, expiry, per user/feature, service-only); `src/lib/ai-usage.test.ts` (caps passed, mapping, fail-closed).
+- **Still external:** set a hard spend limit on the LLM Gateway key as the last line of defence.
+
+### DR-039 — A reminder that failed to send was never retried (AUD-06)
+- **Severity / priority:** High / Medium · **Type:** Functional (reliability) · **Found by:** code review, reproduced in the test database
+- **Actual:** the sender wrote the "sent today" row before sending and kept it whatever happened, so a transient push error (FCM 5xx, timeout) lost that meal's reminder for the day. Failed reads of subscriptions, diary or log were treated as empty.
+- **Fix:** migration `20260904000000_reminder_delivery_state.sql`: `reminder_log` rows are `claimed → sent | failed` with an attempt count; `claim_reminder` atomically retries a failed slot after 4 minutes (or a claim left by a crashed run after 5), at most 3 attempts, within the send window. A slot is `sent` once any device's push service accepted it. Read errors stop the run (500) instead of sending blind. "Sent" means accepted by the push service, not displayed by the phone.
+- **Regression tests:** `tests/db/reminders.test.ts` → "claim_reminder…"; `src/lib/reminders.test.ts` → "retry after a failed send (AUD-06)".
+
+### DR-040 — Reminder clock not updated for a second account or after resuming (AUD-12)
+- **Severity / priority:** Medium / Medium · **Type:** Functional · **Found by:** code review
+- **Actual:** the "offset already synced" cache was one value per device, so a second account at the same offset never synced its clock; sync ran only on a full page load, not when the app came back from the background (e.g. after a daylight-saving change or a flight); a failed save was cached as done. The user couldn't see which clock reminders followed.
+- **Fix:** cache per account, re-check on `visibilitychange`, cache only after the server confirms; Me shows "Reminders follow your phone's clock: Africa/Casablanca UTC+0".
+- **Regression check:** typecheck and unit tests; device behaviour (resume after a time-zone change) is on the staging checklist.
+
 ### Accepted risks (not fixed)
 - **Open Food Facts names in AI prompts:** third-party text reaches the model (prompt injection, CWE-1427). Low impact: output is structured and confirmed by the user. Revisit before bulk imports.
 - **Coach loads up to 400 library foods per message:** token cost, not correctness. Revisit when the library grows.
