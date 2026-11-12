@@ -65,7 +65,14 @@ export function useEnableReminders(surface: string) {
 }
 
 /** Me page: device opt-in, times per meal, test send. */
-export function ReminderSettings({ initial }: { initial: ReminderTimes | null }) {
+export function ReminderSettings({
+  initial,
+  clock,
+}: {
+  initial: ReminderTimes | null;
+  /** The account's reminder clock: zone and UTC offset in minutes (AUD-12). */
+  clock?: { timezone: string; utcOffsetMin: number | null } | null;
+}) {
   const t = useTranslations("reminders");
   const { support, subscribed, setSubscribed, error, busy, enable } = useEnableReminders("account");
   const [saving, startSave] = useTransition();
@@ -174,6 +181,17 @@ export function ReminderSettings({ initial }: { initial: ReminderTimes | null })
         </form>
       )}
       {note && <p role="status" className="text-xs text-paper-mute">{note}</p>}
+      {clock && (subscribed || initial) && (
+        <p className="text-[11px] text-paper-mute">
+          {t("clock", {
+            zone: clock.timezone,
+            offset:
+              clock.utcOffsetMin == null
+                ? ""
+                : `UTC${clock.utcOffsetMin >= 0 ? "+" : "−"}${Math.floor(Math.abs(clock.utcOffsetMin) / 60)}${Math.abs(clock.utcOffsetMin) % 60 ? `:${String(Math.abs(clock.utcOffsetMin) % 60).padStart(2, "0")}` : ""}`,
+          })}
+        </p>
+      )}
     </div>
   );
 }
@@ -222,23 +240,38 @@ export function ReminderNudge({ show }: { show: boolean }) {
 
 
 /**
- * App shell: when notifications are on, tell the server this device's UTC
- * offset whenever it changes (DST, travel, a tz-data update), so reminders
- * follow the clock the user actually sees.
+ * App shell: when notifications are on, keep this account's reminder clock
+ * on the phone's UTC offset (DST, travel, a tz-data update), so reminders
+ * follow the clock the user actually sees. AUD-12: the cache is per account
+ * (a second account on the same phone still syncs), it re-checks whenever
+ * the app returns to the foreground, and only a confirmed save is cached.
  */
-export function ReminderClockSync() {
+export function ReminderClockSync({ userId }: { userId: string }) {
   useEffect(() => {
-    if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
-    const offset = -new Date().getTimezoneOffset();
-    const key = "so3ra_reminder_offset";
-    try {
-      if (localStorage.getItem(key) === String(offset)) return;
-    } catch {
-      return;
-    }
-    syncReminderClock({ timezone: Intl.DateTimeFormat().resolvedOptions().timeZone, utcOffsetMin: offset })
-      .then(() => localStorage.setItem(key, String(offset)))
-      .catch(() => {});
-  }, []);
+    const key = `so3ra_reminder_offset:${userId}`;
+    let running = false;
+    const sync = () => {
+      if (running || document.visibilityState !== "visible") return;
+      if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
+      const offset = -new Date().getTimezoneOffset();
+      try {
+        if (localStorage.getItem(key) === String(offset)) return;
+      } catch {
+        return;
+      }
+      running = true;
+      syncReminderClock({ timezone: Intl.DateTimeFormat().resolvedOptions().timeZone, utcOffsetMin: offset })
+        .then((res) => {
+          if (res.ok) localStorage.setItem(key, String(offset));
+        })
+        .catch(() => {})
+        .finally(() => {
+          running = false;
+        });
+    };
+    sync();
+    document.addEventListener("visibilitychange", sync);
+    return () => document.removeEventListener("visibilitychange", sync);
+  }, [userId]);
   return null;
 }

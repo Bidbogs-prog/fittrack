@@ -1089,6 +1089,7 @@
     "save": "Save times",
     "saved": "Saved",
     "savedTimes": "Saved: {list}.",
+    "clock": "Reminders follow your phone's clock: {zone} {offset}. Open the app after travelling or a clock change to update it.",
     "oddTime": "{meal} is set to {time}. That looks unusual: check AM/PM on the time picker.",
     "off": "Off",
     "slot": { "breakfast": "Breakfast", "lunch": "Lunch", "dinner": "Dinner" },

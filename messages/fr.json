@@ -1089,6 +1089,7 @@
     "save": "Enregistrer les horaires",
     "saved": "Enregistré",
     "savedTimes": "Enregistré : {list}.",
+    "clock": "Les rappels suivent l'horloge de votre téléphone : {zone} {offset}. Ouvrez l'app après un voyage ou un changement d'heure pour la mettre à jour.",
     "oddTime": "{meal} est réglé à {time}. Cela semble inhabituel : vérifiez AM/PM dans le sélecteur.",
     "off": "Désactivé",
     "slot": { "breakfast": "Petit-déjeuner", "lunch": "Déjeuner", "dinner": "Dîner" },

@@ -82,7 +82,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           ...Object.fromEntries(Object.entries(beta.source ?? {}).map(([k, v]) => [`src_${k}`, v])),
         }}
       />
-      <ReminderClockSync />
+      <ReminderClockSync userId={userId} />
       <OfflineOwner userId={userId} />
       <MainFrame>
         <RouteFx>{children}</RouteFx>

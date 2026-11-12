@@ -142,16 +142,22 @@ export async function saveReminderTimes(formData: FormData): Promise<{ ok: boole
   return { ok: !error };
 }
 
-/** Keep the device's UTC offset current (DST, travel); called on app open when it changes. */
-export async function syncReminderClock(input: { timezone: string; utcOffsetMin: number }): Promise<void> {
+/**
+ * Keep the account's reminder clock on the phone's current UTC offset (DST,
+ * travel); called on app open and when the app comes back to the
+ * foreground, whenever this account's cached offset differs (AUD-12).
+ * Reports whether it was saved so the client only caches a real write.
+ */
+export async function syncReminderClock(input: { timezone: string; utcOffsetMin: number }): Promise<{ ok: boolean }> {
   const { supabase, userId } = await requireUser();
   const utc_offset_min = validOffset(input.utcOffsetMin);
-  if (utc_offset_min == null) return;
+  if (utc_offset_min == null) return { ok: false };
   const tz = String(input.timezone ?? "");
-  await supabase
+  const { error } = await supabase
     .from("reminder_settings")
     .update({ utc_offset_min, ...(validTz(tz) ? { timezone: tz } : {}) })
     .eq("user_id", userId);
+  return { ok: !error };
 }
 
 /** Send a test notification to every device of the signed-in user. */
