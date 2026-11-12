@@ -40,10 +40,17 @@ describe("food review queue", () => {
 
   it("users can't share their own food or mark it rejected", async () => {
     await expect(t.as(user, () => t.rows(`insert into public.foods (${FOOD}) values (${VALS})`))).rejects.toThrow(/row-level security/);
-    await expect(insertOwn(user, ", review_status", ", 'rejected'")).rejects.toThrow(/row-level security/);
+    // A self-set 'rejected' is overridden to 'pending' (AUD-05 trigger).
+    const [self] = await t.as(user, () =>
+      t.rows<{ review_status: string }>(`insert into public.foods (${FOOD}, owner_id, review_status) values (${VALS}, $1, 'rejected') returning review_status`, [user])
+    );
+    expect(self.review_status).toBe("pending");
     const [{ id }] = await insertOwn(user, ", review_status", ", 'pending'");
     await expect(t.as(user, () => t.rows("update public.foods set owner_id = null where id = $1", [id]))).rejects.toThrow(/row-level security/);
-    await expect(t.as(user, () => t.rows("update public.foods set review_status = 'rejected' where id = $1", [id]))).rejects.toThrow(/row-level security/);
+    const [kept] = await t.as(user, () =>
+      t.rows<{ review_status: string }>("update public.foods set review_status = 'rejected' where id = $1 returning review_status", [id])
+    );
+    expect(kept.review_status).toBe("pending");
   });
 
   it("approval shares the food with everyone", async () => {
@@ -67,5 +74,39 @@ describe("food review queue", () => {
     await expect(
       t.as(admin, () => t.rows(`insert into public.foods (${FOOD}, review_status) values (${VALS}, 'pending')`))
     ).rejects.toThrow(/foods_review_private/);
+  });
+});
+
+describe("review is enforced by the database (AUD-05)", () => {
+  it("a direct insert without a status still lands in the queue", async () => {
+    const [f] = await t.as(user, () =>
+      t.rows<{ review_status: string | null }>(`insert into public.foods (${FOOD}, owner_id) values (${VALS}, $1) returning review_status`, [user])
+    );
+    expect(f.review_status).toBe("pending");
+  });
+
+  it("users can't write reviewer fields or clear the status", async () => {
+    const [{ id }] = await insertOwn(user);
+    const [row] = await t.as(user, () =>
+      t.rows<{ review_status: string; reviewed_by: string | null }>(
+        "update public.foods set reviewed_by = $2, reviewed_at = now(), review_status = null where id = $1 returning review_status, reviewed_by",
+        [id, other]
+      )
+    );
+    expect(row).toEqual({ review_status: "pending", reviewed_by: null });
+  });
+
+  it("changing a rejected food's facts sends it back for review; renaming nothing keeps it rejected", async () => {
+    const [{ id }] = await insertOwn(user);
+    await t.as(admin, () => t.rows("update public.foods set review_status = 'rejected', reviewed_by = $2 where id = $1", [id, admin]));
+    const [same] = await t.as(user, () => t.rows<{ review_status: string }>("update public.foods set updated_at = now() where id = $1 returning review_status", [id]));
+    expect(same.review_status).toBe("rejected");
+    const [edited] = await t.as(user, () => t.rows<{ review_status: string; reviewed_by: string }>("update public.foods set kcal = 350 where id = $1 returning review_status, reviewed_by", [id]));
+    expect(edited).toEqual({ review_status: "pending", reviewed_by: admin });
+  });
+
+  it("admins and imports are not forced into the queue", async () => {
+    const [g] = await t.as(admin, () => t.rows<{ review_status: string | null }>(`insert into public.foods (${FOOD}) values (${VALS}) returning review_status`));
+    expect(g.review_status).toBeNull();
   });
 });
