@@ -48,24 +48,25 @@ export async function recordAiUsage(
 ): Promise<void> {
   // Written with the service role: users have no insert right on ai_usage,
   // so they can't forge cost to trip the global spend cap (security audit #1).
+  // Fills the reservation made by the quota check (AUD-09), or adds a row.
   const db = createAdminClient();
   if (!db) {
     console.error("[ai_usage] SUPABASE_SECRET_KEY missing — usage not recorded, caps can't count this call");
     return;
   }
   void supabase;
-  const { error } = await db.from("ai_usage").insert({
-    user_id: userId,
-    feature,
-    provider: usage.provider,
-    model: usage.model,
-    input_tokens: usage.inputTokens,
-    cached_tokens: usage.cachedTokens,
-    output_tokens: usage.outputTokens,
-    cost_usd: usage.costUsd,
+  const { error } = await db.rpc("record_ai_usage", {
+    p_user: userId,
+    p_feature: feature,
+    p_provider: usage.provider,
+    p_model: usage.model,
+    p_input: usage.inputTokens,
+    p_cached: usage.cachedTokens,
+    p_output: usage.outputTokens,
+    p_cost: usage.costUsd,
   });
   // Metering must never fail the user's request; the log shows the gap.
-  if (error) console.error(`[ai_usage] insert failed: ${error.message}`);
+  if (error) console.error(`[ai_usage] record failed: ${error.message}`);
 }
 
 function limit(name: string, fallback: number | null): number | null {
@@ -112,6 +113,7 @@ export async function getCoachAllowance(
     .select("created_at")
     .eq("user_id", userId)
     .eq("feature", "coach")
+    .eq("status", "done")
     .gte("created_at", (monthly != null ? monthStart : dayStart).toISOString());
   if (error || !data) return { ...base, known: false };
   return {
@@ -143,7 +145,7 @@ let spendCache: { at: number; over: boolean } | null = null;
 /**
  * Global kill switch (GTM G1): true once today's total recorded AI cost
  * (UTC) reaches AI_DAILY_SPEND_LIMIT_USD. Cached for a minute per instance;
- * fails open. Complements the gateway key's own spend cap.
+ * fails closed (AUD-09). Complements the gateway key's own spend cap.
  */
 export async function aiSpendExceeded(supabase: Supabase): Promise<boolean> {
   const raw = process.env.AI_DAILY_SPEND_LIMIT_USD;
@@ -153,16 +155,51 @@ export async function aiSpendExceeded(supabase: Supabase): Promise<boolean> {
   // Platform-wide spend: service role only (users can't call ai_spend_today).
   const db = createAdminClient();
   void supabase;
-  if (!db) return false;
+  // Fail closed (AUD-09): without a working spend check there is no cap at all.
+  if (!db) {
+    console.error("[ai_usage] SUPABASE_SECRET_KEY missing — AI paused: the spend cap can't be checked");
+    return true;
+  }
   const { data, error } = await db.rpc("ai_spend_today");
-  if (error) return false;
+  if (error) {
+    console.error(`[ai_usage] spend check failed, AI paused: ${error.message}`);
+    return true;
+  }
   const over = Number(data) >= cap;
   if (over) console.warn(`[ai_usage] daily spend ${Number(data).toFixed(2)} USD reached the ${cap} USD limit`);
   spendCache = { at: Date.now(), over };
   return over;
 }
 
-/** Null when within the feature's daily cap, otherwise a user-facing reason. Fails open. */
+type Reservation = "ok" | "daily" | "monthly" | "error";
+
+/**
+ * Atomically count and reserve one call against the caps (AUD-09): parallel
+ * requests can no longer all pass a check made before any of them recorded
+ * usage. "error" = the reservation couldn't be made; callers fail closed.
+ */
+async function reserve(userId: string, feature: AiFeature, daily: number | null, monthly: number | null): Promise<Reservation> {
+  const db = createAdminClient();
+  if (!db) {
+    console.error("[ai_usage] SUPABASE_SECRET_KEY missing — AI paused: caps can't be enforced");
+    return "error";
+  }
+  const { data, error } = await db.rpc("reserve_ai_call", {
+    p_user: userId,
+    p_feature: feature,
+    p_daily: daily,
+    p_monthly: monthly,
+  });
+  if (error || (data !== "ok" && data !== "daily" && data !== "monthly")) {
+    console.error(`[ai_usage] reservation failed: ${error?.message ?? String(data)}`);
+    return "error";
+  }
+  return data;
+}
+
+const UNAVAILABLE = "AI features are temporarily unavailable. Try again later.";
+
+/** Null when within the feature's daily cap (one call reserved), otherwise a user-facing reason. */
 export async function featureQuotaError(
   supabase: Supabase,
   userId: string,
@@ -172,7 +209,7 @@ export async function featureQuotaError(
   // The invite-only beta is enforced here too, not only by page redirects:
   // AI endpoints are callable directly by any signed-in account (audit #5).
   if (!(await ensureBetaAccess(supabase, userId))) return "AI features need beta access. Redeem an invite code first.";
-  if (await aiSpendExceeded(supabase)) return "AI features are temporarily unavailable. Try again later.";
+  if (await aiSpendExceeded(supabase)) return UNAVAILABLE;
   const cap = DAILY_CAPS[feature];
   if (!cap) return null;
   const [prefix, free, paid] = cap;
@@ -180,18 +217,10 @@ export async function featureQuotaError(
     ? limit(`${prefix}_PREMIUM_DAILY_LIMIT`, paid)
     : limit(`${prefix}_DAILY_LIMIT`, free);
   if (daily == null) return null;
-  const now = new Date();
-  const dayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-  const { count, error } = await supabase
-    .from("ai_usage")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", userId)
-    .eq("feature", feature)
-    .gte("created_at", dayStart.toISOString());
-  if (error || count == null) return null;
-  return count >= daily
-    ? (CAP_MESSAGES[feature] ?? "You've reached today's limit for this AI feature. Try again tomorrow.")
-    : null;
+  const r = await reserve(userId, feature, daily, null);
+  if (r === "ok") return null;
+  if (r === "error") return UNAVAILABLE;
+  return CAP_MESSAGES[feature] ?? "You've reached today's limit for this AI feature. Try again tomorrow.";
 }
 
 /** Null when within limits, otherwise which cap was hit (translated by the chat). */
@@ -199,16 +228,13 @@ export async function coachQuotaError(
   supabase: Supabase,
   userId: string,
   premium: boolean
-): Promise<"dailyLimit" | "monthlyLimit" | "invite" | null> {
+): Promise<"dailyLimit" | "monthlyLimit" | "invite" | "unavailable" | null> {
   if (!(await ensureBetaAccess(supabase, userId))) return "invite";
-  const a = await getCoachAllowance(supabase, userId, premium);
-  // Fail open: a metering outage shouldn't lock paying users out.
-  if (!a.known) return null;
-  if (a.monthly != null && a.usedMonth >= a.monthly) {
-    return "monthlyLimit";
-  }
-  if (a.daily != null && a.usedToday >= a.daily) {
-    return "dailyLimit";
-  }
-  return null;
+  const daily = premium
+    ? limit("COACH_PREMIUM_DAILY_MESSAGE_LIMIT", 50)
+    : limit("COACH_DAILY_MESSAGE_LIMIT", 5);
+  const monthly = premium ? null : limit("COACH_MONTHLY_MESSAGE_LIMIT", 10);
+  if (daily == null && monthly == null) return null;
+  const r = await reserve(userId, "coach", daily, monthly);
+  return r === "ok" ? null : r === "daily" ? "dailyLimit" : r === "monthly" ? "monthlyLimit" : "unavailable";
 }
