@@ -211,6 +211,25 @@ Found by a full code review (static testing); DR-013 to DR-015 were confirmed by
 - **Fix:** after saving, the Me page echoes the times in 24-hour form ("Saved: Breakfast 10:28 · Lunch 23:47") and warns when a slot is outside its usual window (`implausibleSlots` in `src/lib/reminders.ts`: breakfast 04:00–12:00, lunch 10:30–17:00, dinner 16:00–02:00).
 - **Regression test:** `src/lib/reminders.test.ts` → "implausibleSlots (DR-030)".
 
+### DR-031 — Vulnerable framework and library versions (AUD-01)
+- **Severity / priority:** Critical (advisory) / High · **Type:** Security (dependencies) · **Found by:** `npm audit` during the end-to-end audit
+- **Actual:** Next 16.3.8 (Server Action DoS; image-optimizer SVG and `use cache` RCE advisories), @sentry/nextjs 10.69.0 (tunnel middleware bypass), DOMPurify 3.4.16 via posthog-js (sanitizer bypasses). Reachability was not proven; Server Actions are used throughout, so the DoS advisory applies.
+- **Fix:** Next and eslint-config-next 16.4.6, @sentry/nextjs 10.78.0, posthog-js 1.447.15 (DOMPurify 3.4.17), `npm audit fix` for transitive packages. Remaining: 5 moderate advisories in build-time tooling (glob/minimatch under the Sentry bundler plugin); the fix is Sentry 11, a major upgrade, tracked separately.
+- **Regression check:** typecheck, lint, 1,276 unit/database tests, production build and public browser tests pass on the new versions.
+
+### DR-032 — OAuth callback redirected to a forwarded host (AUD-02)
+- **Severity / priority:** High / High · **Type:** Security (CWE-601) · **Found by:** code review, reproduced against the route handler
+- **Steps:** finish Google sign-in with `x-forwarded-host: attacker.example` on the callback request. **Actual:** redirected to `https://attacker.example/dashboard`. **Expected:** stay on So3ra.
+- **Root cause:** the callback trusted `x-forwarded-host` for its redirect; `next` was sanitised but the host wasn't.
+- **Fix:** redirect relative to the request's own origin, where the session cookie was set.
+- **Regression test:** `src/lib/audit-auth.test.ts` (forged host, unsafe `next`, failed exchange).
+
+### DR-033 — Push subscriptions accepted any URL and could be taken over by endpoint (AUD-07, AUD-08)
+- **Severity / priority:** High / High · **Type:** Security (CWE-918 SSRF; CWE-639) · **Found by:** code review
+- **Actual:** any `https://` URL with non-empty keys was saved, and "Send a test" made the server POST to it. Submitting someone else's endpoint deleted their subscription before anything was validated. Errors saving reminder settings were ignored and reported as success.
+- **Fix:** `src/lib/push-endpoint.ts`: only FCM, Apple, Mozilla and Windows push hosts on port 443 without credentials; keys must be a 65-byte P-256 point and a 16-byte secret. Stored rows that fail the check are never requested and are removed. An existing endpoint moves to another account only with the same keys (same browser), as an update, never delete-first. Settings errors now fail the action.
+- **Regression test:** `src/lib/push-endpoint.test.ts` (allowed services, metadata IP, localhost, http, port, credentials, look-alike hosts, key sizes).
+
 ### Accepted risks (not fixed)
 - **Open Food Facts names in AI prompts:** third-party text reaches the model (prompt injection, CWE-1427). Low impact: output is structured and confirmed by the user. Revisit before bulk imports.
 - **Coach loads up to 400 library foods per message:** token cost, not correctness. Revisit when the library grows.
