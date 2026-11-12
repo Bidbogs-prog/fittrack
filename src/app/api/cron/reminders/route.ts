@@ -4,7 +4,7 @@ import { pushConfigured, reminderPayload, sendPush } from "@/lib/push-server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 /**
- * Meal reminder sender (roadmap GTM G3). Called every 15–30 minutes by a
+ * Meal reminder sender (roadmap GTM G3). Called every 5 minutes by a
  * scheduler with `Authorization: Bearer <CRON_SECRET>` (Vercel Cron sends
  * this automatically; a Supabase pg_cron job can too). For each user with
  * reminders on and at least one device: send the slots that are due in

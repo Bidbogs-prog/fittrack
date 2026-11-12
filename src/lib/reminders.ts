@@ -9,7 +9,7 @@ export type ReminderSlot = (typeof REMINDER_SLOTS)[number];
 
 /**
  * How long after the set time a reminder may still go out. Must be longer
- * than the cron interval (30 min) so every slot is caught once; long enough
+ * than the cron interval (5 min, Supabase pg_cron) so every slot is caught once; long enough
  * to survive a delayed run, short enough that "breakfast" never arrives at
  * lunchtime.
  */

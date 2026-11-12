@@ -34,6 +34,15 @@ export function pushConfigured(): boolean {
   return (configured = true);
 }
 
+/**
+ * Reminders are time-sensitive and scheduled by the user, so they go out with
+ * Urgency: high. With "normal", FCM sends them at normal priority and Android
+ * holds them while the phone is idle (Doze) until it wakes or the app opens:
+ * a 10:30 breakfast reminder showed at 11:36 (DR-029).
+ * TTL: past this, a reminder is stale (breakfast at lunchtime); drop it.
+ */
+export const PUSH_OPTIONS = { TTL: 45 * 60, urgency: "high" } as const;
+
 /** "sent", "gone" (subscription expired — delete it) or "failed". */
 export async function sendPush(target: PushTarget, payload: PushPayload): Promise<"sent" | "gone" | "failed"> {
   if (!pushConfigured()) return "failed";
@@ -41,7 +50,7 @@ export async function sendPush(target: PushTarget, payload: PushPayload): Promis
     await webpush.sendNotification(
       { endpoint: target.endpoint, keys: { p256dh: target.p256dh, auth: target.auth } },
       JSON.stringify(payload),
-      { TTL: 60 * 60, urgency: "normal" }
+      PUSH_OPTIONS
     );
     return "sent";
   } catch (err) {

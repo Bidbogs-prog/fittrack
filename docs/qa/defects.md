@@ -196,6 +196,14 @@ Found by a full code review (static testing); DR-013 to DR-015 were confirmed by
 - **Fix:** `assertFallbackAllowed()` in `src/lib/llm.ts` refuses the fallback in production unless `ALLOW_GEMINI_FALLBACK=1` (`0849339`); `AGENTS.md` updated (`ea9923d`).
 - **Regression test:** `src/lib/llm.test.ts`.
 
+### DR-029 — Meal reminders arrive only when the phone wakes or the app opens
+- **Severity / priority:** High / High · **Type:** Functional · **Found by:** product owner (Android, installed PWA)
+- **Steps:** 1. Enable reminders on Android, breakfast at 10:28. 2. Leave the phone idle (screen off). **Expected:** the notification shows at about 10:30. **Actual:** nothing until the app was opened at 11:36, then the breakfast notification appeared.
+- **Evidence:** `reminder_log` shows breakfast sent at 10:30:04 UTC (local 10:30, offset 0); the 10:30 cron run returned `sent: 1` (FCM accepted it). The server was on time; delivery to the phone was held.
+- **Root cause:** pushes went out with `Urgency: normal`, which FCM sends at normal priority; Android defers those while the device is idle (Doze) until it wakes or Chrome runs. Secondary: the cron ran every 15 minutes, so a reminder could be up to 14 minutes after the set time.
+- **Fix:** `PUSH_OPTIONS` in `src/lib/push-server.ts`: `urgency: "high"` and `TTL` 45 min (a stale breakfast reminder is dropped instead of arriving at lunch); pg_cron job `so3ra-reminders` moved to every 5 minutes.
+- **Regression test:** `src/lib/push-server.test.ts` (fails on `urgency: "normal"`, verified before the fix). Device delivery itself: manual check with the phone locked for 15+ minutes.
+
 ### Accepted risks (not fixed)
 - **Open Food Facts names in AI prompts:** third-party text reaches the model (prompt injection, CWE-1427). Low impact: output is structured and confirmed by the user. Revisit before bulk imports.
 - **Coach loads up to 400 library foods per message:** token cost, not correctness. Revisit when the library grows.
