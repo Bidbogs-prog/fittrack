@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Barcode, X } from "@phosphor-icons/react";
 import { BarcodeScanner } from "@/components/barcode-scanner";
-import type { Food } from "@/lib/types";
+import { lookupBarcode } from "@/lib/barcode-lookup";
 
 /** Scan a product barcode and jump to its food page. */
 export function ScanButton({ variant = "badge" }: { variant?: "badge" | "button" }) {
@@ -14,20 +14,19 @@ export function ScanButton({ variant = "badge" }: { variant?: "badge" | "button"
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [miss, setMiss] = useState<string | null>(null);
+  /** Lookup failed (offline, signed out, server): not the same as "not in the library" (AUD-13). */
+  const [failed, setFailed] = useState<{ code: string; signedOut: boolean } | null>(null);
 
   async function detected(code: string) {
-    try {
-      const res = await fetch(`/api/foods/barcode?code=${encodeURIComponent(code)}`);
-      const json = (await res.json()) as { food: Food | null };
-      if (json.food) {
-        setOpen(false);
-        router.push(`/foods/${json.food.id}`);
-        return;
-      }
-    } catch {
-      // fall through
+    setFailed(null);
+    const r = await lookupBarcode(code);
+    if (r.kind === "found") {
+      setOpen(false);
+      router.push(`/foods/${r.food.id}`);
+      return;
     }
-    setMiss(code);
+    if (r.kind === "missing") setMiss(code);
+    else setFailed({ code, signedOut: r.kind === "signedOut" });
   }
 
   return (
@@ -36,6 +35,7 @@ export function ScanButton({ variant = "badge" }: { variant?: "badge" | "button"
         type="button"
         onClick={() => {
           setMiss(null);
+          setFailed(null);
           setOpen(true);
         }}
         className={
@@ -71,7 +71,20 @@ export function ScanButton({ variant = "badge" }: { variant?: "badge" | "button"
                 <X weight="bold" className="size-4" />
               </button>
             </div>
-            {miss ? (
+            {failed ? (
+              <div role="alert" className="mt-4 space-y-3 text-sm text-paper-dim">
+                <p>{t(failed.signedOut ? "scanSignedOut" : "scanError")}</p>
+                {!failed.signedOut && (
+                  <button
+                    type="button"
+                    onClick={() => void detected(failed.code)}
+                    className="btn-press inline-flex min-h-11 items-center rounded-xl border border-ink-700 px-4"
+                  >
+                    {t("scanRetry")}
+                  </button>
+                )}
+              </div>
+            ) : miss ? (
               <div className="mt-4 space-y-3 text-sm text-paper-dim">
                 <p>{t("scanMiss", { code: miss })}</p>
                 <Link href={`/foods/new?barcode=${encodeURIComponent(miss)}&from=scan`} className="btn-flame btn-press inline-flex min-h-11 items-center rounded-xl px-4">

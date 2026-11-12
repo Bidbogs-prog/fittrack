@@ -15,8 +15,9 @@ import {
 } from "@phosphor-icons/react";
 import { AddFoodDialog } from "@/app/(app)/dashboard/add-food-dialog";
 import { BarcodeScanner } from "@/components/barcode-scanner";
+import { lookupBarcode } from "@/lib/barcode-lookup";
 import { mealForMinutes, minutesOfDate } from "@/lib/day-time";
-import type { Food, MealType } from "@/lib/types";
+import type { MealType } from "@/lib/types";
 import { ConfirmSheet } from "./confirm-sheet";
 import { EditSheet } from "./edit-sheet";
 import { ThinkingOrbit } from "./thinking";
@@ -56,6 +57,8 @@ export function Composer({
   const [scanning, setScanning] = useState(false);
   /** Last barcode the library didn't know: offered as "Add it now". */
   const [missCode, setMissCode] = useState<string | null>(null);
+  /** Last barcode whose lookup failed (offline/server): offered as "Try again", never "Add" (AUD-13). */
+  const [retryCode, setRetryCode] = useState<string | null>(null);
   const [meal, setMeal] = useState<MealType>("snack");
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -112,18 +115,20 @@ export function Composer({
 
   async function handleBarcode(code: string) {
     setScanning(false);
-    try {
-      const res = await fetch(`/api/foods/barcode?code=${encodeURIComponent(code)}`);
-      const json = (await res.json()) as { food: Food | null };
-      if (json.food) {
-        log.addFood(json.food, json.food.serving_grams ?? 100);
-        return;
-      }
-    } catch {
-      // fall through to the miss message
+    setMissCode(null);
+    setRetryCode(null);
+    const r = await lookupBarcode(code);
+    if (r.kind === "found") {
+      log.addFood(r.food, r.food.serving_grams ?? 100);
+      return;
     }
-    setMissCode(code);
-    log.setError(t("barcodeMiss"));
+    if (r.kind === "missing") {
+      setMissCode(code);
+      log.setError(t("barcodeMiss"));
+      return;
+    }
+    if (r.kind === "error") setRetryCode(code);
+    log.setError(t(r.kind === "signedOut" ? "barcodeSignedOut" : "barcodeError"));
   }
 
   // ⌘K / Ctrl+K opens food search; Space (outside fields) holds to talk.
@@ -207,6 +212,18 @@ export function Composer({
                   >
                     {t("barcodeAdd")}
                   </Link>
+                </>
+              )}
+              {retryCode && log.error === t("barcodeError") && (
+                <>
+                  {" "}
+                  <button
+                    type="button"
+                    onClick={() => void handleBarcode(retryCode)}
+                    className="font-semibold underline underline-offset-4"
+                  >
+                    {t("barcodeRetry")}
+                  </button>
                 </>
               )}
             </span>
