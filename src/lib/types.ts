@@ -132,6 +132,8 @@ export interface Food extends MicroValues {
   owner_id: string | null;
   /** Private food submitted for sharing: pending admin review, or rejected (stays private). */
   review_status?: "pending" | "rejected" | null;
+  /** Admin's reason when rejected; readable by the creator. */
+  review_note?: string | null;
   kcal: number;
   protein_g: number;
   carbs_g: number;

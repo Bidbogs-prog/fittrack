@@ -163,7 +163,7 @@ export async function generateAiPlan(formData: FormData): Promise<{ error: strin
   // hand to the model wholesale.
   const [{ data: seed }, { data: own }, { data: favs }] = await Promise.all([
     supabase.from("foods").select("*").is("owner_id", null).eq("source", "manual").limit(120),
-    supabase.from("foods").select("*").not("owner_id", "is", null).limit(30),
+    supabase.from("foods").select("*").eq("owner_id", userId).limit(30),
     supabase.from("favorite_foods").select("food:foods(*)").eq("user_id", userId).limit(24),
   ]);
   const candidates = new Map<string, Food>();

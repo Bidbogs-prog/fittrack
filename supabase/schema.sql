@@ -531,6 +531,11 @@ create table if not exists public.coach_conversations (
 create index if not exists coach_conversations_user_idx
   on public.coach_conversations (user_id, updated_at desc);
 
+-- AUD-10: rolling summary watermark. Messages after summary_through are sent
+-- verbatim; older ones are in summary. Null = nothing summarised yet.
+alter table public.coach_conversations
+  add column if not exists summary_through timestamptz;
+
 alter table public.coach_conversations enable row level security;
 
 drop policy if exists "coach conversations: read own" on public.coach_conversations;
@@ -1756,6 +1761,11 @@ create policy "foods: admins read the review queue" on public.foods
 -- non-admin's own food is always pending after create or a change to its
 -- facts, and reviewer fields are never theirs to set. Admins (approve /
 -- reject) and the service role (imports) are untouched.
+-- AUD-15: a rejection reason the creator can read. Like the other reviewer
+-- fields, only admins write it.
+alter table public.foods
+  add column if not exists review_note text check (char_length(review_note) <= 300);
+
 create or replace function public.foods_enforce_review()
 returns trigger
 language plpgsql
@@ -1763,7 +1773,7 @@ security definer
 set search_path = public
 as $$
 declare
-  ignored constant text[] := array['review_status', 'reviewed_by', 'reviewed_at', 'updated_at', 'created_at'];
+  ignored constant text[] := array['review_status', 'reviewed_by', 'reviewed_at', 'review_note', 'updated_at', 'created_at'];
 begin
   if auth.uid() is null or public.is_admin() or new.owner_id is null then
     return new;
@@ -1772,10 +1782,12 @@ begin
     new.review_status := 'pending';
     new.reviewed_by := null;
     new.reviewed_at := null;
+    new.review_note := null;
     return new;
   end if;
   new.reviewed_by := old.reviewed_by;
   new.reviewed_at := old.reviewed_at;
+  new.review_note := old.review_note;
   new.review_status := case
     when (to_jsonb(new) - ignored) is distinct from (to_jsonb(old) - ignored) then 'pending'
     else old.review_status

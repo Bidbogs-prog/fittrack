@@ -61,7 +61,7 @@ export async function approveFood(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   const { data, error } = await supabase
     .from("foods")
-    .update({ owner_id: null, review_status: null, reviewed_by: userId, reviewed_at: new Date().toISOString() })
+    .update({ owner_id: null, review_status: null, review_note: null, reviewed_by: userId, reviewed_at: new Date().toISOString() })
     .eq("id", id)
     .eq("review_status", "pending")
     .select("name")
@@ -78,9 +78,11 @@ export async function rejectFood(formData: FormData) {
   const { supabase, userId } = await requireAdmin();
   const back = "/admin/foods/review";
   const id = String(formData.get("id") ?? "");
+  // Shown to the creator on the food's page (AUD-15).
+  const note = String(formData.get("note") ?? "").trim().slice(0, 300) || null;
   const { data, error } = await supabase
     .from("foods")
-    .update({ review_status: "rejected", reviewed_by: userId, reviewed_at: new Date().toISOString() })
+    .update({ review_status: "rejected", reviewed_by: userId, reviewed_at: new Date().toISOString(), review_note: note })
     .eq("id", id)
     .eq("review_status", "pending")
     .select("name")

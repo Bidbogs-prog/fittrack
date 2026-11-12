@@ -395,9 +395,9 @@ export async function parseMeal(
         const name = String(row.name ?? "").trim().slice(0, 60);
         if (!name || !grams || grams < 1 || kcal == null) return null;
 
-        let matches = await rankFoods(supabase, { q: String(row.search_query ?? ""), limit: 3 });
+        let matches = await rankFoods(supabase, { q: String(row.search_query ?? ""), limit: 3, viewerId: userId });
         if (matches.length === 0 && name !== row.search_query) {
-          matches = await rankFoods(supabase, { q: name, limit: 3 });
+          matches = await rankFoods(supabase, { q: name, limit: 3, viewerId: userId });
         }
         return {
           name,
@@ -507,12 +507,16 @@ export async function logAiMeal(input: {
     return { error: "Invalid entry." };
   }
 
-  // Re-verify food ids server-side: RLS scopes visibility, so a food id the
-  // user can't see (someone else's private food) simply won't come back.
+  // Re-verify food ids server-side: only global foods and the user's own
+  // (admins can read other people's private foods through RLS; AUD-15).
   const foodIds = [...new Set(items.map((i) => i.food_id).filter((id): id is string => !!id))];
   let visible = new Set<string>();
   if (foodIds.length > 0) {
-    const { data } = await supabase.from("foods").select("id").in("id", foodIds);
+    const { data } = await supabase
+      .from("foods")
+      .select("id")
+      .in("id", foodIds)
+      .or(`owner_id.is.null,owner_id.eq.${userId}`);
     visible = new Set((data ?? []).map((f) => f.id));
   }
   const recipeIds = [...new Set(items.map((i) => i.recipe_id).filter((id): id is string => !!id))];

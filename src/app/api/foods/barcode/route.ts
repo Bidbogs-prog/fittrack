@@ -17,13 +17,18 @@ export async function GET(request: NextRequest) {
     return Response.json({ error: "Invalid barcode" }, { status: 400 });
   }
 
-  const { data: matches } = await supabase
+  // Global row or the user's own copy only: admins can read other people's
+  // private foods through RLS, and must not get them back here (AUD-15).
+  const userId = String(data.claims.sub);
+  const { data: matches, error } = await supabase
     .from("foods")
     .select("*")
     .eq("barcode", code)
+    .or(`owner_id.is.null,owner_id.eq.${userId}`)
     .limit(2);
+  if (error) return Response.json({ error: "Lookup failed" }, { status: 503 });
 
   const foods = (matches ?? []) as Food[];
-  const food = foods.find((f) => f.owner_id != null) ?? foods[0] ?? null;
+  const food = foods.find((f) => f.owner_id === userId) ?? foods[0] ?? null;
   return Response.json({ food });
 }

@@ -12,6 +12,7 @@ export async function GET(request: NextRequest) {
     q: params.get("q") ?? "",
     category: parseCategory(params.get("c")),
     limit: 12,
+    viewerId: String(data.claims.sub),
   });
   return Response.json({ foods });
 }

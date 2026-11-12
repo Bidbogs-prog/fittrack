@@ -45,7 +45,7 @@ export default async function FoodsPage({
 }: {
   searchParams: Promise<{ c?: string; q?: string; page?: string; mine?: string }>;
 }) {
-  const [{ supabase }, params, t, format] = await Promise.all([
+  const [{ supabase, userId }, params, t, format] = await Promise.all([
     requireUser(),
     searchParams,
     getTranslations("foods"),
@@ -57,7 +57,7 @@ export default async function FoodsPage({
   const page = Math.max(1, Number.parseInt(params.page ?? "1", 10) || 1);
   const mine = params.mine === "1";
 
-  const { foods, total } = await searchFoods(supabase, { q, category, page, mine });
+  const { foods, total } = await searchFoods(supabase, { q, category, page, mine, viewerId: userId });
   const totalPages = Math.max(1, Math.ceil(total / FOODS_PAGE_SIZE));
 
   const chip = (on: boolean) =>

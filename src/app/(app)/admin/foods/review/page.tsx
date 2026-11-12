@@ -1,4 +1,5 @@
 import { Check, CheckCircle, WarningCircle, X } from "@phosphor-icons/react/dist/ssr";
+import { Pagination } from "@/components/pagination";
 import { requireAdmin } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Food } from "@/lib/types";
@@ -8,6 +9,8 @@ export const metadata = { title: "Admin · Food review" };
 
 type Pending = Food & { created_at: string };
 
+const PAGE_SIZE = 50;
+
 /**
  * Foods users created, waiting to be shared. Approve = moves into the shared
  * library for everyone; reject = stays private to its creator.
@@ -15,16 +18,21 @@ type Pending = Food & { created_at: string };
 export default async function FoodReviewPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; approved?: string; rejected?: string }>;
+  searchParams: Promise<{ error?: string; approved?: string; rejected?: string; page?: string }>;
 }) {
   const [{ supabase }, q] = await Promise.all([requireAdmin(), searchParams]);
-  const { data } = await supabase
+  // Oldest first, every page reachable (AUD-15: it used to stop at 100).
+  const page = Math.max(1, Number.parseInt(q.page ?? "1", 10) || 1);
+  const { data, count } = await supabase
     .from("foods")
-    .select("*")
+    .select("*", { count: "exact" })
     .eq("review_status", "pending")
     .order("created_at", { ascending: true })
-    .limit(100);
+    .order("id", { ascending: true })
+    .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
   const foods = (data ?? []) as Pending[];
+  const total = count ?? foods.length;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   // Submitter emails and barcode clashes with the shared library.
   const ownerIds = [...new Set(foods.map((f) => f.owner_id).filter((v): v is string => v != null))];
@@ -56,7 +64,7 @@ export default async function FoodReviewPage({
         </p>
       )}
       <p className="text-xs text-paper-mute">
-        Foods users created. They can already log them privately; approving shares them with everyone. Check the facts against the label (per 100 g).
+        <span className="font-semibold text-paper">{total} waiting.</span> Foods users created. They can already log them privately; approving shares them with everyone. Check the facts against the label (per 100 g).
       </p>
       {foods.length === 0 ? (
         <p className="rounded-2xl border border-dashed border-ink-700 px-6 py-14 text-center text-sm text-paper-mute">
@@ -97,8 +105,15 @@ export default async function FoodReviewPage({
                         Approve
                       </button>
                     </form>
-                    <form action={rejectFood}>
+                    <form action={rejectFood} className="flex gap-2">
                       <input type="hidden" name="id" value={f.id} />
+                      <input
+                        name="note"
+                        maxLength={300}
+                        placeholder="Reason (shown to them)"
+                        aria-label={`Rejection reason for ${f.name}`}
+                        className="field h-9 w-44 text-xs"
+                      />
                       <button type="submit" className="btn-press inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-ink-700 px-3 text-xs font-semibold text-paper-dim hover:text-danger">
                         <X weight="bold" className="size-3.5" />
                         Reject
@@ -111,6 +126,7 @@ export default async function FoodReviewPage({
           })}
         </ul>
       )}
+      <Pagination page={page} totalPages={totalPages} total={total} makeHref={(p) => (p > 1 ? `/admin/foods/review?page=${p}` : "/admin/foods/review")} />
     </div>
   );
 }

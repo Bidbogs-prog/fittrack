@@ -26,8 +26,14 @@ export async function searchFoods(
     orderBy?: "name" | "newest";
     /** "prefix" matches only names/brands starting with q (for ranking). */
     match?: "contains" | "prefix";
-    /** Only the caller's own (private) foods. RLS already scopes rows to own+global. */
+    /** Only the viewer's own (private) foods. */
     mine?: boolean;
+    /**
+     * The signed-in user. Results are global foods plus this user's own:
+     * RLS also lets admins read other people's private foods (review queue,
+     * plan requests), which must not show up as library results (AUD-15).
+     */
+    viewerId: string;
   }
 ): Promise<{ foods: Food[]; total: number }> {
   const pageSize = opts.pageSize ?? FOODS_PAGE_SIZE;
@@ -37,7 +43,9 @@ export async function searchFoods(
   let query = (
     opts.orderBy === "newest" ? base.order("created_at", { ascending: false }) : base.order("name")
   ).range((page - 1) * pageSize, page * pageSize - 1);
-  if (opts.mine) query = query.not("owner_id", "is", null);
+  query = opts.mine
+    ? query.eq("owner_id", opts.viewerId)
+    : query.or(`owner_id.is.null,owner_id.eq.${opts.viewerId}`);
   if (opts.category) query = query.eq("category", opts.category);
   const q = sanitizeSearch(opts.q ?? "");
   if (q) {
@@ -56,7 +64,7 @@ export async function searchFoods(
  */
 export async function rankFoods(
   supabase: SupabaseClient,
-  opts: { q?: string; category?: FoodCategory | null; limit: number }
+  opts: { q?: string; category?: FoodCategory | null; limit: number; viewerId: string }
 ): Promise<Food[]> {
   const q = sanitizeSearch(opts.q ?? "");
   const { foods: prefix } = await searchFoods(supabase, {
@@ -64,6 +72,7 @@ export async function rankFoods(
     category: opts.category,
     pageSize: opts.limit,
     match: "prefix",
+    viewerId: opts.viewerId,
   });
   if (!q || prefix.length >= opts.limit) return prefix;
 
@@ -72,6 +81,7 @@ export async function rankFoods(
     category: opts.category,
     pageSize: opts.limit,
     match: "contains",
+    viewerId: opts.viewerId,
   });
   const seen = new Set(prefix.map((f) => f.id));
   return [...prefix, ...contains.filter((f) => !seen.has(f.id))].slice(0, opts.limit);

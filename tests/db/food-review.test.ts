@@ -110,3 +110,14 @@ describe("review is enforced by the database (AUD-05)", () => {
     expect(g.review_status).toBeNull();
   });
 });
+
+describe("rejection reason (AUD-15)", () => {
+  it("the creator reads the admin's reason but can't write one", async () => {
+    const [{ id }] = await insertOwn(user);
+    await t.as(admin, () => t.rows("update public.foods set review_status = 'rejected', review_note = 'Label photo needed' where id = $1", [id]));
+    const [row] = await t.as(user, () =>
+      t.rows<{ review_note: string }>("update public.foods set review_note = 'approved by me' where id = $1 returning review_note", [id])
+    );
+    expect(row.review_note).toBe("Label photo needed");
+  });
+});

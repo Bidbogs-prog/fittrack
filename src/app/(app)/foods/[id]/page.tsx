@@ -47,6 +47,9 @@ export default async function FoodPage({ params }: { params: Promise<{ id: strin
           {food.owner_id === userId && food.review_status && (
             <p className="mt-1 text-xs text-paper-mute">
               {t(food.review_status === "pending" ? "reviewPending" : "reviewRejected")}
+                {food.review_status === "rejected" && food.review_note && (
+                  <span dir="auto" className="block text-paper-dim">{t("reviewReason", { note: food.review_note })}</span>
+                )}
             </p>
             )}
             {food.owner_id === userId && (

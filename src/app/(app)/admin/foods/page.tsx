@@ -17,7 +17,7 @@ export default async function AdminFoodsPage({
 }: {
   searchParams: Promise<{ error?: string; saved?: string; q?: string; page?: string }>;
 }) {
-  const [{ supabase }, params] = await Promise.all([requireAdmin(), searchParams]);
+  const [{ supabase, userId }, params] = await Promise.all([requireAdmin(), searchParams]);
   const { error, saved } = params;
 
   const q = sanitizeSearch(params.q ?? "");
@@ -27,6 +27,7 @@ export default async function AdminFoodsPage({
     page,
     pageSize: PAGE_SIZE,
     orderBy: q ? "name" : "newest",
+    viewerId: userId,
   });
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const href = (p: number) => {
