@@ -274,6 +274,30 @@ Found by a full code review (static testing); DR-013 to DR-015 were confirmed by
 - **Fix:** cache per account, re-check on `visibilitychange`, cache only after the server confirms; Me shows "Reminders follow your phone's clock: Africa/Casablanca UTC+0".
 - **Regression check:** typecheck and unit tests; device behaviour (resume after a time-zone change) is on the staging checklist.
 
+### DR-041 — The coach forgot the start of long conversations (AUD-10)
+- **Severity / priority:** Medium / Medium · **Type:** Functional (AI context) · **Found by:** code review
+- **Actual:** only the last 12 messages were sent to the model, and the first summary ran at message 24 using those same 12, so messages 1–10 (often the user's situation and goals) were never seen again.
+- **Fix:** watermark `coach_conversations.summary_through` (migration `20260905000000_coach_summary_watermark.sql`). Every message after the watermark is sent verbatim; once that tail passes 18 messages, the oldest whole exchanges are folded into the summary and the watermark moves (`src/lib/coach/rolling-summary.ts`). Every message is always in the summary or verbatim.
+- **Regression test:** `src/lib/coach/rolling-summary.test.ts` → a 40-exchange conversation where every earlier fact must stay visible at every turn.
+
+### DR-042 — The microphone could turn on after leaving the page (AUD-11)
+- **Severity / priority:** Medium / Medium · **Type:** Privacy / functional · **Found by:** code review
+- **Actual:** while the permission prompt was open, navigating away or tapping again couldn't cancel the start; when permission resolved, recording began anyway (or twice). The 60-second timer and stream weren't released on every error path; recorder errors were unhandled.
+- **Fix:** `VoiceSession` (`src/lib/voice-session.ts`): idle → starting → recording with a generation token; a stop or cancel during the prompt releases the mic as soon as permission resolves; one owner releases stream, timer and recorder on stop, cap, error and unmount.
+- **Regression test:** `src/lib/voice-session.test.ts` (leave during prompt, double tap, denied, recorder error, cancel, time cap).
+
+### DR-043 — Offline or expired session showed "barcode not in the library" (AUD-13)
+- **Severity / priority:** Medium / Medium · **Type:** Functional / usability · **Found by:** code review
+- **Actual:** any failed lookup (offline, 401, 500, an HTML error page) was shown as "not in the library" with an "Add it now" link, inviting duplicate submissions.
+- **Fix:** `lookupBarcode` (`src/lib/barcode-lookup.ts`) returns found / missing / signedOut / error; only a successful empty answer offers "Add". Errors show "Couldn't look up that barcode" with "Try again"; an expired session says so. Used by Today and Foods.
+- **Regression test:** `src/lib/barcode-lookup.test.ts`.
+
+### DR-044 — Review queue capped at 100; admins saw other people's private foods as library results (AUD-15)
+- **Severity / priority:** Medium / Medium · **Type:** Functional / privacy · **Found by:** code review
+- **Actual:** the review page listed only the oldest 100 pending foods. For admins, RLS also exposes pending foods and plan requesters' foods, so library search, "My foods", barcode lookup, AI meal matching and the plan generator could return another user's private food. A rejected creator was never told why.
+- **Fix:** library queries take the viewer and return global foods plus the viewer's own only (`searchFoods`/`rankFoods` `viewerId`, barcode route, AI log, plans). The review page is paginated (50 per page, total shown). Rejections take an optional reason (`foods.review_note`, migration `20260906000000_food_review_note.sql`), shown to the creator and writable only by admins.
+- **Regression tests:** `tests/db/food-review.test.ts` → "rejection reason (AUD-15)"; owner filtering covered by typecheck (`viewerId` is required); signed-in admin view is on the staging checklist.
+
 ### Accepted risks (not fixed)
 - **Open Food Facts names in AI prompts:** third-party text reaches the model (prompt injection, CWE-1427). Low impact: output is structured and confirmed by the user. Revisit before bulk imports.
 - **Coach loads up to 400 library foods per message:** token cost, not correctness. Revisit when the library grows.
