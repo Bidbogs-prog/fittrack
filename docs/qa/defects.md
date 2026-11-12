@@ -157,7 +157,7 @@ Found by a full code review (static testing); DR-013 to DR-015 were confirmed by
 
 ### DR-022 — No Content-Security-Policy
 - **Severity / priority:** Low / Low · **Type:** Security hardening · **Found by:** code review
-- **Fix:** baseline CSP in `next.config.ts`: `frame-ancestors 'none'`, `base-uri 'self'`, `object-src 'none'`, `form-action 'self'` (`035f1b0`).
+- **Fix:** baseline CSP in `next.config.ts`: `frame-ancestors 'none'`, `base-uri 'self'`, `object-src 'none'` (`035f1b0`). `form-action` was listed here but missing from the header until DR-048.
 - **Regression test:** `e2e/public.spec.ts` security-headers check.
 
 ### DR-023 — An outside link can send a coach message as the user
@@ -297,6 +297,30 @@ Found by a full code review (static testing); DR-013 to DR-015 were confirmed by
 - **Actual:** the review page listed only the oldest 100 pending foods. For admins, RLS also exposes pending foods and plan requesters' foods, so library search, "My foods", barcode lookup, AI meal matching and the plan generator could return another user's private food. A rejected creator was never told why.
 - **Fix:** library queries take the viewer and return global foods plus the viewer's own only (`searchFoods`/`rankFoods` `viewerId`, barcode route, AI log, plans). The review page is paginated (50 per page, total shown). Rejections take an optional reason (`foods.review_note`, migration `20260906000000_food_review_note.sql`), shown to the creator and writable only by admins.
 - **Regression tests:** `tests/db/food-review.test.ts` → "rejection reason (AUD-15)"; owner filtering covered by typecheck (`viewerId` is required); signed-in admin view is on the staging checklist.
+
+### DR-045 — Privacy policy didn't cover raw voice recordings (AUD-16)
+- **Severity / priority:** Medium / High · **Type:** Privacy / compliance · **Found by:** code review after the server-side voice change
+- **Actual:** the policy mentioned "voice transcripts", but the microphone now uploads the audio itself to the AI provider. Nothing in the app said so.
+- **Fix:** a "Voice recordings" section (what is sent, to whom, not stored by us, the provider's own terms apply; no invented retention promise), the retention paragraph covers recordings, policy date updated; while recording, the composer says "Listening… (sent to our AI to transcribe)" in all three languages.
+- **Regression check:** copy review; the provider's retention terms still need confirming with LLM Gateway before launch.
+
+### DR-046 — Food and account forms were English-only and echoed URL text (AUD-17)
+- **Severity / priority:** Medium / Medium · **Type:** i18n / security (content injection) · **Found by:** code review
+- **Actual:** the create/edit food form, its errors, the account page's errors and confirmations, and recipe errors were English in French and Darija. Account, food and recipe pages printed `?error=` / `?message=` text from the URL as-is, so a crafted link could show any sentence in So3ra's alert style; database error text was shown to users. After deleting an account, the login page dropped the English confirmation entirely.
+- **Fix:** 23 new status keys (food fields, recipes, units, fasting window, macro split, delete confirmation, account deleted) in en/fr/ar-MA; actions redirect with keys only (`statusUrl`), pages render through `StatusMessage`/`toStatusKey` and never echo unknown values; database errors become `couldNotSave`, auth errors go through `authErrorKey`. The food form, new-food and edit-food pages are translated (`foodForm` namespace, category names from `foods.cat`). A failed create keeps the scanned barcode and name.
+- **Regression tests:** `src/lib/form-parsing.test.ts` (keys, not prose); `src/i18n/messages.test.ts` key parity across the three catalogues.
+- **Remaining:** recipe page labels are still English (errors are translated).
+
+### DR-047 — Tiny portions passed validation and were saved as 0 (AUD-17)
+- **Severity / priority:** Low / Low · **Type:** Functional (validation) · **Found by:** code review
+- **Actual:** a serving weight of 0.04 g passed "> 0", was rounded to 0 and hit a database error shown as raw text; recipe servings promised 0.5–100 but accepted anything above 0.
+- **Fix:** validate the rounded value that will be stored: serving 1–5000 g, recipe servings 0.5–100. Parsers moved to `src/lib/user-food.ts` and `src/lib/recipe-form.ts` so they can be tested.
+- **Regression test:** `src/lib/form-parsing.test.ts` (0.04, 0.96, 5000.04, 5000.05 g; 0.44 and 0.45 servings).
+
+### DR-048 — CSP had no form-action (AUD-17)
+- **Severity / priority:** Low / Low · **Type:** Security hardening · **Found by:** audit (DR-022 claimed it)
+- **Fix:** `form-action 'self' https://*.supabase.co https://accounts.google.com` (own server actions plus the sign-in redirect for no-JS posts).
+- **Regression test:** `e2e/public.spec.ts` security-headers check.
 
 ### Accepted risks (not fixed)
 - **Open Food Facts names in AI prompts:** third-party text reaches the model (prompt injection, CWE-1427). Low impact: output is structured and confirmed by the user. Revisit before bulk imports.

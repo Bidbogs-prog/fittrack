@@ -163,7 +163,7 @@ End-to-end testing on a staging Supabase project is postponed (MCP connection bl
 | 2. Data integrity | AUD-03 offline queue per account, AUD-04 offline loss/eviction/error handling, AUD-05 food review enforced in the DB, AUD-14 complete exports | No silent data loss or misattribution | **Done** (DR-034–DR-037) |
 | 3. Cost and reliability | AUD-09 atomic AI reservations, AUD-06 reminder claim/retry states, AUD-12 clock sync per account and on resume | Limits hold under concurrency; reminders retry | **Done** (DR-038–DR-040) |
 | 4. Correctness and UX | AUD-10 coach summary of evicted turns, AUD-11 voice state machine, AUD-13 barcode errors vs not found, AUD-15 review queue pagination and owner filters | Features do what they promise | **Done** (DR-041–DR-044) |
-| 5. Trust and polish | AUD-16 privacy text for voice audio, AUD-17 translations of food/account forms, CSP form-action, rounding validation | Copy and policy match behaviour | Next |
+| 5. Trust and polish | AUD-16 privacy text for voice audio, AUD-17 translations of food/account forms, CSP form-action, rounding validation | Copy and policy match behaviour | **Done** (DR-045–DR-048) |
 | 6. Acceptance | Staging Supabase + Vercel, signed-in Playwright suite, Android/iPhone push and voice checklist | Close the "unverified" list | Postponed |
 
 Each fix: regression test first (characterization tests in `src/lib/audit-review.test.ts` and `tests/db/audit-review.test.ts` are inverted when their item is fixed), then a DR entry in `defects.md`.
