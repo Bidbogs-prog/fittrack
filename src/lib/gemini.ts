@@ -46,6 +46,9 @@ export async function generateText(options: {
   turns: GeminiTurn[];
   temperature?: number;
   maxOutputTokens?: number;
+  /** Inline media (base64) attached to the last turn, before its text. */
+  image?: { mimeType: string; base64: string };
+  audio?: { mimeType: string; base64: string };
 }): Promise<string> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
@@ -63,7 +66,16 @@ export async function generateText(options: {
       headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: options.systemPrompt }] },
-        contents: options.turns.map((t) => ({ role: t.role, parts: [{ text: t.text }] })),
+        contents: options.turns.map((t, i) => {
+          const media = i === options.turns.length - 1 ? [options.image, options.audio].filter((m) => m != null) : [];
+          return {
+            role: t.role,
+            parts: [
+              ...media.map((m) => ({ inlineData: { mimeType: m.mimeType.split(";")[0], data: m.base64 } })),
+              { text: t.text },
+            ],
+          };
+        }),
         generationConfig: {
           temperature: options.temperature ?? 0.6,
           // Thinking models spend reasoning tokens from this same budget;

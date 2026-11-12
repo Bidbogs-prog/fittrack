@@ -58,6 +58,8 @@ export interface LlmRequest {
   signal?: AbortSignal;
   /** Inline image sent with the last user turn (base64, no data: prefix). */
   image?: { mimeType: string; base64: string };
+  /** Inline audio sent with the last user turn (base64, no data: prefix), e.g. a voice note. */
+  audio?: { mimeType: string; base64: string };
   /** Ask for JSON matching this schema (OpenAI json_schema response format). */
   schema?: GeminiSchema;
 }
@@ -117,6 +119,12 @@ function toJsonSchema(s: GeminiSchema): Record<string, unknown> {
   };
 }
 
+/** "audio/webm;codecs=opus" → "webm", "audio/mpeg" → "mp3" (file extension for the upload). */
+export function audioFormat(mimeType: string): string {
+  const sub = mimeType.split(";")[0].split("/")[1]?.toLowerCase() ?? "wav";
+  return sub === "mpeg" ? "mp3" : sub === "x-wav" || sub === "wave" ? "wav" : sub === "x-m4a" || sub === "m4a" ? "mp4" : sub;
+}
+
 async function gatewayFetch(req: LlmRequest, stream: boolean): Promise<{ res: Response; model: string }> {
   const model = req.model ?? modelFor(req.tier ?? "premium");
   // Thinking tokens come out of max_tokens; unbounded thinking truncated
@@ -140,11 +148,26 @@ async function gatewayFetch(req: LlmRequest, stream: boolean): Promise<{ res: Re
           { role: "system", content: req.systemPrompt },
           ...req.turns.map((t, i) => {
             const role = t.role === "model" ? "assistant" : "user";
-            if (!req.image || i !== req.turns.length - 1 || role !== "user") return { role, content: t.text };
+            if ((!req.image && !req.audio) || i !== req.turns.length - 1 || role !== "user") return { role, content: t.text };
             return {
               role,
               content: [
-                { type: "image_url", image_url: { url: `data:${req.image.mimeType};base64,${req.image.base64}` } },
+                ...(req.image
+                    ? [{ type: "image_url", image_url: { url: `data:${req.image.mimeType};base64,${req.image.base64}` } }]
+                    : []),
+                  // The gateway forwards `file` blocks to Gemini as inline media with
+                  // this MIME type (docs: features/documents); Gemini reads webm/mp4/ogg/wav.
+                  ...(req.audio
+                    ? [
+                        {
+                          type: "file",
+                          file: {
+                            filename: `voice.${audioFormat(req.audio.mimeType)}`,
+                            file_data: `data:${req.audio.mimeType.split(";")[0]};base64,${req.audio.base64}`,
+                          },
+                        },
+                      ]
+                    : []),
                 { type: "text", text: t.text },
               ],
             };

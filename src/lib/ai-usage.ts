@@ -16,6 +16,7 @@ import { ensureBetaAccess } from "@/lib/beta";
  *
  *   MEAL_LOG_DAILY_LIMIT                free: AI meal parses per UTC day (default 30, 0 = unlimited)
  *   MEAL_LOG_PREMIUM_DAILY_LIMIT        premium: AI meal parses per UTC day (default 100, 0 = unlimited)
+ *   VOICE_DAILY_LIMIT / VOICE_PREMIUM_DAILY_LIMIT  voice transcriptions per UTC day (defaults 40 / 150)
  *   DAY_INSIGHTS_DAILY_LIMIT / DAY_INSIGHTS_PREMIUM_DAILY_LIMIT    default 3 / 20
  *   WEEK_REPORT_DAILY_LIMIT / WEEK_REPORT_PREMIUM_DAILY_LIMIT      default 3 / 10
  *   PLAN_GENERATE_DAILY_LIMIT / PLAN_GENERATE_PREMIUM_DAILY_LIMIT  default 2 / 10
@@ -34,6 +35,7 @@ export type AiFeature =
   | "coach_memory"
   | "weekly_checkin"
   | "meal_log"
+  | "voice"
   | "day_insights"
   | "week_report"
   | "plan_generate";
@@ -123,6 +125,7 @@ export async function getCoachAllowance(
 /** Per-feature daily caps: [env prefix, free default, premium default]. */
 const DAILY_CAPS: Partial<Record<AiFeature, [string, number, number]>> = {
   meal_log: ["MEAL_LOG", 30, 100],
+  voice: ["VOICE", 40, 150],
   day_insights: ["DAY_INSIGHTS", 3, 20],
   week_report: ["WEEK_REPORT", 3, 10],
   plan_generate: ["PLAN_GENERATE", 2, 10],
@@ -131,6 +134,7 @@ const DAILY_CAPS: Partial<Record<AiFeature, [string, number, number]>> = {
 };
 
 const CAP_MESSAGES: Partial<Record<AiFeature, string>> = {
+  voice: "You've reached today's voice limit. You can still type, or try again tomorrow.",
   meal_log: "You've reached today's AI logging limit. You can still log from the food search, or try again tomorrow.",
 };
 
