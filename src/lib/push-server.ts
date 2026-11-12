@@ -2,6 +2,7 @@ import webpush from "web-push";
 import ar from "../../messages/ar-MA.json";
 import en from "../../messages/en.json";
 import fr from "../../messages/fr.json";
+import { isPushEndpoint } from "./push-endpoint";
 import type { ReminderSlot } from "./reminders";
 
 /**
@@ -46,6 +47,8 @@ export const PUSH_OPTIONS = { TTL: 45 * 60, urgency: "high" } as const;
 /** "sent", "gone" (subscription expired — delete it) or "failed". */
 export async function sendPush(target: PushTarget, payload: PushPayload): Promise<"sent" | "gone" | "failed"> {
   if (!pushConfigured()) return "failed";
+  // Rows saved before AUD-07 may point anywhere: never request them, drop them.
+  if (!isPushEndpoint(target.endpoint)) return "gone";
   try {
     await webpush.sendNotification(
       { endpoint: target.endpoint, keys: { p256dh: target.p256dh, auth: target.auth } },

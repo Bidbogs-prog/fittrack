@@ -4,6 +4,7 @@ import { getLocale } from "next-intl/server";
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { pushConfigured, pushMessages, sendPush } from "@/lib/push-server";
+import { isPushEndpoint, isPushKeys } from "@/lib/push-endpoint";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -34,39 +35,52 @@ export async function savePushSubscription(input: {
   const { supabase, userId } = await requireUser();
   if (!pushConfigured()) return { ok: false };
   const endpoint = String(input.endpoint ?? "");
-  if (!endpoint.startsWith("https://") || endpoint.length > 1000) return { ok: false };
-  const p256dh = String(input.p256dh ?? "").slice(0, 200);
-  const auth = String(input.auth ?? "").slice(0, 100);
-  if (!p256dh || !auth) return { ok: false };
+  const p256dh = String(input.p256dh ?? "");
+  const auth = String(input.auth ?? "");
+  // Only real push services, with well-formed keys (AUD-07: the server sends
+  // requests to this URL).
+  if (!isPushEndpoint(endpoint) || !isPushKeys(p256dh, auth)) return { ok: false };
+  const user_agent = String(input.userAgent ?? "").slice(0, 300) || null;
 
-  // A browser keeps one endpoint per origin; re-subscribing replaces it. On a
-  // shared device the endpoint may still belong to the previous account
-  // (it never signed out here): the device now belongs to this user, so the
-  // old owner stops receiving reminders on it (audit #6). Holding the
-  // endpoint is the proof of possession.
+  // A browser keeps one subscription per origin, so on a shared device the
+  // same endpoint can still be registered to the previous account (audit #6).
+  // It moves to this user only with the same keys, i.e. from that browser:
+  // knowing someone's endpoint alone can't delete their reminders (AUD-08).
+  // Nothing is removed before the new row is valid.
   const admin = createAdminClient();
-  await (admin ?? supabase).from("push_subscriptions").delete().eq("endpoint", endpoint);
-  const { error } = await supabase.from("push_subscriptions").insert({
-    user_id: userId,
-    endpoint,
-    p256dh,
-    auth,
-    user_agent: String(input.userAgent ?? "").slice(0, 300) || null,
-  });
-  if (error) return { ok: false };
+  if (!admin) return { ok: false };
+  const { data: existing, error: readError } = await admin
+    .from("push_subscriptions")
+    .select("user_id, p256dh, auth")
+    .eq("endpoint", endpoint)
+    .maybeSingle();
+  if (readError) return { ok: false };
+  if (existing) {
+    const sameUser = existing.user_id === userId;
+    const sameDevice = existing.p256dh === p256dh && existing.auth === auth;
+    if (!sameUser && !sameDevice) return { ok: false };
+    const { error } = await admin
+      .from("push_subscriptions")
+      .update({ user_id: userId, p256dh, auth, user_agent })
+      .eq("endpoint", endpoint);
+    if (error) return { ok: false };
+  } else {
+    const { error } = await supabase.from("push_subscriptions").insert({ user_id: userId, endpoint, p256dh, auth, user_agent });
+    if (error) return { ok: false };
+  }
 
   const locale = await getLocale();
   const timezone = validTz(String(input.timezone ?? "")) ? input.timezone : "Africa/Casablanca";
   const utc_offset_min = validOffset(input.utcOffsetMin);
-  const { data: existing } = await supabase.from("reminder_settings").select("user_id").eq("user_id", userId).maybeSingle();
-  if (existing) {
-    await supabase
-      .from("reminder_settings")
-      .update({ enabled: true, timezone, locale, utc_offset_min, updated_at: new Date().toISOString() })
-      .eq("user_id", userId);
-  } else {
-    await supabase.from("reminder_settings").insert({ user_id: userId, timezone, locale, utc_offset_min });
-  }
+  const { data: settings } = await supabase.from("reminder_settings").select("user_id").eq("user_id", userId).maybeSingle();
+  const { error: settingsError } = settings
+    ? await supabase
+        .from("reminder_settings")
+        .update({ enabled: true, timezone, locale, utc_offset_min, updated_at: new Date().toISOString() })
+        .eq("user_id", userId)
+    : await supabase.from("reminder_settings").insert({ user_id: userId, timezone, locale, utc_offset_min });
+  // Without settings the cron never picks this user up: don't report success.
+  if (settingsError) return { ok: false };
   revalidatePath("/account");
   return { ok: true };
 }
@@ -78,7 +92,6 @@ export async function removePushSubscription(endpoint: string): Promise<void> {
   revalidatePath("/account");
 }
 
-/** Reminder times; an empty field turns that meal's reminder off. */
 /**
  * Reminder times; an empty field turns that meal's reminder off. A slot whose
  * time changes can fire again today: its "sent today" mark is cleared (moving
