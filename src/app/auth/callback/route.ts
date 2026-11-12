@@ -10,14 +10,10 @@ export async function GET(request: NextRequest) {
   if (code) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) {
-      // Behind a load balancer the original host arrives in x-forwarded-host.
-      const forwardedHost = request.headers.get("x-forwarded-host");
-      if (process.env.NODE_ENV === "development" || !forwardedHost) {
-        return NextResponse.redirect(`${origin}${next}`);
-      }
-      return NextResponse.redirect(`https://${forwardedHost}${next}`);
-    }
+    // Same origin as this request, which is where the session cookie was
+      // just set. Never a forwarded header: x-forwarded-host is client-
+      // controllable on some proxies and sent people off-site (AUD-02).
+      if (!error) return NextResponse.redirect(new URL(next, origin));
   }
 
   const message =
