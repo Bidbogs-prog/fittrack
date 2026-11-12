@@ -15,6 +15,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { applyAiEdits, logAiMeal, parseMeal, type AiEdit, type AiMealItem } from "@/app/(app)/dashboard/ai-log";
 import { transcribeVoice } from "@/app/(app)/dashboard/voice-actions";
 import { VOICE_MAX_SECONDS } from "@/lib/voice";
+import { VoiceSession, type RecorderLike } from "@/lib/voice-session";
 import { track } from "@/lib/analytics";
 import { MEAL_DEFAULT_MIN, mealForMinutes, minutesOfDate } from "@/lib/day-time";
 import { macrosForPortion, round1, type Macros } from "@/lib/nutrition";
@@ -207,7 +208,7 @@ export function LogProvider({
   const [interim, setInterim] = useState("");
   const voiceSupported = useClientValue(() => canRecord() || speechCtor() != null, false);
   const recRef = useRef<SpeechRecognitionLike | null>(null);
-  const mediaRef = useRef<MediaRecorder | null>(null);
+  const voiceRef = useRef<VoiceSession | null>(null);
   const liveRef = useRef("");
 
   const [parsing, startParse] = useTransition();
@@ -359,82 +360,65 @@ export function LogProvider({
   );
 
   const stopListening = useCallback(() => {
-    if (mediaRef.current?.state === "recording") mediaRef.current.stop();
+    voiceRef.current?.stop();
     recRef.current?.stop();
   }, []);
 
-  /** Record a voice note and transcribe it server-side (any language). */
-  const startRecording = useCallback(
-    async (onFinal?: (text: string) => void) => {
-      if (mediaRef.current) return;
-      clearMessages();
-      let stream: MediaStream;
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      } catch (err) {
-        const name = (err as { name?: string })?.name;
-        setError(t(name === "NotAllowedError" || name === "SecurityError" ? "voiceDenied" : "voiceError"));
-        return;
-      }
-      const mime = recorderMime();
-      let rec: MediaRecorder;
-      try {
-        rec = new MediaRecorder(stream, mime ? { mimeType: mime, audioBitsPerSecond: 32_000 } : undefined);
-      } catch {
-        stream.getTracks().forEach((tr) => tr.stop());
-        setError(t("voiceError"));
-        return;
-      }
-      const chunks: Blob[] = [];
-      const started = Date.now();
-      const cap = setTimeout(() => rec.state === "recording" && rec.stop(), VOICE_MAX_SECONDS * 1000);
-      rec.ondataavailable = (e) => {
-        if (e.data.size > 0) chunks.push(e.data);
-      };
-      rec.onstop = () => {
-        clearTimeout(cap);
-        stream.getTracks().forEach((tr) => tr.stop());
-        mediaRef.current = null;
-        setListening(false);
-        // A tap that ends almost at once is a mis-tap, not a voice note.
-        if (Date.now() - started < 600 || chunks.length === 0) return;
-        const blob = new Blob(chunks, { type: (rec.mimeType || mime || "audio/webm").split(";")[0] });
-        const ext = blob.type.includes("mp4") ? "m4a" : blob.type.includes("ogg") ? "ogg" : "webm";
-        const fd = new FormData();
-        fd.set("audio", new File([blob], `voice.${ext}`, { type: blob.type }));
-        startParse(async () => {
-          let res: Awaited<ReturnType<typeof transcribeVoice>>;
-          try {
-            res = await transcribeVoice(fd);
-          } catch {
-            setError(t("offlineParse"));
-            return;
-          }
-          if (res.text == null) {
-            setError(res.error === "empty" ? t("voiceEmpty") : res.error === "format" || res.error === "tooLong" ? t("voiceError") : res.error);
-            return;
-          }
-          track("voice_log_captured", { via: "recording" });
-          if (onFinal) onFinal(res.text);
-          else submitText(res.text, "voice");
-        });
-      };
-      try {
-        rec.start(1000);
-        mediaRef.current = rec;
-        setListening(true);
-      } catch {
-        stream.getTracks().forEach((tr) => tr.stop());
-        setError(t("voiceError"));
-      }
+  /** Send a finished recording for transcription (any language). */
+  const transcribe = useCallback(
+    (blob: Blob, onFinal?: (text: string) => void) => {
+      const ext = blob.type.includes("mp4") ? "m4a" : blob.type.includes("ogg") ? "ogg" : "webm";
+      const fd = new FormData();
+      fd.set("audio", new File([blob], `voice.${ext}`, { type: blob.type }));
+      startParse(async () => {
+        let res: Awaited<ReturnType<typeof transcribeVoice>>;
+        try {
+          res = await transcribeVoice(fd);
+        } catch {
+          setError(t("offlineParse"));
+          return;
+        }
+        if (res.text == null) {
+          setError(res.error === "empty" ? t("voiceEmpty") : res.error === "format" || res.error === "tooLong" ? t("voiceError") : res.error);
+          return;
+        }
+        track("voice_log_captured", { via: "recording" });
+        if (onFinal) onFinal(res.text);
+        else submitText(res.text, "voice");
+      });
     },
-    [clearMessages, submitText, t]
+    [submitText, t]
+  );
+
+  /** Record a voice note (AUD-11: one session, cancellable while the permission prompt is open). */
+  const startRecording = useCallback(
+    (onFinal?: (text: string) => void) => {
+      if (voiceRef.current && voiceRef.current.state !== "idle") return;
+      clearMessages();
+      const mime = recorderMime();
+      const session = new VoiceSession(
+        {
+          getUserMedia: () => navigator.mediaDevices.getUserMedia({ audio: true }),
+          createRecorder: (stream) =>
+            new MediaRecorder(stream, mime ? { mimeType: mime, audioBitsPerSecond: 32_000 } : undefined) as unknown as RecorderLike,
+          maxMs: VOICE_MAX_SECONDS * 1000,
+        },
+        {
+          onState: (state) => setListening(state !== "idle"),
+          onError: (kind) => setError(t(kind === "denied" ? "voiceDenied" : "voiceError")),
+          onAudio: (blob) => transcribe(blob, onFinal),
+        }
+      );
+      voiceRef.current = session;
+      void session.start();
+    },
+    [clearMessages, t, transcribe]
   );
 
   const startListening = useCallback(
     (onFinal?: (text: string) => void) => {
       if (canRecord()) {
-        void startRecording(onFinal);
+        startRecording(onFinal);
         return;
       }
       const Ctor = speechCtor();
@@ -494,12 +478,8 @@ export function LogProvider({
   useEffect(
     () => () => {
       recRef.current?.abort();
-      const m = mediaRef.current;
-      if (m) {
-        m.onstop = null;
-        if (m.state === "recording") m.stop();
-        m.stream.getTracks().forEach((tr) => tr.stop());
-      }
+      // Leaving the page: release the mic, even mid-permission-prompt.
+      voiceRef.current?.cancel();
     },
     []
   );
