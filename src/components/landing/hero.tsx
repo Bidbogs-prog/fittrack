@@ -2,6 +2,7 @@ import { Microphone } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { Orbit } from "@/components/orbit/orbit";
+import { SectionLink } from "./section-link";
 
 /** Hero: headline + CTAs + stats beside a slowly turning orbit with floating chips. */
 export async function Hero() {
@@ -21,12 +22,12 @@ export async function Hero() {
           <Link href="/signup" className="btn-flame btn-press glow-flame inline-flex min-h-[52px] items-center rounded-[14px] px-6 text-base">
             {t("cta")} <span aria-hidden className="ms-1.5 rtl:-scale-x-100">→</span>
           </Link>
-          <a
-            href="#how"
+          <SectionLink
+            id="how"
             className="btn-press inline-flex min-h-[52px] items-center rounded-[14px] border border-ink-700 px-6 text-base text-paper hover:border-ink-600"
           >
             {t("demo")}
-          </a>
+          </SectionLink>
         </div>
         <dl className="flex flex-wrap gap-7 border-t border-ink-850 pt-2">
           {(

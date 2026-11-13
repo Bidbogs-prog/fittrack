@@ -11,7 +11,12 @@ import { LEGAL_UPDATED } from "@/lib/site";
 export function LegalPage({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="mx-auto min-h-[100dvh] max-w-2xl px-6 pt-8 pb-16" lang="en" dir="ltr">
-      <Logo href="/" size="sm" />
+      <div className="flex items-center justify-between">
+        <Logo href="/" size="sm" />
+        <Link href="/" className="text-xs text-paper-mute hover:text-paper">
+          ← So3ra
+        </Link>
+      </div>
       <h1 className="mt-10 font-display text-3xl font-bold tracking-tight text-paper lg:text-4xl">{title}</h1>
       <p className="mt-2 text-xs text-paper-mute">Last updated {LEGAL_UPDATED}</p>
       <div className="legal mt-8 space-y-4 text-sm leading-relaxed text-paper-dim [&_a]:text-flame [&_a]:underline [&_a]:underline-offset-2 [&_h2]:mt-8 [&_h2]:font-display [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:text-paper [&_li]:ms-5 [&_li]:list-disc [&_strong]:text-paper">

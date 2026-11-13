@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Logo } from "@/components/logo";
+import { SectionLink } from "./section-link";
 import { setLocalePublic } from "@/app/locale-actions";
 import { LOCALES } from "@/i18n/request";
 
@@ -14,10 +15,10 @@ export async function LandingNav() {
       <div className="mx-auto flex max-w-[1200px] items-center gap-6 px-6 py-3.5">
         <Logo />
         <nav aria-label={t("sections")} className="flex flex-1 gap-[22px] text-sm text-paper-dim max-md:hidden">
-          <a href="#how" className="hover:text-paper">{t("how")}</a>
-          <a href="#system" className="hover:text-paper">{t("system")}</a>
-          <a href="#coach" className="hover:text-paper">{t("coach")}</a>
-          <a href="#faq" className="hover:text-paper">{t("faq")}</a>
+          <SectionLink id="how" className="hover:text-paper">{t("how")}</SectionLink>
+          <SectionLink id="system" className="hover:text-paper">{t("system")}</SectionLink>
+          <SectionLink id="coach" className="hover:text-paper">{t("coach")}</SectionLink>
+          <SectionLink id="faq" className="hover:text-paper">{t("faq")}</SectionLink>
         </nav>
         <div className="flex items-center gap-2.5 text-[13px] max-md:ms-auto">
           <form action={setLocalePublic} className="flex items-center text-paper-mute max-sm:hidden">

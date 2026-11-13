@@ -31,7 +31,7 @@ export default async function Home() {
       <footer className="border-t border-ink-850">
         <div className="mx-auto flex max-w-[1200px] flex-wrap justify-between gap-4 px-6 pt-7 pb-[max(1.75rem,env(safe-area-inset-bottom))] text-[13px] text-paper-mute">
           <span className="whitespace-nowrap">
-            So3ra · <span lang="ar">{SITE_NAME_AR}</span> · {t("formerly")}
+            So3ra · <span lang="ar">{SITE_NAME_AR}</span>
           </span>
           <nav aria-label={t("label")} className="flex flex-wrap gap-x-[18px] gap-y-1">
             <Link href="/login" className="hover:text-paper">
