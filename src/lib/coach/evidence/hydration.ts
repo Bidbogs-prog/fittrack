@@ -18,7 +18,7 @@ export const hydration: CoachBrief = {
     "ماء",
   ],
   lastReviewed: "2026-08-13",
-  body: `Adequate total water intake is about 2.0 L/day for women and 2.5 L/day for men in temperate conditions (EFSA 2010) — and that's total water, of which food typically supplies 20–30%, so drinking needs are lower than the headline number. Needs scale up with body size, heat and training; FitTrack's water target (~35 ml/kg, capped 1.5–4 L) is a reasonable middle of these ranges, and the tracker is there for habit-building, not precision.
+  body: `Adequate total water intake is about 2.0 L/day for women and 2.5 L/day for men in temperate conditions (EFSA 2010) — and that's total water, of which food typically supplies 20–30%, so drinking needs are lower than the headline number. Needs scale up with body size, heat and training; So3ra's water target (~35 ml/kg, capped 1.5–4 L) is a reasonable middle of these ranges, and the tracker is there for habit-building, not precision.
 
 The practical signals beat formulas: pale-straw urine and rarely feeling thirsty means hydration is fine (ACSM position stand; Sawka et al. 2007). Around training, drink to thirst before and after; for sessions over ~60–90 minutes or heavy sweating in heat, some sodium with fluids helps retention and comfort. Day to day, electrolyte products are unnecessary for normal eating — food sodium covers it.
 
