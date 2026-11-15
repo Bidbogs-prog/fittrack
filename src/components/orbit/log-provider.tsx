@@ -236,7 +236,11 @@ export function LogProvider({
         items: items.map((base) => ({
           key: `i${++seq.current}`,
           base,
-          source: matchFirst ? (base.matches[0]?.id ?? "est") : "est",
+          source: !matchFirst
+            ? "est"
+            : base.preselect !== undefined
+              ? (base.preselect ?? "est")
+              : (base.matches[0]?.id ?? "est"),
           grams: String(base.grams),
         })),
       });

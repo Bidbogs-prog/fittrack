@@ -561,6 +561,7 @@
     "fromPhoto": "من صورتك",
     "dataSource": "مصدر بيانات {name}",
     "aiEstimate": "تقدير الذكاء الاصطناعي",
+    "estimateChecked": "تصحّح باش السعرات توافق الماكروز. شوف الكمية.",
     "gramsOf": "غرامات {name}",
     "remove": "إزالة {name}",
     "allRemoved": "أُزيل كل شيء. ألغِ وأعد المحاولة.",

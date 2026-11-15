@@ -561,6 +561,7 @@
     "fromPhoto": "D'après votre photo",
     "dataSource": "Source des données pour {name}",
     "aiEstimate": "Estimation IA",
+    "estimateChecked": "Ajusté pour que les calories correspondent aux macros. Vérifiez la portion.",
     "gramsOf": "Grammes de {name}",
     "remove": "Retirer {name}",
     "allRemoved": "Tout a été retiré. Annulez et redites-le.",

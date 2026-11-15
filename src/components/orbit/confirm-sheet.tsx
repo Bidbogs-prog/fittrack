@@ -184,6 +184,9 @@ export function ConfirmSheet() {
                     {Math.round(m.kcal)} kcal · P {Math.round(m.protein)} · C {Math.round(m.carbs)} · F{" "}
                     {Math.round(m.fat)}
                   </p>
+                  {item.source === "est" && item.base.flags && item.base.flags.length > 0 && (
+                    <p className="text-[11px] text-carbs">{t("estimateChecked")}</p>
+                  )}
                 </div>
                 <label className="flex shrink-0 items-center rounded-lg border border-ink-600 font-mono text-[13px] font-medium text-paper focus-within:border-flame/70">
                   <span className="sr-only">{t("gramsOf", { name: item.base.name })}</span>

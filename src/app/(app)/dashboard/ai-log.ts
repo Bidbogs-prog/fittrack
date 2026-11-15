@@ -9,6 +9,7 @@ import { isPremium } from "@/lib/entitlements";
 import { PARSE_SCHEMA, PARSE_SYSTEM_PROMPT } from "./ai-log-prompt";
 import { generateJson, LlmError } from "@/lib/llm";
 import { macrosForPortion, round1, type Macros } from "@/lib/nutrition";
+import { checkEstimate, rankMatches, type EstimateFlag } from "@/lib/estimate-check";
 import { MEAL_TYPES, type Food, type MealType, type RecipeItem } from "@/lib/types";
 
 /**
@@ -40,6 +41,14 @@ export interface AiMealItem {
   /** Library candidates (best first); may be empty. */
   matches: Food[];
   /**
+   * The match to pre-select, or null to keep the AI estimate selected (food
+   * review F-1: a match is pre-selected only when its name and energy
+   * density fit). Absent = the first match (barcode, catalogue items).
+   */
+  preselect?: string | null;
+  /** Server corrections made to the estimate, shown to the user. */
+  flags?: EstimateFlag[];
+  /**
    * Set when the row came from one of the user's recipes (directly or via a
    * saved/recent meal): logging the estimate keeps the recipe link, with
    * servings scaled by grams / this item's grams.
@@ -52,6 +61,7 @@ interface ParsedItem extends AiEstimate {
   portion: string;
   grams: number;
   search_query: string;
+  state?: string;
 }
 
 /** A pointer into the user's own catalogue (saved meal, recipe, recent meal). */
@@ -395,22 +405,30 @@ export async function parseMeal(
         const name = String(row.name ?? "").trim().slice(0, 60);
         if (!name || !grams || grams < 1 || kcal == null) return null;
 
-        let matches = await rankFoods(supabase, { q: String(row.search_query ?? ""), limit: 3, viewerId: userId });
-        if (matches.length === 0 && name !== row.search_query) {
-          matches = await rankFoods(supabase, { q: name, limit: 3, viewerId: userId });
-        }
-        return {
-          name,
-          portion: String(row.portion ?? "").trim().slice(0, 60),
-          grams: Math.round(grams),
-          est: {
+        const { est, flags } = checkEstimate(
+          {
             kcal,
             protein_g: cleanNumber(row.protein_g, 2000) ?? 0,
             carbs_g: cleanNumber(row.carbs_g, 2000) ?? 0,
             fat_g: cleanNumber(row.fat_g, 2000) ?? 0,
             fibre_g: cleanNumber(row.fibre_g, 2000) ?? 0,
           },
-          matches,
+          grams
+        );
+        // Both queries, then keep only candidates that fit (name on whole
+        // words + energy density) as the default; the rest are alternatives.
+        const query = String(row.search_query ?? "").trim();
+        const queries = [query, name].filter((q, i, a) => q && a.indexOf(q) === i);
+        const found = (await Promise.all(queries.map((q) => rankFoods(supabase, { q, limit: 4, viewerId: userId })))).flat();
+        const ranked = rankMatches(found, { kcal: est.kcal, grams }, queries);
+        return {
+          name,
+          portion: String(row.portion ?? "").trim().slice(0, 60),
+          grams: Math.round(grams),
+          est,
+          matches: ranked.matches.slice(0, 4),
+          preselect: ranked.preselect,
+          flags,
         };
       })
     )
