@@ -50,7 +50,7 @@ export async function searchFoods(
   const q = sanitizeSearch(opts.q ?? "");
   if (q) {
     const pattern = opts.match === "prefix" ? `${q}%` : `%${q}%`;
-    query = query.or(`name.ilike.${pattern},brand.ilike.${pattern}`);
+    query = query.or(`name.ilike.${pattern},brand.ilike.${pattern},aliases.ilike.${pattern}`);
   }
 
   const { data, count } = await query;
@@ -90,6 +90,7 @@ export async function rankFoods(
 /** Short provenance tag for food cards: USDA, OFF (Open Food Facts), So3ra, or Yours. */
 export function foodSourceLabel(food: Pick<Food, "source" | "owner_id">): string {
   if (food.owner_id != null) return "Yours";
+  if (food.source === "reference") return "So3ra ref";
   if (food.source === "usda") return "USDA";
   if (food.source === "off") return "OFF";
   return "So3ra";

@@ -265,5 +265,6 @@ export function ConfirmSheet() {
 function sourceLabel(source: string): string {
   if (source === "usda") return "USDA";
   if (source === "off") return "OFF";
+  if (source === "reference") return "So3ra ref";
   return "So3ra";
 }

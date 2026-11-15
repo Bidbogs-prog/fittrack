@@ -10,6 +10,8 @@ import { PARSE_SCHEMA, PARSE_SYSTEM_PROMPT } from "./ai-log-prompt";
 import { generateJson, LlmError } from "@/lib/llm";
 import { macrosForPortion, round1, type Macros } from "@/lib/nutrition";
 import { checkEstimate, rankMatches, type EstimateFlag } from "@/lib/estimate-check";
+import { REFERENCE_BY_KEY } from "@/lib/reference/compute";
+import { REFERENCE_PROMPT_BLOCK } from "@/lib/reference/prompt";
 import { MEAL_TYPES, type Food, type MealType, type RecipeItem } from "@/lib/types";
 
 /**
@@ -62,6 +64,7 @@ interface ParsedItem extends AiEstimate {
   grams: number;
   search_query: string;
   state?: string;
+  ref?: string;
 }
 
 /** A pointer into the user's own catalogue (saved meal, recipe, recent meal). */
@@ -358,7 +361,8 @@ export async function parseMeal(
   let parsed: { intent?: string; items: ParsedItem[]; refs?: ParsedRef[]; edits?: ParsedEdit[] };
   try {
     const res = await generateJson<{ intent?: string; items: ParsedItem[]; refs?: ParsedRef[]; edits?: ParsedEdit[] }>({
-      systemPrompt: PARSE_SYSTEM_PROMPT,
+      // Reference table in the system prompt: identical on every call, so cacheable.
+      systemPrompt: `${PARSE_SYSTEM_PROMPT}\n\n${REFERENCE_PROMPT_BLOCK}`,
       userPrompt: description
         ? `MEAL DESCRIPTION\n${description}${catalogue.text}`
         : "Identify the foods in this meal photo.",
@@ -397,6 +401,13 @@ export async function parseMeal(
   });
 
   const rows = (Array.isArray(parsed.items) ? parsed.items : []).slice(0, MAX_ITEMS);
+  // Reference foods the model pointed at: their library rows (if synced).
+  const refKeys = [...new Set(rows.map((r) => String(r.ref ?? "").trim()).filter((k) => REFERENCE_BY_KEY.has(k)))];
+  const refFoods = new Map<string, Food>();
+  if (refKeys.length > 0) {
+    const { data } = await supabase.from("foods").select("*").eq("source", "reference").in("ref_key", refKeys);
+    for (const f of (data ?? []) as Food[]) if (f.ref_key) refFoods.set(f.ref_key, f);
+  }
   const estimated = (
     await Promise.all(
       rows.map(async (row): Promise<AiMealItem | null> => {
@@ -405,6 +416,30 @@ export async function parseMeal(
         const name = String(row.name ?? "").trim().slice(0, 60);
         if (!name || !grams || grams < 1 || kcal == null) return null;
 
+        // A reference dish: nutrition comes from the vetted table, not the model.
+        const ref = REFERENCE_BY_KEY.get(String(row.ref ?? "").trim());
+        if (ref) {
+          const k = grams / 100;
+          const refFood = refFoods.get(ref.key);
+          const others = (await rankFoods(supabase, { q: String(row.search_query ?? name), limit: 3, viewerId: userId })).filter(
+            (f) => f.id !== refFood?.id
+          );
+          return {
+            name,
+            portion: String(row.portion ?? "").trim().slice(0, 60),
+            grams: Math.round(grams),
+            est: {
+              kcal: Math.round(ref.per100.kcal * k),
+              protein_g: round1(ref.per100.protein_g * k),
+              carbs_g: round1(ref.per100.carbs_g * k),
+              fat_g: round1(ref.per100.fat_g * k),
+              fibre_g: round1(ref.per100.fibre_g * k),
+            },
+            matches: refFood ? [refFood, ...others] : others,
+            preselect: refFood?.id ?? null,
+            flags: [],
+          };
+        }
         const { est, flags } = checkEstimate(
           {
             kcal,

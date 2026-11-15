@@ -117,7 +117,7 @@ export type MicroKey = (typeof MICRO_KEYS)[number];
 export type MicroValues = Record<MicroKey, number | null>;
 
 /** Where a food row came from: hand-curated, Open Food Facts, or USDA import. */
-export type FoodSource = "manual" | "off" | "usda";
+export type FoodSource = "manual" | "off" | "usda" | "reference";
 
 /** All nutritional facts are per 100 g. */
 export interface Food extends MicroValues {
@@ -134,6 +134,12 @@ export interface Food extends MicroValues {
   review_status?: "pending" | "rejected" | null;
   /** Admin's reason when rejected; readable by the creator. */
   review_note?: string | null;
+  /** So3ra reference foods (source "reference"): stable key, how it was calculated, dietitian sign-off. */
+  ref_key?: string | null;
+  aliases?: string | null;
+  state?: "dry" | "cooked" | "prepared" | "drink" | "packaged" | null;
+  ref_basis?: string | null;
+  ref_reviewed_at?: string | null;
   kcal: number;
   protein_g: number;
   carbs_g: number;

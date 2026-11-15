@@ -159,7 +159,17 @@ alter table public.foods
 
 alter table public.foods drop constraint if exists foods_source_check;
 alter table public.foods add constraint foods_source_check
-  check (source in ('manual', 'off', 'usda'));
+  check (source in ('manual', 'off', 'usda', 'reference'));
+
+alter table public.foods
+  add column if not exists ref_key text,
+  add column if not exists aliases text check (char_length(aliases) <= 1000),
+  add column if not exists state text check (state in ('dry', 'cooked', 'prepared', 'drink', 'packaged')),
+  add column if not exists ref_basis text check (char_length(ref_basis) <= 1000),
+  add column if not exists ref_reviewed_at timestamptz;
+
+alter table public.foods drop constraint if exists foods_ref_key_key;
+alter table public.foods add constraint foods_ref_key_key unique (ref_key);
 
 -- Household serving sizes (roadmap 2.2): purely presentational shortcuts —
 -- grams remain the source of truth for every calculation.

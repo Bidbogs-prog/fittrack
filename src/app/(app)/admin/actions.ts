@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
 import { refreshRequestBrief } from "@/lib/plan-brief";
+import { REFERENCE_ROWS } from "@/lib/reference/rows";
 import {
   FOOD_CATEGORIES,
   MEAL_TYPES,
@@ -90,6 +91,29 @@ export async function rejectFood(formData: FormData) {
   if (error || !data) fail(back, error?.message ?? "That food is no longer pending.");
   revalidatePath("/admin/foods", "layout");
   redirect(`${back}?rejected=${encodeURIComponent(data.name)}`);
+}
+
+// ---------- REFERENCE FOODS ----------
+
+/**
+ * Upsert the So3ra reference foods (src/lib/reference) into the shared
+ * library by ref_key. Re-running after a recipe change updates the values;
+ * dietitian sign-off (ref_reviewed_at) is cleared when the numbers change.
+ */
+export async function syncReferenceFoods() {
+  const { supabase } = await requireAdmin();
+  const back = "/admin/foods";
+  const { data: existing } = await supabase.from("foods").select("ref_key, kcal, protein_g, carbs_g, fat_g").eq("source", "reference");
+  const old = new Map((existing ?? []).map((r) => [r.ref_key as string, r]));
+  const rows = REFERENCE_ROWS.map((row) => {
+    const o = old.get(row.ref_key);
+    const changed = !o || ["kcal", "protein_g", "carbs_g", "fat_g"].some((k) => Number(o[k as keyof typeof o]) !== row[k as keyof typeof row]);
+    return changed ? { ...row, ref_reviewed_at: null } : row;
+  });
+  const { error } = await supabase.from("foods").upsert(rows, { onConflict: "ref_key" });
+  if (error) fail(back, `Reference sync failed: ${error.message}`);
+  revalidatePath("/foods");
+  redirect(`${back}?saved=${encodeURIComponent(`${rows.length} reference foods`)}`);
 }
 
 // ---------- FOODS ----------

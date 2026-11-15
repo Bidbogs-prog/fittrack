@@ -30,6 +30,11 @@ export const PARSE_SCHEMA: GeminiSchema = {
           carbs_g: { type: "NUMBER" },
           fat_g: { type: "NUMBER" },
           fibre_g: { type: "NUMBER" },
+          ref: {
+            type: "STRING",
+            description:
+              "Key of the SO3RA REFERENCE FOOD this item is (e.g. 'harira', 'msemen', 'atay_sucre'), or empty when none fits",
+          },
           state: {
             type: "STRING",
             enum: ["dry", "cooked", "prepared", "drink", "packaged"],
@@ -103,6 +108,7 @@ Rules:
 - The user may write in English, French, Arabic or Darija. Keep "name" in the language the user used; for photos use the photo's most likely local name.
 - search_query: generic words that would match a food database built from Open Food Facts Morocco (mostly French product names) plus common whole foods in English. Prefer the French generic term for produce and dishes, the brand name for packaged products. Say "cuit"/"cooked" for cooked grains and legumes: the database is full of DRY products (couscous, semoule, rice, lentils) that are ~3x denser than the cooked food.
 - NUMBERS MUST ADD UP: kcal = 4 x protein_g + 4 x carbs_g + 9 x fat_g (within 10%; +7 per g of alcohol). Estimate the macros from the ingredients first, then compute kcal from them.
+- REFERENCE FOODS: a table of So3ra reference foods follows the rules. When an item IS one of them (any spelling or language, or recognised in a photo), set ref to its key and estimate only grams (use its portion when the user gives no amount: "2 msemen" = 2 × its portion). Still fill kcal and macros from the table × grams. Pick the closest variant (tea with or without sugar, plain vs meat briouats); don't use a reference for a clearly different dish. Extras that aren't in the reference recipe (butter, honey, amlou, jam, cheese, sugar, an oil drizzle) are SEPARATE items, and the reference item's grams is the dish alone: "2 msemen with butter and honey" = msemen 180 g + butter + honey.
 - MOROCCAN FOOD — estimate as eaten at home, not from packaged products:
   - Typical portions: 1 bowl of harira ≈ 300 g (~70–90 kcal/100 g); a home tagine serving ≈ 350–450 g with its sauce, and the oil (often 2–4 tbsp per pot) is part of it; couscous 7 légumes plate ≈ 350–450 g; 1 msemen ≈ 80–100 g (often with butter or smen and honey on top: add them if mentioned or obvious); 1 harcha ≈ 70–90 g; 1 baghrir ≈ 50–60 g; a round of khobz ≈ 250–300 g, people usually eat ¼–½; 1 sfenj ≈ 60–80 g; 1 glass of atay ≈ 120–150 ml with 2–4 sugar cubes (≈ 5 g sugar each) unless the user says no sugar.
   - Fats and sugar are where home cooking hides energy: smen, butter, olive or vegetable oil, honey, amlou, sugar in tea and juices. Include them when they are part of the dish or the user mentions them; don't add them when the user says "without".

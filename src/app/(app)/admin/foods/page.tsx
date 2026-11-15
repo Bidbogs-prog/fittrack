@@ -5,7 +5,7 @@ import { FoodSearch } from "@/components/food-search";
 import { Pagination } from "@/components/pagination";
 import { requireAdmin } from "@/lib/auth";
 import { sanitizeSearch, searchFoods } from "@/lib/foods";
-import { deleteFood } from "../actions";
+import { deleteFood, syncReferenceFoods } from "../actions";
 import { FoodForm } from "./food-form";
 
 export const metadata = { title: "Admin · Foods" };
@@ -61,6 +61,17 @@ export default async function AdminFoodsPage({
           Facts are per 100 g — portion math is derived from these numbers everywhere in the app.
         </p>
         <FoodForm />
+      </section>
+
+      <section className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-ink-800 bg-ink-900/60 p-5">
+        <p className="max-w-[60ch] text-xs text-paper-mute">
+          So3ra reference foods (Moroccan home dishes, calculated from standard recipes in <code>src/lib/reference</code>). Sync after changing a recipe; changed values lose their dietitian sign-off.
+        </p>
+        <form action={syncReferenceFoods}>
+          <button type="submit" className="btn-press rounded-lg border border-ink-700 px-3.5 py-2 text-xs font-semibold text-paper-dim hover:text-paper">
+            Sync reference foods
+          </button>
+        </form>
       </section>
 
       <section className="space-y-4">

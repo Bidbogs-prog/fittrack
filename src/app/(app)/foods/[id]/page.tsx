@@ -66,6 +66,12 @@ export default async function FoodPage({ params }: { params: Promise<{ id: strin
 
       <Portion food={food} />
 
+      {food.source === "reference" && (
+        <p className="text-xs leading-relaxed text-paper-mute">
+          {t("refRow")} {food.ref_reviewed_at ? t("refReviewed") : t("refUnreviewed")}
+          {food.ref_basis && <span className="mt-1 block" lang="en">{food.ref_basis}</span>}
+        </p>
+      )}
       {food.source === "off" && (
         <p className="text-xs text-paper-mute">
           {t.rich("offRow", {
