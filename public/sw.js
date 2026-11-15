@@ -12,7 +12,7 @@
  *
  * Bump VERSION to invalidate all caches on deploy of a new strategy.
  */
-const VERSION = "v6";
+const VERSION = "v7";
 const STATIC_CACHE = `so3ra-static-${VERSION}`;
 const PAGE_CACHE = `so3ra-pages-${VERSION}`;
 const OFFLINE_URL = "/offline.html";
@@ -56,6 +56,11 @@ self.addEventListener("push", (event) => {
     self.registration.showNotification(data.title || "So3ra", {
       body: data.body || "",
       tag: data.tag || "so3ra",
+      // Same tag as yesterday's still-unread reminder = a silent replacement
+      // (no sound, no pop-up), which looked like no breakfast reminder at all
+      // (DR-049). renotify alerts again while still keeping one per meal.
+      renotify: true,
+      timestamp: Date.now(),
       icon: "/icons/icon-192.png",
       badge: "/icons/notification-badge.png",
       data: { url: data.url || "/dashboard" },

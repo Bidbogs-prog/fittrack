@@ -322,6 +322,13 @@ Found by a full code review (static testing); DR-013 to DR-015 were confirmed by
 - **Fix:** `form-action 'self' https://*.supabase.co https://accounts.google.com` (own server actions plus the sign-in redirect for no-JS posts).
 - **Regression test:** `e2e/public.spec.ts` security-headers check.
 
+### DR-049 — Breakfast reminder sent every day but never seen
+- **Severity / priority:** High / High · **Type:** Functional · **Found by:** product owner (Android; lunch reminders arrived, breakfast didn't, with power saving off)
+- **Evidence:** `reminder_log` and the cron responses show breakfast sent and accepted by FCM at 10:30 on 11, 12 and 13 November; lunch arrived the same day.
+- **Root cause:** every reminder for a meal uses the same notification tag (`reminder-breakfast`). If an earlier one was still in the notification shade, the new one replaced it silently: no sound, no vibration, no pop-up, same position. Breakfast reminders had been left unread on previous days; lunch had been cleared, so it alerted.
+- **Fix:** the service worker shows reminders with `renotify: true` (and a fresh timestamp): still one notification per meal, but each new one alerts. Service worker version bumped to v7 so phones pick it up.
+- **Regression test:** `src/lib/sw.test.ts` (tag per meal requires `renotify` in the push handler). On-device check: leave yesterday's breakfast reminder unread and confirm today's alerts.
+
 ### Accepted risks (not fixed)
 - **Open Food Facts names in AI prompts:** third-party text reaches the model (prompt injection, CWE-1427). Low impact: output is structured and confirmed by the user. Revisit before bulk imports.
 - **Coach loads up to 400 library foods per message:** token cost, not correctness. Revisit when the library grows.
