@@ -102,7 +102,7 @@ export async function GET(request: NextRequest) {
           let accepted = 0;
           let failed = 0;
           for (const sub of userSubs) {
-            const r = await sendPush(sub, reminderPayload(slot, s.locale));
+            const r = await sendPush(sub, reminderPayload(slot, s.locale, probe.date));
             stats[r === "sent" ? "sent" : r === "gone" ? "gone" : "failed"]++;
             if (r === "sent") accepted++;
             if (r === "failed") failed++;

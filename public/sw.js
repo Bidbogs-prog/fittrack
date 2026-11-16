@@ -12,7 +12,7 @@
  *
  * Bump VERSION to invalidate all caches on deploy of a new strategy.
  */
-const VERSION = "v7";
+const VERSION = "v8";
 const STATIC_CACHE = `so3ra-static-${VERSION}`;
 const PAGE_CACHE = `so3ra-pages-${VERSION}`;
 const OFFLINE_URL = "/offline.html";
@@ -53,7 +53,18 @@ self.addEventListener("push", (event) => {
     data = { body: event.data ? event.data.text() : "" };
   }
   event.waitUntil(
-    self.registration.showNotification(data.title || "So3ra", {
+    showAndAck(data)
+  );
+});
+
+/**
+ * Show the notification, then tell the server it arrived (and whether it
+ * could be shown), so "sent" and "reached the phone" can be told apart.
+ */
+async function showAndAck(data) {
+  let shown = true;
+  try {
+    await self.registration.showNotification(data.title || "So3ra", {
       body: data.body || "",
       tag: data.tag || "so3ra",
       // Same tag as yesterday's still-unread reminder = a silent replacement
@@ -64,9 +75,24 @@ self.addEventListener("push", (event) => {
       icon: "/icons/icon-192.png",
       badge: "/icons/notification-badge.png",
       data: { url: data.url || "/dashboard" },
-    })
-  );
-});
+    });
+  } catch {
+    shown = false;
+  }
+  if (!data.ack) return;
+  try {
+    const sub = await self.registration.pushManager.getSubscription();
+    if (!sub) return;
+    await fetch("/api/push/ack", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ endpoint: sub.endpoint, slot: data.ack.slot, date: data.ack.date, shown }),
+      keepalive: true,
+    });
+  } catch {
+    // best-effort diagnostics
+  }
+}
 
 // Use an alpha-only logo for Android's monochrome status-bar badge.
 // Source: /icons/notification-badge.svg (rasterised to 96px PNG).

@@ -87,6 +87,21 @@ describe("push reminders RLS", () => {
     await expect(t.as(a, () => t.rows("select public.claim_reminder($1, 'lunch', '2026-11-03')", [a]))).rejects.toThrow(/permission denied/);
   });
 
+  it("ack_reminder marks only the device owner's existing row, service-only", async () => {
+    await t.admin(() => t.rows("insert into public.push_subscriptions (user_id, endpoint, p256dh, auth) values ($1, 'https://fcm.googleapis.com/fcm/send/ack-a', 'k', 'x')", [a]));
+    await t.admin(() => t.rows("insert into public.reminder_log (user_id, slot, local_date) values ($1, 'breakfast', '2026-11-16')", [a]));
+    const ack = (endpoint: string, slot: string, date: string) =>
+      t.admin(async () => (await t.rows<{ ok: boolean }>("select public.ack_reminder($1, $2, $3, true) as ok", [endpoint, slot, date]))[0].ok);
+    expect(await ack("https://fcm.googleapis.com/fcm/send/unknown", "breakfast", "2026-11-16")).toBe(false);
+    expect(await ack("https://fcm.googleapis.com/fcm/send/ack-a", "lunch", "2026-11-16")).toBe(false);
+    expect(await ack("https://fcm.googleapis.com/fcm/send/ack-a", "breakfast", "2026-11-16")).toBe(true);
+    const [row] = await t.admin(() =>
+      t.rows<{ received: boolean; shown: boolean }>("select received_at is not null as received, shown from public.reminder_log where user_id = $1 and slot = 'breakfast' and local_date = '2026-11-16'", [a])
+    );
+    expect(row).toEqual({ received: true, shown: true });
+    await expect(t.as(a, () => t.rows("select public.ack_reminder('x', 'breakfast', '2026-11-16', true)"))).rejects.toThrow(/permission denied/);
+  });
+
   it("the send log dedupes one slot per user per local day", async () => {
     await t.admin(() => t.rows("insert into public.reminder_log (user_id, slot, local_date) values ($1, 'lunch', '2026-11-02')", [a]));
     await expect(

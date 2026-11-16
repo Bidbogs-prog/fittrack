@@ -336,6 +336,13 @@ Found by a full code review (static testing); DR-013 to DR-015 were confirmed by
 - **Fix:** `src/lib/estimate-check.ts`: a match is pre-selected only when its name fits the query on whole words (accent-insensitive) and its energy density is within ±30% of the estimate; otherwise the estimate stays selected and matches are alternatives, closest first. Estimates whose kcal disagrees with 4P+4C+9F by >20% are recomputed from the macros (shown as "Adjusted…"); anything denser than fat is scaled down. The parser prompt asks for the food's state, "cuit"/"cooked" in search terms, consistent numbers, and Moroccan home portions and hidden fats/sugar.
 - **Regression test:** `src/lib/estimate-check.test.ts` (real catalogue rows: dry vs cooked couscous, harira mix, oeuf/boeuf, lait vs lait d'amande, pizza dough for "pain", tea; ±30% boundaries; macro consistency). Live check (Gemini, new prompt): harira bowl 300 g → 240 kcal (80/100 g), couscous 7 légumes 400 g → 480 kcal, ½ khobz 130 g → 350 kcal, all within 3% of 4/4/9.
 
+### DR-051 — No way to tell "sent" from "reached the phone" for reminders
+- **Severity / priority:** Medium / High · **Type:** Observability · **Found by:** product owner (breakfast reminder still missing after DR-049 while lunch and dinner arrive)
+- **Evidence (16 Nov):** breakfast sent and accepted by FCM at 10:30 on 14, 15 and 16 November, same as lunch (12:15) and dinner (22:05), one Android device. The server can't see whether the phone received it.
+- **Fix:** the service worker reports each reminder to `/api/push/ack` after showing it (device identified by its push endpoint, only that owner's existing row is marked, once; `ack_reminder`, migration `20260908000000_reminder_receipts.sql`). The Me page lists the last reminders: "sent 10:30, reached this phone 10:31", "sent, not confirmed by a phone", or "couldn't be shown". Service worker v8.
+- **Regression tests:** `tests/db/reminders.test.ts` → "ack_reminder…"; `src/lib/sw.test.ts` (ack after show, payload carries slot and date).
+- **Open:** root cause of the missing breakfast on the device; the receipts will show whether it never arrives, arrives late, or arrives but isn't shown.
+
 ### Accepted risks (not fixed)
 - **Open Food Facts names in AI prompts:** third-party text reaches the model (prompt injection, CWE-1427). Low impact: output is structured and confirmed by the user. Revisit before bulk imports.
 - **Coach loads up to 400 library foods per message:** token cost, not correctness. Revisit when the library grows.

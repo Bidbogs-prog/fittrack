@@ -15,6 +15,16 @@ import { useClientValue } from "@/lib/use-client-clock";
 import { currentSubscription, pushSupport, subscribeDevice, type PushSupport } from "@/lib/push-client";
 import { implausibleSlots } from "@/lib/reminders";
 
+/** A reminder_log row for the Me page's delivery history. */
+export interface RecentReminder {
+  slot: "breakfast" | "lunch" | "dinner";
+  local_date: string;
+  status: "claimed" | "sent" | "failed";
+  updated_at: string;
+  received_at: string | null;
+  shown: boolean | null;
+}
+
 export interface ReminderTimes {
   breakfast: string | null;
   lunch: string | null;
@@ -68,8 +78,11 @@ export function useEnableReminders(surface: string) {
 export function ReminderSettings({
   initial,
   clock,
+  recent = [],
 }: {
   initial: ReminderTimes | null;
+  /** Last reminders: sent (push service accepted) vs received by this phone. */
+  recent?: RecentReminder[];
   /** The account's reminder clock: zone and UTC offset in minutes (AUD-12). */
   clock?: { timezone: string; utcOffsetMin: number | null } | null;
 }) {
@@ -181,6 +194,34 @@ export function ReminderSettings({
         </form>
       )}
       {note && <p role="status" className="text-xs text-paper-mute">{note}</p>}
+      {recent.length > 0 && (subscribed || initial) && (
+        <div className="flex flex-col gap-1">
+          <p className="text-[11px] font-semibold text-paper-dim">{t("historyTitle")}</p>
+          <ul className="flex flex-col gap-0.5 font-mono text-[11px] text-paper-mute tabular">
+            {recent.map((r) => {
+              // Plain arithmetic on the account's UTC offset: no locale/timezone
+              // formatting, so server and phone render the same text.
+              const hm = (iso: string) => {
+                const m = Math.floor(new Date(iso).getTime() / 60_000) + (clock?.utcOffsetMin ?? 0);
+                const day = ((m % 1440) + 1440) % 1440;
+                return `${String(Math.floor(day / 60)).padStart(2, "0")}:${String(day % 60).padStart(2, "0")}`;
+              };
+              return (
+                <li key={`${r.local_date}-${r.slot}`}>
+                  {r.local_date.slice(5)} · {t(`slot.${r.slot}`)} ·{" "}
+                  {r.status === "failed"
+                    ? t("historyFailed")
+                    : r.received_at
+                      ? t(r.shown === false ? "historyNotShown" : "historyReceived", { sent: hm(r.updated_at), got: hm(r.received_at) })
+                      : r.status === "sent"
+                        ? t("historySentOnly", { sent: hm(r.updated_at) })
+                        : t("historySending")}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
       {clock && (subscribed || initial) && (
         <p className="text-[11px] text-paper-mute">
           {t("clock", {

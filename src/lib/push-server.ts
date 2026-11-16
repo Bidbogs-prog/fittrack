@@ -22,6 +22,8 @@ export interface PushPayload {
   body: string;
   url: string;
   tag: string;
+  /** Reminder identity; the service worker acks it to /api/push/ack. */
+  ack?: { slot: ReminderSlot; date: string };
 }
 
 let configured: boolean | null = null;
@@ -72,7 +74,13 @@ export function pushMessages(locale: string): PushMessages {
   return (cat as unknown as { pushNotify: PushMessages }).pushNotify;
 }
 
-export function reminderPayload(slot: ReminderSlot, locale: string): PushPayload {
+export function reminderPayload(slot: ReminderSlot, locale: string, date?: string): PushPayload {
   const m = pushMessages(locale);
-  return { title: m.title[slot], body: m.body[slot], url: "/dashboard", tag: `reminder-${slot}` };
+  return {
+    title: m.title[slot],
+    body: m.body[slot],
+    url: "/dashboard",
+    tag: `reminder-${slot}`,
+    ...(date ? { ack: { slot, date } } : {}),
+  };
 }

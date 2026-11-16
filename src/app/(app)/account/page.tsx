@@ -11,7 +11,7 @@ import { toStatusKey } from "@/i18n/status";
 import { IntentButton } from "@/components/intent-button";
 import { loadMemories } from "@/lib/coach/memory";
 import { MemoryList } from "./memory-list";
-import { ReminderSettings, type ReminderTimes } from "@/components/reminder-settings";
+import { ReminderSettings, type RecentReminder, type ReminderTimes } from "@/components/reminder-settings";
 
 const PREMIUM_LIVE = ["checkin", "memory", "coach", "logging"] as const;
 const PREMIUM_SOON = ["menu", "weekPlan", "nutrients", "ramadan"] as const;
@@ -20,6 +20,7 @@ import { formatHeight, formatWeight } from "@/lib/units";
 import { changePassword, deleteAccount, saveUnits, setLocale } from "./actions";
 import { SplitEditor, WindowEditor } from "./editors";
 import { SignOutForm } from "@/components/sign-out-form";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export const metadata = { title: "Me" };
 
@@ -54,6 +55,16 @@ export default async function AccountPage({
     supabase.from("reminder_settings").select("breakfast, lunch, dinner, timezone, utc_offset_min").eq("user_id", userId).maybeSingle(),
     getTranslations("reminders"),
   ]);
+  // Delivery diagnostics: reminder_log is service-only, read it for this user.
+  const recentReminders =
+    (
+      await createAdminClient()
+        ?.from("reminder_log")
+        .select("slot, local_date, status, updated_at, received_at, shown")
+        .eq("user_id", userId)
+        .order("updated_at", { ascending: false })
+        .limit(6)
+    )?.data ?? [];
   const monthlyLeft =
     allowance.monthly != null ? Math.max(0, allowance.monthly - allowance.usedMonth) : null;
   const targets = active?.targets ?? null;
@@ -161,6 +172,7 @@ export default async function AccountPage({
         <section className={`${card} flex flex-col gap-2.5 p-3.5 lg:p-5`}>
           <h2 className="font-display text-base font-semibold text-paper">{tRem("title")}</h2>
           <ReminderSettings
+              recent={recentReminders as RecentReminder[]}
               initial={(reminderData as ReminderTimes | null) ?? null}
               clock={
                 reminderData
