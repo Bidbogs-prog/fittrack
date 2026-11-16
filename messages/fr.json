@@ -1127,6 +1127,7 @@
     "historyReceived": "envoyé {sent}, reçu par ce téléphone {got}",
     "historyNotShown": "envoyé {sent}, reçu {got} mais pas affiché",
     "historySentOnly": "envoyé {sent}, non confirmé par un téléphone",
+    "historySentNoReceipt": "envoyé {sent} (avant les accusés de réception)",
     "historyFailed": "envoi impossible",
     "historySending": "envoi…",
     "oddTime": "{meal} est réglé à {time}. Cela semble inhabituel : vérifiez AM/PM dans le sélecteur.",

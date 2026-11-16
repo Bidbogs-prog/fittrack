@@ -1127,6 +1127,7 @@
     "historyReceived": "sent {sent}, reached this phone {got}",
     "historyNotShown": "sent {sent}, reached the phone {got} but couldn't be shown",
     "historySentOnly": "sent {sent}, not confirmed by a phone",
+    "historySentNoReceipt": "sent {sent} (before delivery receipts)",
     "historyFailed": "couldn't be sent",
     "historySending": "sending…",
     "oddTime": "{meal} is set to {time}. That looks unusual: check AM/PM on the time picker.",

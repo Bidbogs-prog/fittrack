@@ -1127,6 +1127,7 @@
     "historyReceived": "تصيفط {sent}، وصل لهاد التيليفون {got}",
     "historyNotShown": "تصيفط {sent}، وصل {got} ولكن ما تبانش",
     "historySentOnly": "تصيفط {sent}، ما أكدوش حتى تيليفون",
+    "historySentNoReceipt": "تصيفط {sent} (قبل تأكيد الوصول)",
     "historyFailed": "ما قدرش يتصيفط",
     "historySending": "كيتصيفط…",
     "oddTime": "{meal} مضبوط على {time}. هادشي ماشي عادي: شوف AM/PM فالساعة.",

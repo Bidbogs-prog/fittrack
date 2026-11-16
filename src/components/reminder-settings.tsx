@@ -15,6 +15,9 @@ import { useClientValue } from "@/lib/use-client-clock";
 import { currentSubscription, pushSupport, subscribeDevice, type PushSupport } from "@/lib/push-client";
 import { implausibleSlots } from "@/lib/reminders";
 
+/** Phones started confirming delivery with service worker v8 (DR-051). */
+const RECEIPTS_SINCE = "2026-11-16T11:00:00";
+
 /** A reminder_log row for the Me page's delivery history. */
 export interface RecentReminder {
   slot: "breakfast" | "lunch" | "dinner";
@@ -214,7 +217,8 @@ export function ReminderSettings({
                     : r.received_at
                       ? t(r.shown === false ? "historyNotShown" : "historyReceived", { sent: hm(r.updated_at), got: hm(r.received_at) })
                       : r.status === "sent"
-                        ? t("historySentOnly", { sent: hm(r.updated_at) })
+                        ? // Before receipts existed there's nothing to confirm with.
+                          t(r.updated_at < RECEIPTS_SINCE ? "historySentNoReceipt" : "historySentOnly", { sent: hm(r.updated_at) })
                         : t("historySending")}
                 </li>
               );
